@@ -70,15 +70,33 @@ describe('Impro', function () {
 
     describe('when given a source content type', function () {
         it('should default to output an image of the same type', function () {
-            return expect(impro({ contentType: 'image/jpeg' }).resize(40, 15).crop('center').targetContentType, 'to equal', 'image/jpeg');
+            return expect(impro().sourceType('image/jpeg').resize(40, 15).crop('center'), 'to satisfy', {
+                targetContentType: 'image/jpeg'
+            });
         });
 
         it('should honor an explicit type conversion', function () {
-            return expect(impro({ contentType: 'image/jpeg' }).gif().targetContentType, 'to equal', 'image/gif');
+            return expect(impro().sourceType('image/jpeg').gif(), 'to satisfy', {
+                targetContentType: 'image/gif'
+            });
         });
     });
 
     it('should not provide a targetContentType when no source content type is given and no explicit conversion has been performed', function () {
-        return expect(impro().resize(40, 15).crop('center').targetContentType, 'to be undefined');
+        return expect(impro().resize(40, 15).crop('center'), 'to satisfy', {
+            targetContentType: undefined
+        });
+    });
+
+    it('should derive the metadata of an image', function () {
+        return expect(
+            load('turtle.jpg'),
+            'when piped through',
+            impro().metadata(),
+            'to yield output satisfying when decoded as', 'utf-8',
+            'when passed as parameter to', JSON.parse, 'to satisfy', {
+                contentType: 'image/jpeg'
+            }
+        );
     });
 });
