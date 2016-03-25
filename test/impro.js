@@ -122,4 +122,19 @@ describe('Impro', function () {
             'to yield output satisfying to have length', 149
         );
     });
+
+    describe('with the gifsicle engine', function () {
+        it('should handle resize before extract', function () {
+            return expect(
+                'cat.gif',
+                'when piped through',
+                impro.gifsicle().resize(380, 486).extract(150, 150, 100, 100)),
+                'to yield output satisfying',
+                expect.it('to have metadata satisfying', {
+                    size: { width: 100, height: 100 },
+                    Scene: '3 of 4' // Animated
+                }).and('to resemble', load('cat-resized-then-cropped.gif')
+            );
+        });
+    });
 });

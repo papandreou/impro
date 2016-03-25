@@ -6,7 +6,6 @@ var mime = require('mime');
 var exifReader = require('exif-reader');
 var util = require('util');
 var icc = require('icc');
-var Gifsicle;
 var filterConstructorByOperationName = {};
 var errors = require('./errors');
 
@@ -24,14 +23,6 @@ function getMockFileNameForContentType(contentType) {
         return mime.extensions[contentType];
     }
 }
-
-try {
-    sharp = require('sharp');
-} catch (e) {}
-
-try {
-    Gifsicle = require('gifsicle-stream');
-} catch (e) {}
 
 function isNumberWithin(num, min, max) {
     return typeof num === 'number' && num >= min && num <= max;
@@ -424,11 +415,6 @@ Pipeline.prototype._freeze = function () {
             stream.on('error', this._fail.bind(this));
         }, this);
         this._frozen = true;
-
-        var end = this.end;
-        this.end = function () {
-            return end.apply(this, arguments);
-        };
         this.on('finish', function () {
             this._streams[0].end();
         }.bind(this));
@@ -459,7 +445,6 @@ Pipeline.prototype._flush = function () {
         this.currentEngine = undefined;
         return;
     } else if (this.queue.length > 0) {
-        var that = this;
         var engineName = this.currentEngineName;
         var sourceContentType = this.sourceContentType;
         if (sourceContentType === 'image/gif' && !this.queue.some(function (operation) {
@@ -476,24 +461,6 @@ Pipeline.prototype._flush = function () {
             }
         }
         if (engineName === 'gifsicle') {
-            var gifsicleArgs = [];
-            this.queue.forEach(function (operation) {
-                if (operation.name === 'resize') {
-                    if (this.queue.some(function (operation) { return operation.name === 'ignoreAspectRatio'; })) {
-                        gifsicleArgs.push('--resize', operation.args[0] + 'x' + operation.args[1]);
-                    } else {
-                        gifsicleArgs.push('--resize-fit', operation.args[0] + 'x' + operation.args[1]);
-                    }
-                } else if (operation.name === 'extract') {
-                    gifsicleArgs.push('--crop', operation.args[0] + ',' + operation.args[1] + '+' + operation.args[2] + 'x' + operation.args[3]);
-                } else if (operation.name === 'rotate' && /^(?:90|180|270)$/.test(operation.args[0])) {
-                    gifsicleArgs.push('--rotate-' + operation.args[0]);
-                } else if (operation.name === 'progressive') {
-                    gifsicleArgs.push('--interlace');
-                }
-            }, this);
-            this.add(new Gifsicle(gifsicleArgs));
-            this.targetContentType = 'image/gif';
         } else if (engineName === 'sharp') {
         } else if (engineName === 'gm') {
         } else {
@@ -892,6 +859,63 @@ if (gm) {
                 typeof gm.prototype[propertyName] === 'function');
         })),
         class: GmEngine
+    });
+}
+
+var Gifsicle = requireOr('gifsicle-stream');
+if (Gifsicle) {
+    function GifsicleEngine(pipeline) {
+        Engine.call(this, pipeline);
+        this.queue = [];
+    }
+    util.inherits(GifsicleEngine, Engine);
+
+    GifsicleEngine.prototype.op = function (name, args) {
+        this.queue.push({name: name, args: args});
+    };
+
+    GifsicleEngine.prototype.flush = function () {
+        if (this.queue.length > 0) {
+            var gifsicleArgs = [];
+            var seenOperationThatMustComeBeforeExtract = false;
+            var flush = function () {
+                if (gifsicleArgs.length > 0) {
+                    this.pipeline.add(new Gifsicle(gifsicleArgs));
+                    seenOperationThatMustComeBeforeExtract = false;
+                    gifsicleArgs = [];
+                }
+            }.bind(this);
+
+            var ignoreAspectRatio = this.queue.some(function (operation) {
+                return operation.name === 'ignoreAspectRatio';
+            });
+
+            this.queue.forEach(function (operation) {
+                if (operation.name === 'resize') {
+                    seenOperationThatMustComeBeforeExtract = true;
+                    gifsicleArgs.push('--resize' + (ignoreAspectRatio ? '' : '-fit'), operation.args[0] + 'x' + operation.args[1]);
+                } else if (operation.name === 'extract') {
+                    if (seenOperationThatMustComeBeforeExtract) {
+                        flush();
+                    }
+                    gifsicleArgs.push('--crop', operation.args[0] + ',' + operation.args[1] + '+' + operation.args[2] + 'x' + operation.args[3]);
+                } else if (operation.name === 'rotate' && /^(?:90|180|270)$/.test(operation.args[0])) {
+                    gifsicleArgs.push('--rotate-' + operation.args[0]);
+                    seenOperationThatMustComeBeforeExtract = true;
+                } else if (operation.name === 'progressive') {
+                    gifsicleArgs.push('--interlace');
+                }
+            }, this);
+            flush();
+            this.pipeline.targetContentType = 'image/gif';
+            this.queue = [];
+        }
+    };
+
+    Impro.registerEngine({
+        name: 'gifsicle',
+        class: GifsicleEngine,
+        operations: [ 'crop', 'rotate', 'progressive', 'extract', 'resize', 'ignoreAspectRatio' ]
     });
 }
 
