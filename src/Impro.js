@@ -773,7 +773,7 @@ Pipeline.prototype.add = function (options) {
         } else {
             var operationNameLowerCase = operationName.toLowerCase(),
                 FilterConstructor = filterConstructorByOperationName[operationNameLowerCase];
-            if (FilterConstructor && filters[operationNameLowerCase] !== false) {
+            if (FilterConstructor && this.impro.filters[operationNameLowerCase] !== false) {
                 this._flush();
                 if (operationNameLowerCase === 'svgfilter' && this.impro.root && options.sourceFilePath) {
                     operationArgs.push('--root', 'file://' + this.impro.root, '--url', 'file://' + options.sourceFilePath);

@@ -1,4 +1,4 @@
-var expect = require('unexpected')
+var expect = require('unexpected').clone()
     .use(require('unexpected-stream'))
     .use(require('unexpected-image'))
     .use(require('unexpected-resemble'));
@@ -97,6 +97,15 @@ describe('Impro', function () {
             'when passed as parameter to', JSON.parse, 'to satisfy', {
                 contentType: 'image/jpeg'
             }
+        );
+    });
+
+    it('should run an image through optipng', function () {
+        return expect(
+            load('testImage.png'),
+            'when piped through',
+            impro().add({ name: 'optipng', args: [ '-o7' ]}),
+            'to yield output satisfying to have length', 149
         );
     });
 });
