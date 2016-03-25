@@ -86,6 +86,16 @@ describe('Impro', function () {
         });
     });
 
+    it('should allow an image engine to be explicitly selected', function () {
+        return expect(
+            'turtle.jpg',
+            'when piped through',
+            impro().gm().resize(40, 15).crop('center'),
+            'to yield output satisfying to resemble',
+            load('turtleCroppedCenterGm.jpg')
+        );
+    });
+
     it('should not provide a targetContentType when no source content type is given and no explicit conversion has been performed', function () {
         return expect(impro().resize(40, 15).crop('center'), 'to satisfy', {
             targetContentType: undefined

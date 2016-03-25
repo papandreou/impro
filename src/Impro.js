@@ -688,6 +688,8 @@ Impro.registerEngine = function (options) {
     Impro.defaultEngineName = Impro.defaultEngineName || engineName;
     Impro.isOperationByEngineNameAndName[engineName] = {};
     Impro.EngineByName[options.name] = options.class;
+    Impro.registerMethod(engineName);
+
     (options.operations || []).forEach(function (operationName) {
         Impro.isOperationByEngineNameAndName[engineName][operationName] = true;
         (Impro.engineNamesByOperationName[operationName] = Impro.engineNamesByOperationName[operationName] || []).push(engineName);
@@ -762,7 +764,7 @@ if (gm) {
     GmEngine.prototype.flush = function () {
         if (this.queue.length > 0) {
             var pipeline = this.pipeline;
-            var gmOperationsForThisInstance = this.queue;
+            var operations = this.queue;
             // For some reason the gm module doesn't expose itself as a readable/writable stream,
             // so we need to wrap it into one:
 
@@ -777,7 +779,7 @@ if (gm) {
                     spawned = true;
                     var seenData = false,
                         hasEnded = false,
-                        gmInstance = gm(readStream, getMockFileNameForContentType(gmOperationsForThisInstance[0].sourceContentType));
+                        gmInstance = gm(readStream, getMockFileNameForContentType(operations[0].sourceContentType));
                     if (pipeline.impro.maxInputPixels) {
                         gmInstance.limit('pixels', pipeline.impro.maxInputPixels);
                     }
@@ -785,16 +787,16 @@ if (gm) {
                     var crop;
                     var withoutEnlargement;
                     var ignoreAspectRatio;
-                    for (var i = 0 ; i < gmOperationsForThisInstance.length ; i += 1) {
-                        var gmOperation = gmOperationsForThisInstance[i];
-                        if (gmOperation.name === 'resize') {
-                            resize = gmOperation;
-                        } else if (gmOperation.name === 'crop') {
-                            crop = gmOperation;
-                        } else if (gmOperation.name === 'withoutEnlargement') {
-                            withoutEnlargement = gmOperation;
-                        } else if (gmOperation.name === 'ignoreAspectRatio') {
-                            ignoreAspectRatio = gmOperation;
+                    for (var i = 0 ; i < operations.length ; i += 1) {
+                        var operation = operations[i];
+                        if (operation.name === 'resize') {
+                            resize = operation;
+                        } else if (operation.name === 'crop') {
+                            crop = operation;
+                        } else if (operation.name === 'withoutEnlargement') {
+                            withoutEnlargement = operation;
+                        } else if (operation.name === 'ignoreAspectRatio') {
+                            ignoreAspectRatio = operation;
                         }
                     }
                     if (withoutEnlargement && resize) {
@@ -804,24 +806,24 @@ if (gm) {
                         resize.args[1] += '!';
                     }
                     if (resize && crop) {
-                        gmOperationsForThisInstance.push({
+                        operations.push({
                             name: 'extent',
                             args: [].concat(resize.args)
                         });
                         resize.args.push('^');
                     }
-                    gmOperationsForThisInstance.reduce(function (gmInstance, gmOperation) {
-                        pipeline.impro.checkSharpOrGmOperation(gmOperation);
-                        if (gmOperation.name === 'rotate' && gmOperation.args.length === 1) {
-                            gmOperation = _.extend({}, gmOperation);
-                            gmOperation.args = ['transparent', gmOperation.args[0]];
+                    operations.reduce(function (gmInstance, operation) {
+                        pipeline.impro.checkSharpOrGmOperation(operation);
+                        if (operation.name === 'rotate' && operation.args.length === 1) {
+                            operation = _.extend({}, operation);
+                            operation.args = ['transparent', operation.args[0]];
                         }
-                        if (gmOperation.name === 'extract') {
-                            gmOperation.name = 'crop';
-                            gmOperation.args = [gmOperation.args[2], gmOperation.args[3], gmOperation.args[0], gmOperation.args[1]];
-                        } else if (gmOperation.name === 'crop') {
-                            gmOperation.name = 'gravity';
-                            gmOperation.args = [
+                        if (operation.name === 'extract') {
+                            operation.name = 'crop';
+                            operation.args = [operation.args[2], operation.args[3], operation.args[0], operation.args[1]];
+                        } else if (operation.name === 'crop') {
+                            operation.name = 'gravity';
+                            operation.args = [
                                 {
                                     northwest: 'NorthWest',
                                     north: 'North',
@@ -832,21 +834,21 @@ if (gm) {
                                     southwest: 'SouthWest',
                                     south: 'South',
                                     southeast: 'SouthEast'
-                                }[String(gmOperation.args[0]).toLowerCase()] || 'Center'
+                                }[String(operation.args[0]).toLowerCase()] || 'Center'
                             ];
                         }
-                        if (gmOperation.name === 'progressive') {
-                            gmOperation.name = 'interlace';
-                            gmOperation.args = [ 'line' ];
+                        if (operation.name === 'progressive') {
+                            operation.name = 'interlace';
+                            operation.args = [ 'line' ];
                         }
                         // There are many, many more that could be supported:
-                        if (gmOperation.name === 'webp' || gmOperation.name === 'png' || gmOperation.name === 'jpeg' || gmOperation.name === 'gif') {
-                            gmOperation = _.extend({}, gmOperation);
-                            gmOperation.args.unshift(gmOperation.name);
-                            gmOperation.name = 'setFormat';
+                        if (operation.name === 'webp' || operation.name === 'png' || operation.name === 'jpeg' || operation.name === 'gif') {
+                            operation = _.extend({}, operation);
+                            operation.args.unshift(operation.name);
+                            operation.name = 'setFormat';
                         }
-                        if (typeof gmInstance[gmOperation.name] === 'function') {
-                            return gmInstance[gmOperation.name].apply(gmInstance, gmOperation.args);
+                        if (typeof gmInstance[operation.name] === 'function') {
+                            return gmInstance[operation.name].apply(gmInstance, operation.args);
                         } else {
                             return gmInstance;
                         }
