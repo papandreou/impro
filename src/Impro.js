@@ -1,5 +1,6 @@
 /*global JSON*/
 var Stream = require('stream');
+var requireOr = require('require-or');
 var _ = require('lodash');
 var mime = require('mime');
 var exifReader = require('exif-reader');
@@ -814,10 +815,7 @@ Impro.registerEngine = function (options) {
     });
 };
 
-var sharp;
-try {
-    sharp = require('sharp');
-} catch (e) {}
+var sharp = requireOr('sharp');
 
 if (sharp) {
     Impro.registerEngine({
@@ -826,10 +824,7 @@ if (sharp) {
     });
 }
 
-var gm;
-try {
-    gm = require('gm');
-} catch (e) {}
+var gm = requireOr('gm');
 
 if (gm) {
     Impro.registerEngine({
