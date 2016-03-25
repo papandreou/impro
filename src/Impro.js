@@ -402,6 +402,7 @@ function Pipeline(impro, options) {
     this.targetContentType = options && options.sourceContentType;
     this._streams = [];
     this.queue = [];
+    this.defaultEngineName = options.defaultEngineName || impro.defaultEngineName;
 }
 
 util.inherits(Pipeline, Stream.Duplex);
@@ -733,7 +734,7 @@ Pipeline.prototype.add = function (options) {
             this.targetContentType = 'application/json; charset=utf-8';
         } else if (Impro.isOperationByEngineNameAndName[operationName]) {
             this._flush();
-            this.currentEngineName = operationName;
+            this.defaultEngineName = operationName;
         } else if (Impro.engineNamesByOperationName[operationName]) {
             // Hack: This should be moved into the specific engines:
             var conversionToContentType = mime.types[operationName];
@@ -751,8 +752,8 @@ Pipeline.prototype.add = function (options) {
                 }
 
                 if (!this.currentEngineName || candidateEngineNames.indexOf(this.currentEngineName) === -1) {
-                    if (candidateEngineNames.indexOf(this.impro.defaultEngineName) !== -1) {
-                        this.currentEngineName = this.impro.defaultEngineName;
+                    if (candidateEngineNames.indexOf(this.defaultEngineName) !== -1) {
+                        this.currentEngineName = this.defaultEngineName;
                     } else {
                         this.currentEngineName = candidateEngineNames[0];
                     }
