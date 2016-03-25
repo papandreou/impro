@@ -5,7 +5,6 @@ var mime = require('mime');
 var exifReader = require('exif-reader');
 var util = require('util');
 var icc = require('icc');
-var sharp;
 var Gifsicle;
 var filterConstructorByOperationName = {};
 var errors = require('./errors');
@@ -476,7 +475,7 @@ Pipeline.prototype._flush = function () {
             var gifsicleArgs = [];
             this.queue.forEach(function (operation) {
                 if (operation.name === 'resize') {
-                    if (operations.some(function (operation) { return operation.name === 'ignoreAspectRatio'; })) {
+                    if (this.queue.some(function (operation) { return operation.name === 'ignoreAspectRatio'; })) {
                         gifsicleArgs.push('--resize', operation.args[0] + 'x' + operation.args[1]);
                     } else {
                         gifsicleArgs.push('--resize-fit', operation.args[0] + 'x' + operation.args[1]);
@@ -488,7 +487,7 @@ Pipeline.prototype._flush = function () {
                 } else if (operation.name === 'progressive') {
                     gifsicleArgs.push('--interlace');
                 }
-            });
+            }, this);
             this.add(new Gifsicle(gifsicleArgs));
             this.targetContentType = 'image/gif';
         } else if (engineName === 'sharp') {
@@ -646,10 +645,9 @@ Pipeline.prototype.add = function (options) {
         }, this);
     } else if (options && options.operations) {
         options.operations.forEach(function (operation) {
-            this.add(opSpec);
+            this.add(operation);
         }, this);
     } else if (typeof options.name === 'string') {
-        var currentEngineName;
         var operationName = options.name;
         var operationArgs = options.args;
         var filter;
@@ -665,11 +663,9 @@ Pipeline.prototype.add = function (options) {
         } else if (this.impro.filters[operationName]) {
             this._flush();
             filter = this.impro.filters[operationName](operationArgs, {
-                numPreceedingFilters: filterInfos.length
+                numPreceedingFilters: this._streams.length
             });
             if (filter) {
-                filter.usedQueryStringFragments = [keyValuePair];
-                filter.operationName = operationName;
                 if (filter.outputContentType) {
                     this.targetContentType = filter.outputContentType;
                 }
@@ -693,14 +689,10 @@ Pipeline.prototype.add = function (options) {
                     }
                     if (metadata.format === 'magick') {
                         // https://github.com/lovell/sharp/issues/377
-                        metadata.contentType = sourceContentType;
-                        metadata.format = sourceContentType && sourceContentType.replace(/^image\//, '');
+                        metadata.format = alreadyKnownMetadata.contentType && alreadyKnownMetadata.contentType.replace(/^image\//, '');
                     } else if (metadata.format) {
                         // metadata.format is one of 'jpeg', 'png', 'webp' so this should be safe:
                         metadata.contentType = 'image/' + metadata.format;
-                    }
-                    if (metadata.format === 'magick') {
-                        metadata.format = undefined; // So that alreadyKnownMetadata.contentType will overwrite it
                     }
                     _.defaults(metadata, alreadyKnownMetadata);
                     if (metadata.exif) {
