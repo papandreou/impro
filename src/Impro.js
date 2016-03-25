@@ -443,32 +443,7 @@ Pipeline.prototype._flush = function () {
     if (this.currentEngine) {
         this.currentEngine.flush();
         this.currentEngine = undefined;
-        return;
-    } else if (this.queue.length > 0) {
-        var engineName = this.currentEngineName;
-        var sourceContentType = this.sourceContentType;
-        if (sourceContentType === 'image/gif' && !this.queue.some(function (operation) {
-            return operation.name === 'png' || operation.name === 'webp' || operation.name === 'jpeg';
-        })) {
-            engineName = 'gm';
-            // Gotcha: gifsicle does not support --resize-fit in a way where the image will be enlarged
-            // to fit the bounding box, so &withoutEnlargement is assumed, but not required:
-            // Raised the issue here: https://github.com/kohler/gifsicle/issues/13#issuecomment-196321546
-            if (this.impro.filters.gifsicle !== false && Gifsicle && this.queue.every(function (operation) {
-                return operation.name === 'resize' || operation.name === 'extract' || operation.name === 'rotate' || operation.name === 'withoutEnlargement' || operation.name === 'progressive' || operation.name === 'crop' || operation.name === 'ignoreAspectRatio';
-            })) {
-                engineName = 'gifsicle';
-            }
-        }
-        if (engineName === 'gifsicle') {
-        } else if (engineName === 'sharp') {
-        } else if (engineName === 'gm') {
-        } else {
-            throw new Error('Internal error');
-        }
-        this.queue = [];
     }
-    this.currentEngineName = undefined;
 };
 
 Pipeline.prototype.add = function (options) {
