@@ -13,6 +13,10 @@ var load = memoizeSync(function (fileName) {
     return fs.readFileSync(pathModule.resolve(__dirname, '..', 'testdata', fileName));
 });
 
+expect.addAssertion('<string> when piped through <Stream> <assertion?>', function (expect, subject) {
+    return expect.apply(expect, [load(subject), 'when piped through'].concat(Array.prototype.slice.call(arguments, 2)));
+});
+
 describe('Impro', function () {
     it('should return a new instance', function () {
         expect(new Impro(), 'to be an', Impro);
@@ -32,7 +36,7 @@ describe('Impro', function () {
     describe('when passed a query string', function () {
         it('should return a duplex stream that executes the processing instructions', function () {
             return expect(
-                load('turtle.jpg'),
+                'turtle.jpg',
                 'when piped through',
                 impro('resize=40,15&crop=center'),
                 'to yield output satisfying to resemble',
@@ -44,7 +48,7 @@ describe('Impro', function () {
     describe('when passed an array of operation objects', function () {
         it('should return a duplex stream that executes the processing instructions', function () {
             return expect(
-                load('turtle.jpg'),
+                'turtle.jpg',
                 'when piped through',
                 impro([
                     { name: 'resize', args: [ 40, 15 ] },
@@ -59,7 +63,7 @@ describe('Impro', function () {
     describe('when adding the processing instructions via individual method calls', function () {
         it('should return a duplex stream that executes the processing instructions', function () {
             return expect(
-                load('turtle.jpg'),
+                'turtle.jpg',
                 'when piped through',
                 impro().resize(40, 15).crop('center'),
                 'to yield output satisfying to resemble',
@@ -90,7 +94,7 @@ describe('Impro', function () {
 
     it('should derive the metadata of an image', function () {
         return expect(
-            load('turtle.jpg'),
+            'turtle.jpg',
             'when piped through',
             impro().metadata(),
             'to yield output satisfying when decoded as', 'utf-8',
@@ -102,7 +106,7 @@ describe('Impro', function () {
 
     it('should run an image through optipng', function () {
         return expect(
-            load('testImage.png'),
+            'testImage.png',
             'when piped through',
             impro().add({ name: 'optipng', args: [ '-o7' ]}),
             'to yield output satisfying to have length', 149
