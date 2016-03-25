@@ -730,7 +730,7 @@ Pipeline.prototype.add = function (options) {
                 sharpInstance.end();
             });
             this._streams.push(duplexStream);
-            targetContentType = 'application/json; charset=utf-8';
+            this.targetContentType = 'application/json; charset=utf-8';
         } else if (Impro.isOperationByEngineNameAndName[operationName]) {
             this._flush();
             this.currentEngineName = operationName;
