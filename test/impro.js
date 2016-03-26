@@ -136,5 +136,13 @@ describe('Impro', function () {
                 }).and('to resemble', load('cat-resized-then-cropped.gif')
             );
         });
+
+        it('should prefer gifsicle for processing gifs', function () {
+            return expect(
+                impro.sourceType('gif').resize(10, 10).flush(),
+                'to satisfy',
+                { _streams: [ expect.it('to be a', require('gifsicle-stream')) ] }
+            );
+        });
     });
 });

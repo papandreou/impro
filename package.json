@@ -48,7 +48,7 @@
     "unexpected": "10.10.12",
     "unexpected-image": "2.0.0",
     "unexpected-resemble": "3.0.0",
-    "unexpected-stream": "2.0.2"
+    "unexpected-stream": "2.0.3"
   },
   "dependencies": {
     "babel-runtime": "^5.0.0",
