@@ -6,15 +6,8 @@ var mime = require('mime');
 var exifReader = require('exif-reader');
 var util = require('util');
 var icc = require('icc');
-var filterConstructorByOperationName = {};
 var errors = require('./errors');
 var createAnimatedGifDetector = requireOr('animated-gif-detector');
-
-['PngQuant', 'PngCrush', 'JpegTran', 'Inkscape', 'SvgFilter'].forEach(function (constructorName) {
-    try {
-        filterConstructorByOperationName[constructorName.toLowerCase()] = require(constructorName.toLowerCase());
-    } catch (e) {}
-});
 
 function getMockFileNameForContentType(contentType) {
     if (contentType) {
@@ -533,20 +526,6 @@ Pipeline.prototype.add = function (options) {
                 }
                 this.currentEngine.op(operationName, operationArgs);
             }
-        } else {
-            var operationNameLowerCase = operationName.toLowerCase(),
-                FilterConstructor = filterConstructorByOperationName[operationNameLowerCase];
-            if (FilterConstructor && this.impro.filters[operationNameLowerCase] !== false) {
-                this.flush();
-                if (operationNameLowerCase === 'svgfilter' && this.impro.root && options.sourceFilePath) {
-                    operationArgs.push('--root', 'file://' + this.impro.root, '--url', 'file://' + options.sourceFilePath);
-                }
-                filter = new FilterConstructor(operationArgs);
-                if (operationNameLowerCase === 'inkscape') {
-                    this.targetContentType = 'image/' + filter.outputFormat;
-                }
-                this._streams.push(filter);
-            }
         }
     }
     return this;
@@ -959,6 +938,81 @@ if (OptiPng) {
         name: 'optipng',
         class: OptiPngEngine,
         contentTypes: [ 'image/png' ]
+    });
+}
+
+var PngCrush = requireOr('pngcrush');
+if (PngCrush) {
+    function PngCrushEngine(pipeline, options) {
+        Engine.call(this, pipeline);
+        pipeline.add(new PngCrush(options));
+    }
+    util.inherits(PngCrush, Engine);
+
+    Impro.registerEngine({
+        name: 'pngcrush',
+        class: PngCrushEngine,
+        contentTypes: [ 'image/png' ]
+    });
+}
+
+var PngQuant = requireOr('pngquant');
+if (PngQuant) {
+    function PngQuantEngine(pipeline, options) {
+        Engine.call(this, pipeline);
+        pipeline.add(new PngQuant(options));
+    }
+    util.inherits(PngQuant, Engine);
+
+    Impro.registerEngine({
+        name: 'pngquant',
+        class: PngQuantEngine,
+        contentTypes: [ 'image/png' ]
+    });
+}
+
+var JpegTran = requireOr('jpegtran');
+if (JpegTran) {
+    function JpegTranEngine(pipeline, options) {
+        Engine.call(this, pipeline);
+        pipeline.add(new JpegTran(options));
+    }
+    util.inherits(JpegTran, Engine);
+
+    Impro.registerEngine({
+        name: 'jpegtran',
+        class: JpegTranEngine,
+        contentTypes: [ 'image/jpeg' ]
+    });
+}
+
+var SvgFilter = requireOr('svgfilter');
+if (SvgFilter) {
+    function SvgFilterEngine(pipeline, options) {
+        Engine.call(this, pipeline);
+        pipeline.add(new SvgFilter(options));
+    }
+    util.inherits(SvgFilter, Engine);
+
+    Impro.registerEngine({
+        name: 'svgfilter',
+        class: SvgFilterEngine,
+        contentTypes: [ 'image/svg+xml' ]
+    });
+}
+
+var Inkscape = requireOr('inkscape');
+if (Inkscape) {
+    function InkscapeEngine(pipeline, options) {
+        Engine.call(this, pipeline);
+        pipeline.add(new Inkscape(options));
+    }
+    util.inherits(Inkscape, Engine);
+
+    Impro.registerEngine({
+        name: 'inkscape',
+        class: InkscapeEngine,
+        contentTypes: [ 'image/svg+xml' ]
     });
 }
 
