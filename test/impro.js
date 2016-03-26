@@ -13,8 +13,8 @@ var load = memoizeSync(function (fileName) {
     return fs.readFileSync(pathModule.resolve(__dirname, '..', 'testdata', fileName));
 });
 
-expect.addAssertion('<string> when piped through <Stream> <assertion?>', function (expect, subject) {
-    return expect.apply(expect, [load(subject), 'when piped through'].concat(Array.prototype.slice.call(arguments, 2)));
+expect.addAssertion('<string> when piped through <Stream> <assertion?>', function (expect, subject, ...rest) {
+    return expect(load(subject), 'when piped through', ...rest);
 });
 
 expect.addAssertion('<Stream> to yield JSON output satisfying <any>', function (expect, subject, value) {
