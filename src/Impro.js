@@ -8,6 +8,7 @@ var util = require('util');
 var icc = require('icc');
 var filterConstructorByOperationName = {};
 var errors = require('./errors');
+var createAnimatedGifDetector = requireOr('animated-gif-detector');
 
 ['PngQuant', 'PngCrush', 'JpegTran', 'Inkscape', 'SvgFilter'].forEach(function (constructorName) {
     try {
@@ -491,8 +492,31 @@ Pipeline.prototype.add = function (options) {
             this.flush();
             var sharpInstance = sharp();
             var duplexStream = new Stream.Duplex();
+            var animatedGifDetector;
+            var isAnimated;
+            if ((this.targetContentType === 'image/gif' || !this.targetContentType) && createAnimatedGifDetector) {
+                animatedGifDetector = createAnimatedGifDetector();
+                animatedGifDetector.on('animated', function () {
+                    isAnimated = true;
+                    this.emit('decided');
+                    animatedGifDetector = null;
+                });
+
+                duplexStream.on('finish', function () {
+                    if (typeof isAnimated === 'undefined') {
+                        isAnimated = false;
+                        if (animatedGifDetector) {
+                            animatedGifDetector.emit('decided', false);
+                            animatedGifDetector = null;
+                        }
+                    }
+                });
+            }
             duplexStream._write = function (chunk, encoding, cb) {
-                if (sharpInstance.write(chunk, encoding) === false) {
+                if (animatedGifDetector) {
+                    animatedGifDetector.write(chunk);
+                }
+                if (sharpInstance.write(chunk, encoding) === false && !animatedGifDetector) {
                     sharpInstance.once('drain', cb);
                 } else {
                     cb();
@@ -502,7 +526,7 @@ Pipeline.prototype.add = function (options) {
             duplexStream._read = function (size) {
                 sharpInstance.metadata(function (err, metadata) {
                     if (err) {
-                        return duplexStream.emit('error', err);
+                        metadata = _.defaults({ error: err.message }, alreadyKnownMetadata);
                     }
                     if (metadata.format === 'magick') {
                         // https://github.com/lovell/sharp/issues/377
@@ -532,8 +556,24 @@ Pipeline.prototype.add = function (options) {
                             metadata.icc = undefined;
                         }
                     }
-                    duplexStream.push(JSON.stringify(metadata));
-                    duplexStream.push(null);
+                    if (metadata.format === 'magick') {
+                        metadata.contentType = targetContentType;
+                    }
+                    function proceed() {
+                        duplexStream.push(JSON.stringify(metadata));
+                        duplexStream.push(null);
+                    }
+                    if (typeof isAnimated === 'boolean') {
+                        metadata.animated = isAnimated;
+                        proceed();
+                    } else if (animatedGifDetector) {
+                        animatedGifDetector.on('decided', function (isAnimated) {
+                            metadata.animated = isAnimated;
+                            proceed();
+                        });
+                    } else {
+                        proceed();
+                    }
                 });
             };
             duplexStream.on('finish', function () {

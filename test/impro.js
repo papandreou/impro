@@ -17,6 +17,10 @@ expect.addAssertion('<string> when piped through <Stream> <assertion?>', functio
     return expect.apply(expect, [load(subject), 'when piped through'].concat(Array.prototype.slice.call(arguments, 2)));
 });
 
+expect.addAssertion('<Stream> to yield JSON output satisfying <any>', function (expect, subject, value) {
+    return expect(subject, 'to yield output satisfying when decoded as', 'utf-8', 'when passed as parameter to', JSON.parse, 'to satisfy', value);
+});
+
 describe('Impro', function () {
     it('should return a new instance', function () {
         expect(new Impro(), 'to be an', Impro);
@@ -102,16 +106,61 @@ describe('Impro', function () {
         });
     });
 
-    it('should derive the metadata of an image', function () {
-        return expect(
-            'turtle.jpg',
-            'when piped through',
-            impro().metadata(),
-            'to yield output satisfying when decoded as', 'utf-8',
-            'when passed as parameter to', JSON.parse, 'to satisfy', {
-                contentType: 'image/jpeg'
-            }
-        );
+    describe('#metadata', function () {
+        it('should produce the metadata of an image as JSON', function () {
+            return expect(
+                'turtle.jpg',
+                'when piped through',
+                impro().metadata(),
+                'to yield output satisfying when decoded as', 'utf-8',
+                'when passed as parameter to', JSON.parse, 'to satisfy', {
+                    contentType: 'image/jpeg',
+                    // filesize: 105836,
+                    // etag: /^W\//,
+                    width: 481,
+                    height: 424,
+                    space: 'srgb',
+                    channels: 3,
+                    hasProfile: false,
+                    hasAlpha: false
+                }
+            );
+        });
+
+        it('should allow retrieving the metadata of a non-image file with a non-image extension', function () {
+            return expect(
+                'something.txt',
+                'when piped through',
+                impro().sourceType('text/plain; charset=UTF-8').metadata(),
+                'to yield JSON output satisfying', {
+                    contentType: 'text/plain; charset=UTF-8'
+                    // filesize: 4,
+                    // etag: expect.it('to be a string')
+                }
+            );
+        });
+
+        it('should set animated:true for an animated gif', function () {
+            return expect(
+                'animated.gif',
+                'when piped through',
+                impro().metadata(),
+                'to yield JSON output satisfying', {
+                    animated: true
+                }
+            );
+        });
+
+        it('should set animated:false for a non-animated gif', function () {
+            return expect(
+                'bulb.gif',
+                'when piped through',
+                impro().metadata(),
+                'to yield JSON output satisfying', {
+                    animated: false
+                }
+            );
+        });
     });
 
     it('should run an image through optipng', function () {
