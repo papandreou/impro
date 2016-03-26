@@ -133,6 +133,7 @@ describe('Impro', function () {
                 'when piped through',
                 impro().sourceType('text/plain; charset=UTF-8').metadata(),
                 'to yield JSON output satisfying', {
+                    error: 'Input buffer contains unsupported image format',
                     contentType: 'text/plain; charset=UTF-8'
                     // filesize: 4,
                     // etag: expect.it('to be a string')

@@ -488,99 +488,6 @@ Pipeline.prototype.add = function (options) {
                     this.targetContentType = filter.outputContentType;
                 }
             }
-        } else if (operationName === 'metadata' && sharp) {
-            this.flush();
-            var sharpInstance = sharp();
-            var duplexStream = new Stream.Duplex();
-            var animatedGifDetector;
-            var isAnimated;
-            if ((this.targetContentType === 'image/gif' || !this.targetContentType) && createAnimatedGifDetector) {
-                animatedGifDetector = createAnimatedGifDetector();
-                animatedGifDetector.on('animated', function () {
-                    isAnimated = true;
-                    this.emit('decided');
-                    animatedGifDetector = null;
-                });
-
-                duplexStream.on('finish', function () {
-                    if (typeof isAnimated === 'undefined') {
-                        isAnimated = false;
-                        if (animatedGifDetector) {
-                            animatedGifDetector.emit('decided', false);
-                            animatedGifDetector = null;
-                        }
-                    }
-                });
-            }
-            duplexStream._write = function (chunk, encoding, cb) {
-                if (animatedGifDetector) {
-                    animatedGifDetector.write(chunk);
-                }
-                if (sharpInstance.write(chunk, encoding) === false && !animatedGifDetector) {
-                    sharpInstance.once('drain', cb);
-                } else {
-                    cb();
-                }
-            };
-            var alreadyKnownMetadata = { contentType: this.targetContentType };
-            duplexStream._read = function (size) {
-                sharpInstance.metadata(function (err, metadata) {
-                    if (err) {
-                        metadata = _.defaults({ error: err.message }, alreadyKnownMetadata);
-                    }
-                    if (metadata.format === 'magick') {
-                        // https://github.com/lovell/sharp/issues/377
-                        metadata.format = alreadyKnownMetadata.contentType && alreadyKnownMetadata.contentType.replace(/^image\//, '');
-                    } else if (metadata.format) {
-                        // metadata.format is one of 'jpeg', 'png', 'webp' so this should be safe:
-                        metadata.contentType = 'image/' + metadata.format;
-                    }
-                    _.defaults(metadata, alreadyKnownMetadata);
-                    if (metadata.exif) {
-                        var exifData;
-                        try {
-                            exifData = exifReader(metadata.exif);
-                        } catch (e) {
-                            // Error: Invalid EXIF
-                        }
-                        metadata.exif = undefined;
-                        if (exifData) {
-                            _.defaults(metadata, exifData);
-                        }
-                    }
-                    if (metadata.icc) {
-                        try {
-                            metadata.icc = icc.parse(metadata.icc);
-                        } catch (e) {
-                            // Error: Error: Invalid ICC profile, remove the Buffer
-                            metadata.icc = undefined;
-                        }
-                    }
-                    if (metadata.format === 'magick') {
-                        metadata.contentType = targetContentType;
-                    }
-                    function proceed() {
-                        duplexStream.push(JSON.stringify(metadata));
-                        duplexStream.push(null);
-                    }
-                    if (typeof isAnimated === 'boolean') {
-                        metadata.animated = isAnimated;
-                        proceed();
-                    } else if (animatedGifDetector) {
-                        animatedGifDetector.on('decided', function (isAnimated) {
-                            metadata.animated = isAnimated;
-                            proceed();
-                        });
-                    } else {
-                        proceed();
-                    }
-                });
-            };
-            duplexStream.on('finish', function () {
-                sharpInstance.end();
-            });
-            this._streams.push(duplexStream);
-            this.targetContentType = 'application/json; charset=utf-8';
         } else if (Impro.isOperationByEngineNameAndName[operationName]) {
             // Should the engine names be registered as exclusive operations of the engines themselves?
             this.flush();
@@ -598,7 +505,7 @@ Pipeline.prototype.add = function (options) {
             var candidateEngineNames = Impro.engineNamesByOperationName[operationName].filter(function (engineName) {
                 var supported = Impro.isSupportedByEngineNameAndContentType[engineName];
                 return (
-                    (this.targetContentType ? supported[this.targetContentType] : supported['*']) &&
+                    (operationName === 'metadata' || (this.targetContentType ? supported[this.targetContentType] : supported['*'])) &&
                     this.impro.filters[engineName] !== false
                 );
             }, this);
@@ -764,9 +671,102 @@ if (sharp) {
     util.inherits(SharpEngine, Engine);
 
     SharpEngine.prototype.op = function (name, args) {
-        this.queue.push({name: name, args: args});
-        if (name === 'png' || name === 'gif' || name === 'jpeg') {
-            this.pipeline.targetContentType = 'image/' + name;
+        if (name === 'metadata') {
+            this.flush();
+            var sharpInstance = sharp();
+            var duplexStream = new Stream.Duplex();
+            var animatedGifDetector;
+            var isAnimated;
+            if ((this.pipeline.targetContentType === 'image/gif' || !this.pipeline.targetContentType) && createAnimatedGifDetector) {
+                animatedGifDetector = createAnimatedGifDetector();
+                animatedGifDetector.on('animated', function () {
+                    isAnimated = true;
+                    this.emit('decided');
+                    animatedGifDetector = null;
+                });
+
+                duplexStream.on('finish', function () {
+                    if (typeof isAnimated === 'undefined') {
+                        isAnimated = false;
+                        if (animatedGifDetector) {
+                            animatedGifDetector.emit('decided', false);
+                            animatedGifDetector = null;
+                        }
+                    }
+                });
+            }
+            duplexStream._write = function (chunk, encoding, cb) {
+                if (animatedGifDetector) {
+                    animatedGifDetector.write(chunk);
+                }
+                if (sharpInstance.write(chunk, encoding) === false && !animatedGifDetector) {
+                    sharpInstance.once('drain', cb);
+                } else {
+                    cb();
+                }
+            };
+            var alreadyKnownMetadata = { contentType: this.pipeline.targetContentType };
+            duplexStream._read = function (size) {
+                sharpInstance.metadata(function (err, metadata) {
+                    if (err) {
+                        metadata = _.defaults({ error: err.message }, alreadyKnownMetadata);
+                    }
+                    if (metadata.format === 'magick') {
+                        // https://github.com/lovell/sharp/issues/377
+                        metadata.contentType = alreadyKnownMetadata.contentType;
+                        metadata.format = alreadyKnownMetadata.contentType && alreadyKnownMetadata.contentType.replace(/^image\//, '');
+                    } else if (metadata.format) {
+                        // metadata.format is one of 'jpeg', 'png', 'webp' so this should be safe:
+                        metadata.contentType = 'image/' + metadata.format;
+                    }
+                    _.defaults(metadata, alreadyKnownMetadata);
+                    if (metadata.exif) {
+                        var exifData;
+                        try {
+                            exifData = exifReader(metadata.exif);
+                        } catch (e) {
+                            // Error: Invalid EXIF
+                        }
+                        metadata.exif = undefined;
+                        if (exifData) {
+                            _.defaults(metadata, exifData);
+                        }
+                    }
+                    if (metadata.icc) {
+                        try {
+                            metadata.icc = icc.parse(metadata.icc);
+                        } catch (e) {
+                            // Error: Error: Invalid ICC profile, remove the Buffer
+                            metadata.icc = undefined;
+                        }
+                    }
+                    function proceed() {
+                        duplexStream.push(JSON.stringify(metadata));
+                        duplexStream.push(null);
+                    }
+                    if (typeof isAnimated === 'boolean') {
+                        metadata.animated = isAnimated;
+                        proceed();
+                    } else if (animatedGifDetector) {
+                        animatedGifDetector.on('decided', function (isAnimated) {
+                            metadata.animated = isAnimated;
+                            proceed();
+                        });
+                    } else {
+                        proceed();
+                    }
+                });
+            };
+            duplexStream.on('finish', function () {
+                sharpInstance.end();
+            });
+            this.pipeline.add(duplexStream);
+            this.pipeline.targetContentType = 'application/json; charset=utf-8';
+        } else {
+            this.queue.push({name: name, args: args});
+            if (name === 'png' || name === 'gif' || name === 'jpeg') {
+                this.pipeline.targetContentType = 'image/' + name;
+            }
         }
     };
 
