@@ -14,6 +14,7 @@ var load = memoizeSync(function (fileName) {
 });
 
 expect.addAssertion('<string> when piped through <Stream> <assertion?>', function (expect, subject, ...rest) {
+    expect.errorMode = 'nested';
     return expect(load(subject), 'when piped through', ...rest);
 });
 
@@ -192,6 +193,48 @@ describe('Impro', function () {
                 impro.sourceType('gif').resize(10, 10).flush(),
                 'to satisfy',
                 { _streams: [ expect.it('to be a', require('gifsicle-stream')) ] }
+            );
+        });
+    });
+
+    describe('with the inkscape engine', function () {
+        it('should convert to png by default', function () {
+            return expect(
+                'dialog-information.svg',
+                'when piped through',
+                impro.sourceType('svg').inkscape(),
+                'to yield output satisfying to resemble',
+                load('dialog-information.png')
+            );
+        });
+
+        it('should convert to png explicitly', function () {
+            return expect(
+                'dialog-information.svg',
+                'when piped through',
+                impro.sourceType('svg').inkscape().png(),
+                'to yield output satisfying to resemble',
+                load('dialog-information.png')
+            );
+        });
+
+        it('should convert to pdf', function () {
+            return expect(
+                'dialog-information.svg',
+                'when piped through',
+                impro.sourceType('svg').inkscape().pdf(),
+                'to yield output satisfying', 'when decoded as', 'utf-8',
+                'to match', /^%PDF-1\.4/
+            );
+        });
+
+        it('should convert to eps', function () {
+            return expect(
+                'dialog-information.svg',
+                'when piped through',
+                impro.sourceType('svg').inkscape().eps(),
+                'to yield output satisfying', 'when decoded as', 'utf-8',
+                'to match', /^%!PS-Adobe-3.0/
             );
         });
     });

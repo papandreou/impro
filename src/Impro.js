@@ -498,7 +498,7 @@ Pipeline.prototype.add = function (options) {
             var candidateEngineNames = Impro.engineNamesByOperationName[operationName].filter(function (engineName) {
                 var supported = Impro.isSupportedByEngineNameAndContentType[engineName];
                 return (
-                    (operationName === 'metadata' || (this.targetContentType ? supported[this.targetContentType] : supported['*'])) &&
+                    (operationName === 'metadata' || engineName === this.currentEngineName || (this.targetContentType ? supported[this.targetContentType] : supported['*'])) &&
                     this.impro.filters[engineName] !== false
                 );
             }, this);
@@ -637,6 +637,46 @@ if (Gifsicle) {
         class: GifsicleEngine,
         operations: [ 'crop', 'rotate', 'progressive', 'extract', 'resize', 'ignoreAspectRatio' ],
         contentTypes: [ 'image/gif' ]
+    });
+}
+
+var Inkscape = requireOr('inkscape');
+if (Inkscape) {
+    function InkscapeEngine(pipeline, args) {
+        Engine.call(this, pipeline);
+        if (Array.isArray(args)) {
+            this.args = args;
+        } else if (typeof args !== 'undefined') {
+            this.args = [String(args)];
+        } else {
+            this.args = [];
+        }
+    }
+    util.inherits(InkscapeEngine, Engine);
+
+    InkscapeEngine.prototype.op = function (name, args) {
+        this.outputFormat = name;
+    };
+
+    InkscapeEngine.prototype.flush = function () {
+        if (this.outputFormat === 'pdf') {
+            this.pipeline.targetContentType = 'application/pdf';
+            this.args.push('--export-pdf');
+        } else if (this.outputFormat === 'eps') {
+            this.pipeline.targetContentType = 'application/eps';
+            this.args.push('--export-eps');
+        } else if (!this.outputFormat || this.outputFormat === 'png') {
+            this.pipeline.targetContentType = 'image/png';
+            this.args.push('--export-png');
+        }
+        this.pipeline.add(new Inkscape(this.args));
+    };
+
+    Impro.registerEngine({
+        name: 'inkscape',
+        class: InkscapeEngine,
+        contentTypes: [ 'image/svg+xml' ],
+        operations: [ 'pdf', 'eps', 'png' ]
     });
 }
 
@@ -997,21 +1037,6 @@ if (SvgFilter) {
     Impro.registerEngine({
         name: 'svgfilter',
         class: SvgFilterEngine,
-        contentTypes: [ 'image/svg+xml' ]
-    });
-}
-
-var Inkscape = requireOr('inkscape');
-if (Inkscape) {
-    function InkscapeEngine(pipeline, options) {
-        Engine.call(this, pipeline);
-        pipeline.add(new Inkscape(options));
-    }
-    util.inherits(Inkscape, Engine);
-
-    Impro.registerEngine({
-        name: 'inkscape',
-        class: InkscapeEngine,
         contentTypes: [ 'image/svg+xml' ]
     });
 }
