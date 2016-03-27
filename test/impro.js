@@ -247,6 +247,14 @@ describe('Impro', function () {
                 { _streams: [ expect.it('to be a', require('gifsicle-stream')) ] }
             );
         });
+
+        it('should use another engine for gifs when gifsicle is disabled', function () {
+            return expect(
+                impro({gifsicle: false}).type('gif').resize(10, 10).flush(),
+                'to satisfy',
+                { _streams: [ expect.it('not to be a', require('gifsicle-stream')) ] }
+            );
+        });
     });
 
     describe('with the inkscape engine', function () {

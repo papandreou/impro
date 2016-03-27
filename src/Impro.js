@@ -324,11 +324,10 @@ function Impro(options, operations) {
     if (!(this instanceof Impro) || operations) {
         return new Impro(options).pipeline(_.omit(options, Impro.supportedOptions), operations);
     }
-    this.filters = {}; // Maybe get rid of this?
-    _.extend(this, { defaultEngineName: Impro.defaultEngineName }, _.pick(options, Impro.supportedOptions));
+    _.extend(this, {defaultEngineName: Impro.defaultEngineName}, _.pick(options, Impro.supportedOptions));
 }
 
-Impro.supportedOptions = [ 'defaultEngineName', 'allowOperation', 'maxInputPixels', 'maxOutputPixels', 'root' ];
+Impro.supportedOptions = [ 'defaultEngineName', 'allowOperation', 'maxInputPixels', 'maxOutputPixels', 'root', 'engines' ];
 
 Impro.prototype.parse = function (queryString) {
     var keyValuePairs = queryString.split('&');
@@ -471,16 +470,6 @@ Pipeline.prototype.add = function (options) {
                 var contentType = mime.types[operationArgs[0]] || operationArgs[0];
                 this.sourceContentType = this.targetContentType = contentType;
             }
-        } else if (this.impro.filters[operationName]) {
-            this.flush();
-            filter = this.impro.filters[operationName](operationArgs, {
-                numPreceedingFilters: this._streams.length
-            });
-            if (filter) {
-                if (filter.outputContentType) {
-                    this.targetContentType = filter.outputContentType;
-                }
-            }
         } else if (Impro.isOperationByEngineNameAndName[operationName]) {
             // Should the engine names be registered as exclusive operations of the engines themselves?
             this.flush();
@@ -499,7 +488,7 @@ Pipeline.prototype.add = function (options) {
                 var supported = Impro.isSupportedByEngineNameAndContentType[engineName];
                 return (
                     (operationName === 'metadata' || engineName === this.currentEngineName || (this.targetContentType ? supported[this.targetContentType] : supported['*'])) &&
-                    this.impro.filters[engineName] !== false
+                    this.impro[engineName] !== false
                 );
             }, this);
             if (candidateEngineNames.length > 0) {
@@ -563,6 +552,7 @@ Impro.registerEngine = function (options) {
     Impro.isOperationByEngineNameAndName[engineName] = {};
     Impro.EngineByName[options.name] = options.class;
     Impro.registerMethod(engineName);
+    Impro.supportedOptions.push(engineName); // Allow disabling via new Impro({<engineName>: false})
 
     (options.operations || []).forEach(function (operationName) {
         Impro.isOperationByEngineNameAndName[engineName][operationName] = true;
@@ -794,11 +784,11 @@ if (sharp) {
 
     SharpEngine.prototype.flush = function () {
         if (this.queue.length > 0) {
+            var impro = this.pipeline.impro;
             if (this.pipeline.impro.maxInputPixels) {
-                this.queue.unshift({name: 'limitInputPixels', args: [this.impro.maxInputPixels]});
+                this.queue.unshift({name: 'limitInputPixels', args: [impro.maxInputPixels]});
             }
 
-            var impro = this.pipeline.impro;
             this.pipeline.add(this.queue.reduce(function (sharpInstance, operation) {
                 var args = operation.args;
                 if (operation.name === 'resize' && typeof impro.maxOutputPixels === 'number' && args[0] * args[1] > impro.maxOutputPixels) {
@@ -818,7 +808,7 @@ if (sharp) {
         name: 'sharp',
         operations: ['metadata', 'resize', 'extract', 'sequentialRead', 'crop', 'max', 'background', 'embed', 'flatten', 'rotate', 'flip', 'flop', 'withoutEnlargement', 'ignoreAspectRatio', 'sharpen', 'interpolateWith', 'gamma', 'grayscale', 'greyscale', 'jpeg', 'png', 'webp', 'quality', 'progressive', 'withMetadata', 'compressionLevel'],
         class: SharpEngine,
-        contentTypes: [ 'image/gif', 'image/jpeg', 'image/png', 'image/webp', '*' ]
+        contentTypes: [ 'image/jpeg', 'image/png', 'image/webp', '*' ]
     });
 }
 
