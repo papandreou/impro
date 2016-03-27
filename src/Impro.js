@@ -314,19 +314,21 @@ function isValidOperation(name, args) {
     }
 }
 
-function Impro(options) {
-    if (!(this instanceof Impro)) {
-        return new Impro().pipeline(options);
+function Impro(options, operations) {
+    if (typeof options === 'string' || Array.isArray(options)) {
+        operations = options;
+        options = {};
+    } else {
+        options = options || {};
     }
-    options = options || {};
-
-    this.filters = options.filters || {};
-    this.root = options.root;
-    this.defaultEngineName = options.defaultEngineName || Impro.defaultEngineName;
-    this.allowOperation = options.allowOperation;
-    this.maxInputPixels = options.maxInputPixels;
-    this.maxOutputPixels = options.maxOutputPixels;
+    if (!(this instanceof Impro) || operations) {
+        return new Impro(options).pipeline(_.omit(options, Impro.supportedOptions), operations);
+    }
+    this.filters = {}; // Maybe get rid of this?
+    _.extend(this, { defaultEngineName: Impro.defaultEngineName }, _.pick(options, Impro.supportedOptions));
 }
+
+Impro.supportedOptions = [ 'defaultEngineName', 'allowOperation', 'maxInputPixels', 'maxOutputPixels', 'root' ];
 
 Impro.prototype.parse = function (queryString) {
     var keyValuePairs = queryString.split('&');
@@ -365,10 +367,10 @@ Impro.prototype.parse = function (queryString) {
     };
 };
 
-Impro.prototype.pipeline = function (opSpecs, options) {
+Impro.prototype.pipeline = function (options, operations) {
     var pipeline = new Pipeline(this, options);
-    if (opSpecs) {
-        pipeline.add(opSpecs);
+    if (operations) {
+        pipeline.add(operations);
     }
     return pipeline;
 };
@@ -381,6 +383,7 @@ function Pipeline(impro, options) {
     this.targetContentType = options && options.sourceContentType;
     this._streams = [];
     this.defaultEngineName = options.defaultEngineName || impro.defaultEngineName;
+    this.sourceMetadata = _.omit(options, ['defaultEngineName', 'sourceContentType']);
 }
 
 util.inherits(Pipeline, Stream.Duplex);
@@ -533,11 +536,11 @@ Impro.registerMethod = function (operationName) {
     };
 
     Impro.prototype[operationName] = Impro.prototype[operationName] || function () {
-        return this.pipeline({name: operationName, args: Array.prototype.slice.call(arguments)});
+        return this.pipeline().add({name: operationName, args: Array.prototype.slice.call(arguments)});
     };
 
     Impro[operationName] = Impro[operationName] || function () {
-        return new Impro().pipeline({name: operationName, args: Array.prototype.slice.call(arguments)});
+        return new Impro().pipeline().add({name: operationName, args: Array.prototype.slice.call(arguments)});
     };
 };
 
@@ -719,6 +722,9 @@ if (sharp) {
                 }
             };
             var alreadyKnownMetadata = { contentType: this.pipeline.targetContentType };
+            if (this.pipeline._streams.length === 0) {
+                _.extend(alreadyKnownMetadata, this.pipeline.sourceMetadata);
+            }
             duplexStream._read = function (size) {
                 sharpInstance.metadata(function (err, metadata) {
                     if (err) {

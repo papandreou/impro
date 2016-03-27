@@ -117,14 +117,42 @@ describe('Impro', function () {
                 'to yield output satisfying when decoded as', 'utf-8',
                 'when passed as parameter to', JSON.parse, 'to satisfy', {
                     contentType: 'image/jpeg',
-                    // filesize: 105836,
-                    // etag: /^W\//,
                     width: 481,
                     height: 424,
                     space: 'srgb',
                     channels: 3,
                     hasProfile: false,
                     hasAlpha: false
+                }
+            );
+        });
+
+        it('should include source metadata provided via the meta method', function () {
+            return expect(
+                'turtle.jpg',
+                'when piped through',
+                impro({ filesize: 105836, etag: 'W/"foobar"' }).metadata(),
+                'to yield output satisfying when decoded as', 'utf-8',
+                'when passed as parameter to', JSON.parse, 'to satisfy', {
+                    contentType: 'image/jpeg',
+                    filesize: 105836,
+                    etag: /^W\//
+                }
+            );
+        });
+
+        it('should not include source metadata provided via the meta method when an operation has been performed', function () {
+            return expect(
+                'turtle.jpg',
+                'when piped through',
+                impro({ filesize: 105836, etag: 'W/"foobar"' }).resize(10, 10).metadata(),
+                'to yield output satisfying when decoded as', 'utf-8',
+                'when passed as parameter to', JSON.parse, 'to satisfy', {
+                    contentType: 'image/jpeg',
+                    filesize: undefined,
+                    etag: undefined,
+                    width: 10,
+                    height: 10
                 }
             );
         });
