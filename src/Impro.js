@@ -376,6 +376,7 @@ Impro.prototype.pipeline = function (options, operations) {
 
 function Pipeline(impro, options) {
     Stream.Duplex.call(this);
+    this.operations = [];
     options = options || {};
     this.ended = false;
     this.impro = impro;
@@ -513,6 +514,7 @@ Pipeline.prototype.add = function (options) {
                 } else if (operationName === 'jpeg' || operationName === 'png' || operationName === 'webp') {
                     this.targetContentType = 'image/' + operationName;
                 }
+                this.operations.push({name: operationName, args: operationArgs, engineName: this.currentEngineName});
                 this.currentEngine.op(operationName, operationArgs);
             }
         }

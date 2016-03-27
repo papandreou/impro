@@ -127,6 +127,15 @@ describe('Impro', function () {
         );
     });
 
+    it('should maintain an array of engines that have been applied', function () {
+        return expect(impro.resize(10, 10).gm().extract(10, 20, 30, 40).flush(), 'to satisfy', {
+            operations: [
+                {name: 'resize', args: [10, 10], engineName: 'sharp'},
+                {name: 'extract', args: [10, 20, 30, 40], engineName: 'gm'}
+            ]
+        });
+    });
+
     it('should not provide a targetContentType when no source content type is given and no explicit conversion has been performed', function () {
         return expect(impro().resize(40, 15).crop('center'), 'to satisfy', {
             targetContentType: undefined
