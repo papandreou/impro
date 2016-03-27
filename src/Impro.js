@@ -486,7 +486,7 @@ Pipeline.prototype.add = function (options) {
             this.flush();
             this.defaultEngineName = operationName;
             this.currentEngineName = operationName;
-            this.currentEngine = new Impro.EngineByName[this.currentEngineName](this);
+            this.currentEngine = new Impro.EngineByName[this.currentEngineName](this, operationArgs);
         } else if (Impro.engineNamesByOperationName[operationName]) {
             // Hack: This should be moved into the specific engines:
             var conversionToContentType = mime.types[operationName];
@@ -1028,9 +1028,9 @@ if (JpegTran) {
 
 var SvgFilter = requireOr('svgfilter');
 if (SvgFilter) {
-    function SvgFilterEngine(pipeline, options) {
+    function SvgFilterEngine(pipeline, args) {
         Engine.call(this, pipeline);
-        pipeline.add(new SvgFilter(options));
+        pipeline.add(new SvgFilter(args[0]));
     }
     util.inherits(SvgFilterEngine, Engine);
 

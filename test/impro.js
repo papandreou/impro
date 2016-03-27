@@ -1,4 +1,5 @@
 var expect = require('unexpected').clone()
+    .use(require('unexpected-dom'))
     .use(require('unexpected-stream'))
     .use(require('unexpected-image'))
     .use(require('unexpected-resemble'));
@@ -235,6 +236,23 @@ describe('Impro', function () {
                 impro.sourceType('svg').inkscape().eps(),
                 'to yield output satisfying', 'when decoded as', 'utf-8',
                 'to match', /^%!PS-Adobe-3.0/
+            );
+        });
+    });
+
+    describe('with the svgfilter engine', function () {
+        it('should run the image through an SVG filter based on a script in an external file', function () {
+            return expect(
+                'dialog-information.svg',
+                'when piped through',
+                impro.svgfilter({
+                    url: 'file://' + pathModule.resolve(__dirname, '..', 'testdata') + '/',
+                    runScript: 'addBogusElement.js',
+                    bogusElementId: 'theBogusElementId'
+                }),
+                'to yield output satisfying when decoded as', 'utf-8',
+                'when parsed as XML queried for first', 'bogus', 'to satisfy',
+                { attributes: { id: 'theBogusElementId' } }
             );
         });
     });
