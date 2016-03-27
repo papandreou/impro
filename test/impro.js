@@ -2,7 +2,9 @@ var expect = require('unexpected').clone()
     .use(require('unexpected-dom'))
     .use(require('unexpected-stream'))
     .use(require('unexpected-image'))
+    .use(require('unexpected-sinon'))
     .use(require('unexpected-resemble'));
+var sinon = require('sinon');
 
 var Impro = require('../');
 var impro = Impro;
@@ -224,6 +226,48 @@ describe('Impro', function () {
             impro().add({ name: 'optipng', args: [ '-o7' ]}),
             'to yield output satisfying to have length', 149
         );
+    });
+
+    describe('with the sharp engine', function () {
+        it('should allow passing a cache option', function () {
+            var cacheStub = sinon.stub(require('sharp'), 'cache');
+            return expect(
+                'turtle.jpg',
+                'when piped through',
+                new Impro({sharp: {cache: 123}}).metadata(),
+                'to yield JSON output satisfying', {
+                    contentType: 'image/jpeg'
+                }
+            ).then(function () {
+                expect(cacheStub, 'to have calls satisfying', function () {
+                    cacheStub(123);
+                });
+            }).finally(function () {
+                cacheStub.restore();
+            });
+        });
+
+        it('should only call sharp.cache once, even after processing multiple images', function () {
+            var cacheStub = sinon.stub(require('sharp'), 'cache');
+            var improInstance = new Impro({sharp: {cache: 123}});
+            return expect(
+                'turtle.jpg',
+                'when piped through',
+                improInstance.metadata(),
+                'to yield JSON output satisfying', {
+                    contentType: 'image/jpeg'
+                }
+            ).then(() => expect(
+                'turtle.jpg',
+                'when piped through',
+                improInstance.metadata(),
+                'to yield JSON output satisfying', {
+                    contentType: 'image/jpeg'
+                }
+            ))
+            .then(() => expect(cacheStub, 'to have calls satisfying', () => cacheStub(123)))
+            .finally(() => cacheStub.restore());
+        });
     });
 
     describe('with the gifsicle engine', function () {

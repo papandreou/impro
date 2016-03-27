@@ -682,7 +682,7 @@ if (sharp) {
     SharpEngine.prototype.op = function (name, args) {
         if (name === 'metadata') {
             this.flush();
-            var sharpInstance = sharp();
+            var sharpInstance = this.createSharpInstance();
             var duplexStream = new Stream.Duplex();
             var animatedGifDetector;
             var isAnimated;
@@ -782,13 +782,22 @@ if (sharp) {
         }
     };
 
+    SharpEngine.prototype.createSharpInstance = function () {
+        var impro = this.pipeline.impro;
+        if (impro.sharp && typeof impro.sharp.cache !== 'undefined' && !impro._sharpCacheSet) {
+            sharp.cache(impro.sharp.cache);
+            impro._sharpCacheSet = true;
+        }
+        var sharpInstance = sharp();
+        if (impro.maxInputPixels) {
+            sharpInstance = sharpInstance.limitInputPixels(impro.maxInputPixels);
+        }
+        return sharpInstance;
+    };
+
     SharpEngine.prototype.flush = function () {
         if (this.queue.length > 0) {
             var impro = this.pipeline.impro;
-            if (this.pipeline.impro.maxInputPixels) {
-                this.queue.unshift({name: 'limitInputPixels', args: [impro.maxInputPixels]});
-            }
-
             this.pipeline.add(this.queue.reduce(function (sharpInstance, operation) {
                 var args = operation.args;
                 if (operation.name === 'resize' && typeof impro.maxOutputPixels === 'number' && args[0] * args[1] > impro.maxOutputPixels) {
@@ -799,7 +808,7 @@ if (sharp) {
                     args = [ { left: args[0], top: args[1], width: args[2], height: args[3] } ];
                 }
                 return sharpInstance[operation.name].apply(sharpInstance, args);
-            }, sharp()));
+            }, this.createSharpInstance()));
             this.queue = [];
         }
     };

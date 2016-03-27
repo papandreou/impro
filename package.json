@@ -48,11 +48,13 @@
     "nyc": "6.0.0",
     "optipng": "0.3.1",
     "sharp": "0.13.1",
+    "sinon": "1.17.3",
     "svgfilter": "1.1.0",
     "unexpected": "10.10.12",
     "unexpected-dom": "3.0.2",
     "unexpected-image": "2.0.0",
     "unexpected-resemble": "3.0.0",
+    "unexpected-sinon": "10.2.0",
     "unexpected-stream": "2.0.3"
   },
   "dependencies": {
