@@ -328,12 +328,6 @@ function Impro(options) {
     this.maxOutputPixels = options.maxOutputPixels;
 }
 
-Impro.prototype.checkSharpOrGmOperation = function (operation) {
-    if (operation.name === 'resize' && typeof this.maxOutputPixels === 'number' && operation.args[0] * operation.args[1] > this.maxOutputPixels) {
-        throw new errors.OutputDimensionsExceeded('resize: Target dimensions of ' + operation.args[0] + 'x' + operation.args[1] + ' exceed maxOutputPixels (' + this.maxOutputPixels + ')');
-    }
-};
-
 Impro.prototype.parse = function (queryString) {
     var keyValuePairs = queryString.split('&');
     var operations = [];
@@ -797,8 +791,10 @@ if (sharp) {
 
             var impro = this.pipeline.impro;
             this.pipeline.add(this.queue.reduce(function (sharpInstance, operation) {
-                impro.checkSharpOrGmOperation(operation);
                 var args = operation.args;
+                if (operation.name === 'resize' && typeof impro.maxOutputPixels === 'number' && args[0] * args[1] > impro.maxOutputPixels) {
+                    throw new errors.OutputDimensionsExceeded('resize: Target dimensions of ' + args[0] + 'x' + args[1] + ' exceed maxOutputPixels (' + impro.maxOutputPixels + ')');
+                }
                 // Compensate for https://github.com/lovell/sharp/issues/276
                 if (operation.name === 'extract' && args.length >= 4) {
                     args = [ { left: args[0], top: args[1], width: args[2], height: args[3] } ];
@@ -883,7 +879,10 @@ if (gm) {
                         resize.args.push('^');
                     }
                     operations.reduce(function (gmInstance, operation) {
-                        pipeline.impro.checkSharpOrGmOperation(operation);
+                        var args = operation.args;
+                        if (operation.name === 'resize' && typeof pipeline.impro.maxOutputPixels === 'number' && args[0] * args[1] > pipeline.impro.maxOutputPixels) {
+                            throw new errors.OutputDimensionsExceeded('resize: Target dimensions of ' + args[0] + 'x' + args[1] + ' exceed maxOutputPixels (' + pipeline.impro.maxOutputPixels + ')');
+                        }
                         if (operation.name === 'rotate' && operation.args.length === 1) {
                             operation = _.extend({}, operation);
                             operation.args = ['transparent', operation.args[0]];

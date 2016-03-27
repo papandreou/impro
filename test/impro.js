@@ -256,4 +256,18 @@ describe('Impro', function () {
             );
         });
     });
+
+    describe('with a maxOutputPixels setting', function () {
+        it('should refuse to resize an image to exceed the max number of pixels', function () {
+            expect(function () {
+                new Impro({maxOutputPixels: 2}).resize(100, 100).flush();
+            }, 'to throw', 'resize: Target dimensions of 100x100 exceed maxOutputPixels (2)');
+        });
+
+        it.skip('should refuse to resize an image to exceed the max number of pixels, gm', function () {
+            expect(function () {
+                new Impro({maxOutputPixels: 2}).gm().resize(100, 100).flush();
+            }, 'to throw', 'resize: Target dimensions of 100x100 exceed maxOutputPixels (2)');
+        });
+    });
 });
