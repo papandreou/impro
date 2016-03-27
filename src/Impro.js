@@ -987,7 +987,7 @@ if (PngCrush) {
         Engine.call(this, pipeline);
         pipeline.add(new PngCrush(options));
     }
-    util.inherits(PngCrush, Engine);
+    util.inherits(PngCrushEngine, Engine);
 
     Impro.registerEngine({
         name: 'pngcrush',
@@ -1002,7 +1002,7 @@ if (PngQuant) {
         Engine.call(this, pipeline);
         pipeline.add(new PngQuant(options));
     }
-    util.inherits(PngQuant, Engine);
+    util.inherits(PngQuantEngine, Engine);
 
     Impro.registerEngine({
         name: 'pngquant',
@@ -1017,7 +1017,7 @@ if (JpegTran) {
         Engine.call(this, pipeline);
         pipeline.add(new JpegTran(options));
     }
-    util.inherits(JpegTran, Engine);
+    util.inherits(JpegTranEngine, Engine);
 
     Impro.registerEngine({
         name: 'jpegtran',
@@ -1032,7 +1032,7 @@ if (SvgFilter) {
         Engine.call(this, pipeline);
         pipeline.add(new SvgFilter(options));
     }
-    util.inherits(SvgFilter, Engine);
+    util.inherits(SvgFilterEngine, Engine);
 
     Impro.registerEngine({
         name: 'svgfilter',
