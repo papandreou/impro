@@ -971,7 +971,7 @@ if (gm) {
                 typeof gm.prototype[propertyName] === 'function');
         })),
         class: GmEngine,
-        contentTypes: [ 'image/gif', 'image/jpeg', 'image/png', '*' ]
+        contentTypes: [ 'image/gif', 'image/jpeg', 'image/png', 'image/x-icon', 'image/vnd.microsoft.icon', '*' ]
     });
 }
 

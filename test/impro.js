@@ -369,6 +369,29 @@ describe('Impro', function () {
         });
     });
 
+    describe('with the jpegtran engine', function () {
+        it('process the image according to the given options', function () {
+            return expect(
+                'turtle.jpg',
+                'when piped through',
+                impro('jpegtran=-grayscale,-flip,horizontal'),
+                'to yield output satisfying',
+                expect.it('to have metadata satisfying', {
+                    format: 'JPEG',
+                    'Channel Depths': {
+                        Gray: '8 bits'
+                    },
+                    size: {
+                        width: 481,
+                        height: 424
+                    }
+                }).and('to satisfy', function (buffer) {
+                    expect(buffer.length, 'to be within', 1, 105836);
+                })
+            );
+        });
+    });
+
     describe('with a maxOutputPixels setting', function () {
         it('should refuse to resize an image to exceed the max number of pixels', function () {
             expect(function () {
