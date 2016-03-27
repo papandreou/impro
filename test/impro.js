@@ -24,8 +24,31 @@ expect.addAssertion('<Stream> to yield JSON output satisfying <any>', function (
 });
 
 describe('Impro', function () {
-    it('should return a new instance', function () {
-        expect(new Impro(), 'to be an', Impro);
+    describe('when instantiated with new', function () {
+        it('should return a new instance', function () {
+            expect(new Impro(), 'to be an', Impro);
+        });
+    });
+
+    describe('when called without new', function () {
+        it('should return a pipeline', function () {
+            // Use 'to be a' when Pipeline is exposed via its own file
+            expect(impro().constructor.name, 'to equal', 'Pipeline');
+        });
+    });
+
+    describe('when passed an object', function () {
+        it('should interpret unsupported properties as source metadata', function () {
+            expect(impro({foo: 'bar'}).sourceMetadata, 'to equal', {foo: 'bar'});
+        });
+
+        it('should support a type property', function () {
+            expect(impro({type: 'gif'}).targetContentType, 'to equal', 'image/gif');
+        });
+
+        it('should support a type property that is a full Content-Type', function () {
+            expect(impro({type: 'image/gif'}).targetContentType, 'to equal', 'image/gif');
+        });
     });
 
     describe('#parse', function () {
@@ -80,13 +103,13 @@ describe('Impro', function () {
 
     describe('when given a source content type', function () {
         it('should default to output an image of the same type', function () {
-            return expect(impro().sourceType('image/jpeg').resize(40, 15).crop('center'), 'to satisfy', {
+            return expect(impro().type('image/jpeg').resize(40, 15).crop('center'), 'to satisfy', {
                 targetContentType: 'image/jpeg'
             });
         });
 
         it('should honor an explicit type conversion', function () {
-            return expect(impro().sourceType('image/jpeg').gif(), 'to satisfy', {
+            return expect(impro().type('image/jpeg').gif(), 'to satisfy', {
                 targetContentType: 'image/gif'
             });
         });
@@ -161,7 +184,7 @@ describe('Impro', function () {
             return expect(
                 'something.txt',
                 'when piped through',
-                impro().sourceType('text/plain; charset=UTF-8').metadata(),
+                impro().type('text/plain; charset=UTF-8').metadata(),
                 'to yield JSON output satisfying', {
                     error: 'Input buffer contains unsupported image format',
                     contentType: 'text/plain; charset=UTF-8'
@@ -219,7 +242,7 @@ describe('Impro', function () {
 
         it('should prefer gifsicle for processing gifs', function () {
             return expect(
-                impro.sourceType('gif').resize(10, 10).flush(),
+                impro.type('gif').resize(10, 10).flush(),
                 'to satisfy',
                 { _streams: [ expect.it('to be a', require('gifsicle-stream')) ] }
             );
@@ -231,7 +254,7 @@ describe('Impro', function () {
             return expect(
                 'dialog-information.svg',
                 'when piped through',
-                impro.sourceType('svg').inkscape(),
+                impro.type('svg').inkscape(),
                 'to yield output satisfying to resemble',
                 load('dialog-information.png')
             );
@@ -241,7 +264,7 @@ describe('Impro', function () {
             return expect(
                 'dialog-information.svg',
                 'when piped through',
-                impro.sourceType('svg').inkscape().png(),
+                impro.type('svg').inkscape().png(),
                 'to yield output satisfying to resemble',
                 load('dialog-information.png')
             );
@@ -251,7 +274,7 @@ describe('Impro', function () {
             return expect(
                 'dialog-information.svg',
                 'when piped through',
-                impro.sourceType('svg').inkscape().pdf(),
+                impro.type('svg').inkscape().pdf(),
                 'to yield output satisfying', 'when decoded as', 'utf-8',
                 'to match', /^%PDF-1\.4/
             );
@@ -261,7 +284,7 @@ describe('Impro', function () {
             return expect(
                 'dialog-information.svg',
                 'when piped through',
-                impro.sourceType('svg').inkscape().eps(),
+                impro.type('svg').inkscape().eps(),
                 'to yield output satisfying', 'when decoded as', 'utf-8',
                 'to match', /^%!PS-Adobe-3.0/
             );

@@ -383,7 +383,10 @@ function Pipeline(impro, options) {
     this.targetContentType = options && options.sourceContentType;
     this._streams = [];
     this.defaultEngineName = options.defaultEngineName || impro.defaultEngineName;
-    this.sourceMetadata = _.omit(options, ['defaultEngineName', 'sourceContentType']);
+    this.sourceMetadata = _.omit(options, ['defaultEngineName', 'type']);
+    if (options.type) {
+        this.type(options.type);
+    }
 }
 
 util.inherits(Pipeline, Stream.Duplex);
@@ -459,11 +462,11 @@ Pipeline.prototype.add = function (options) {
         var operationName = options.name;
         var operationArgs = options.args;
         var filter;
-        if (operationName === 'sourceType') {
+        if (operationName === 'type') {
             if (this.currentEngine || this._streams.length > 0) {
-                throw new Error('sourceType must be called before any operations are performed');
+                throw new Error('type must be called before any operations are performed');
             } else if (operationArgs.length !== 1 || typeof operationArgs[0] !== 'string') {
-                throw new Error('sourceType must be given as a string');
+                throw new Error('type must be given as a string');
             } else {
                 var contentType = mime.types[operationArgs[0]] || operationArgs[0];
                 this.sourceContentType = this.targetContentType = contentType;
