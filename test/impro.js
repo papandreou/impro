@@ -234,43 +234,43 @@ describe('Impro', function () {
 
     describe('with the sharp engine', function () {
         it('should allow passing a cache option', function () {
-            var cacheStub = sinon.stub(require('sharp'), 'cache');
+            var cacheSpy = sinon.spy(require('sharp'), 'cache');
             return expect(
                 'turtle.jpg',
                 'when piped through',
-                new Impro({sharp: {cache: 123}}).metadata(),
-                'to yield JSON output satisfying', {
-                    contentType: 'image/jpeg'
+                new Impro({sharp: {cache: 123}}).resize(10, 10),
+                'to yield output satisfying to have metadata satisfying', {
+                    format: 'JPEG'
                 }
             ).then(function () {
-                expect(cacheStub, 'to have calls satisfying', function () {
-                    cacheStub(123);
+                expect(cacheSpy, 'to have calls satisfying', function () {
+                    cacheSpy(123);
                 });
             }).finally(function () {
-                cacheStub.restore();
+                cacheSpy.restore();
             });
         });
 
         it('should only call sharp.cache once, even after processing multiple images', function () {
-            var cacheStub = sinon.stub(require('sharp'), 'cache');
+            var cacheSpy = sinon.spy(require('sharp'), 'cache');
             var improInstance = new Impro({sharp: {cache: 123}});
             return expect(
                 'turtle.jpg',
                 'when piped through',
-                improInstance.metadata(),
-                'to yield JSON output satisfying', {
-                    contentType: 'image/jpeg'
+                improInstance.type('jpeg').resize(10, 10),
+                'to yield output satisfying to have metadata satisfying', {
+                    format: 'JPEG'
                 }
             ).then(() => expect(
                 'turtle.jpg',
                 'when piped through',
-                improInstance.metadata(),
-                'to yield JSON output satisfying', {
-                    contentType: 'image/jpeg'
+                improInstance.type('jpeg').resize(10, 10),
+                'to yield output satisfying to have metadata satisfying', {
+                    format: 'JPEG'
                 }
             ))
-            .then(() => expect(cacheStub, 'to have calls satisfying', () => cacheStub(123)))
-            .finally(() => cacheStub.restore());
+            .then(() => expect(cacheSpy, 'to have calls satisfying', () => cacheSpy(123)))
+            .finally(() => cacheSpy.restore());
         });
     });
 

@@ -630,138 +630,132 @@ if (Inkscape) {
 var sharp = requireOr('sharp');
 if (sharp) {
     Impro.registerEngine({
+        name: 'sharpMetadata',
+        operations: ['metadata'],
+        contentTypes: ['*'],
+        execute: function (pipeline, operations, options) {
+            var sharpInstance = sharp();
+            var duplexStream = new Stream.Duplex();
+            var animatedGifDetector;
+            var isAnimated;
+            if ((pipeline.targetContentType === 'image/gif' || !pipeline.targetContentType) && createAnimatedGifDetector) {
+                animatedGifDetector = createAnimatedGifDetector();
+                animatedGifDetector.on('animated', function () {
+                    isAnimated = true;
+                    this.emit('decided');
+                    animatedGifDetector = null;
+                });
+
+                duplexStream.on('finish', function () {
+                    if (typeof isAnimated === 'undefined') {
+                        isAnimated = false;
+                        if (animatedGifDetector) {
+                            animatedGifDetector.emit('decided', false);
+                            animatedGifDetector = null;
+                        }
+                    }
+                });
+            }
+            duplexStream._write = function (chunk, encoding, cb) {
+                if (animatedGifDetector) {
+                    animatedGifDetector.write(chunk);
+                }
+                if (sharpInstance.write(chunk, encoding) === false && !animatedGifDetector) {
+                    sharpInstance.once('drain', cb);
+                } else {
+                    cb();
+                }
+            };
+            var alreadyKnownMetadata = { contentType: pipeline.targetContentType };
+            if (pipeline._streams.length === 0) {
+                _.extend(alreadyKnownMetadata, pipeline.sourceMetadata);
+            }
+            duplexStream._read = function (size) {
+                sharpInstance.metadata(function (err, metadata) {
+                    if (err) {
+                        metadata = _.defaults({ error: err.message }, alreadyKnownMetadata);
+                    }
+                    if (metadata.format === 'magick') {
+                        // https://github.com/lovell/sharp/issues/377
+                        metadata.contentType = alreadyKnownMetadata.contentType;
+                        metadata.format = alreadyKnownMetadata.contentType && alreadyKnownMetadata.contentType.replace(/^image\//, '');
+                    } else if (metadata.format) {
+                        // metadata.format is one of 'jpeg', 'png', 'webp' so this should be safe:
+                        metadata.contentType = 'image/' + metadata.format;
+                    }
+                    _.defaults(metadata, alreadyKnownMetadata);
+                    if (metadata.exif) {
+                        var exifData;
+                        try {
+                            exifData = exifReader(metadata.exif);
+                        } catch (e) {
+                            // Error: Invalid EXIF
+                        }
+                        metadata.exif = undefined;
+                        if (exifData) {
+                            _.defaults(metadata, exifData);
+                        }
+                    }
+                    if (metadata.icc) {
+                        try {
+                            metadata.icc = icc.parse(metadata.icc);
+                        } catch (e) {
+                            // Error: Error: Invalid ICC profile, remove the Buffer
+                            metadata.icc = undefined;
+                        }
+                    }
+                    function proceed() {
+                        duplexStream.push(JSON.stringify(metadata));
+                        duplexStream.push(null);
+                    }
+                    if (typeof isAnimated === 'boolean') {
+                        metadata.animated = isAnimated;
+                        proceed();
+                    } else if (animatedGifDetector) {
+                        animatedGifDetector.on('decided', function (isAnimated) {
+                            metadata.animated = isAnimated;
+                            proceed();
+                        });
+                    } else {
+                        proceed();
+                    }
+                });
+            };
+            duplexStream.on('finish', function () {
+                sharpInstance.end();
+            });
+            pipeline.add(duplexStream);
+            pipeline.targetContentType = 'application/json; charset=utf-8';
+        }
+    });
+
+    Impro.registerEngine({
         name: 'sharp',
-        operations: ['metadata', 'resize', 'extract', 'sequentialRead', 'crop', 'max', 'background', 'embed', 'flatten', 'rotate', 'flip', 'flop', 'withoutEnlargement', 'ignoreAspectRatio', 'sharpen', 'interpolateWith', 'gamma', 'grayscale', 'greyscale', 'jpeg', 'png', 'webp', 'quality', 'progressive', 'withMetadata', 'compressionLevel'],
+        operations: ['resize', 'extract', 'sequentialRead', 'crop', 'max', 'background', 'embed', 'flatten', 'rotate', 'flip', 'flop', 'withoutEnlargement', 'ignoreAspectRatio', 'sharpen', 'interpolateWith', 'gamma', 'grayscale', 'greyscale', 'jpeg', 'png', 'webp', 'quality', 'progressive', 'withMetadata', 'compressionLevel'],
         contentTypes: [ 'image/jpeg', 'image/png', 'image/webp', '*' ],
         execute: function (pipeline, operations, options) {
-            function createSharpInstance() {
-                var impro = pipeline.impro;
-                if (impro.sharp && typeof impro.sharp.cache !== 'undefined' && !impro._sharpCacheSet) {
-                    sharp.cache(impro.sharp.cache);
-                    impro._sharpCacheSet = true;
-                }
-                var sharpInstance = sharp();
-                if (impro.maxInputPixels) {
-                    sharpInstance = sharpInstance.limitInputPixels(impro.maxInputPixels);
-                }
-                return sharpInstance;
-            }
             var impro = pipeline.impro;
-            var sharpInstance;
-            operations.forEach(function (operation) {
-                if (operation.name === 'metadata') {
-                    if (sharpInstance) {
-                        pipeline.add(sharpInstance);
-                        sharpInstance = undefined;
-                    }
-                    var metadataSharpInstance = createSharpInstance();
-                    var duplexStream = new Stream.Duplex();
-                    var animatedGifDetector;
-                    var isAnimated;
-                    if ((pipeline.targetContentType === 'image/gif' || !pipeline.targetContentType) && createAnimatedGifDetector) {
-                        animatedGifDetector = createAnimatedGifDetector();
-                        animatedGifDetector.on('animated', function () {
-                            isAnimated = true;
-                            this.emit('decided');
-                            animatedGifDetector = null;
-                        });
-
-                        duplexStream.on('finish', function () {
-                            if (typeof isAnimated === 'undefined') {
-                                isAnimated = false;
-                                if (animatedGifDetector) {
-                                    animatedGifDetector.emit('decided', false);
-                                    animatedGifDetector = null;
-                                }
-                            }
-                        });
-                    }
-                    duplexStream._write = function (chunk, encoding, cb) {
-                        if (animatedGifDetector) {
-                            animatedGifDetector.write(chunk);
-                        }
-                        if (metadataSharpInstance.write(chunk, encoding) === false && !animatedGifDetector) {
-                            metadataSharpInstance.once('drain', cb);
-                        } else {
-                            cb();
-                        }
-                    };
-                    var alreadyKnownMetadata = { contentType: pipeline.targetContentType };
-                    if (pipeline._streams.length === 0) {
-                        _.extend(alreadyKnownMetadata, pipeline.sourceMetadata);
-                    }
-                    duplexStream._read = function (size) {
-                        metadataSharpInstance.metadata(function (err, metadata) {
-                            if (err) {
-                                metadata = _.defaults({ error: err.message }, alreadyKnownMetadata);
-                            }
-                            if (metadata.format === 'magick') {
-                                // https://github.com/lovell/sharp/issues/377
-                                metadata.contentType = alreadyKnownMetadata.contentType;
-                                metadata.format = alreadyKnownMetadata.contentType && alreadyKnownMetadata.contentType.replace(/^image\//, '');
-                            } else if (metadata.format) {
-                                // metadata.format is one of 'jpeg', 'png', 'webp' so this should be safe:
-                                metadata.contentType = 'image/' + metadata.format;
-                            }
-                            _.defaults(metadata, alreadyKnownMetadata);
-                            if (metadata.exif) {
-                                var exifData;
-                                try {
-                                    exifData = exifReader(metadata.exif);
-                                } catch (e) {
-                                    // Error: Invalid EXIF
-                                }
-                                metadata.exif = undefined;
-                                if (exifData) {
-                                    _.defaults(metadata, exifData);
-                                }
-                            }
-                            if (metadata.icc) {
-                                try {
-                                    metadata.icc = icc.parse(metadata.icc);
-                                } catch (e) {
-                                    // Error: Error: Invalid ICC profile, remove the Buffer
-                                    metadata.icc = undefined;
-                                }
-                            }
-                            function proceed() {
-                                duplexStream.push(JSON.stringify(metadata));
-                                duplexStream.push(null);
-                            }
-                            if (typeof isAnimated === 'boolean') {
-                                metadata.animated = isAnimated;
-                                proceed();
-                            } else if (animatedGifDetector) {
-                                animatedGifDetector.on('decided', function (isAnimated) {
-                                    metadata.animated = isAnimated;
-                                    proceed();
-                                });
-                            } else {
-                                proceed();
-                            }
-                        });
-                    };
-                    duplexStream.on('finish', function () {
-                        metadataSharpInstance.end();
-                    });
-                    pipeline.add(duplexStream);
-                    pipeline.targetContentType = 'application/json; charset=utf-8';
-                } else {
-                    var args = operation.args;
-                    if (operation.name === 'resize' && typeof impro.maxOutputPixels === 'number' && args[0] * args[1] > impro.maxOutputPixels) {
-                        throw new errors.OutputDimensionsExceeded('resize: Target dimensions of ' + args[0] + 'x' + args[1] + ' exceed maxOutputPixels (' + impro.maxOutputPixels + ')');
-                    }
-                    // Compensate for https://github.com/lovell/sharp/issues/276
-                    if (operation.name === 'extract' && args.length >= 4) {
-                        args = [ { left: args[0], top: args[1], width: args[2], height: args[3] } ];
-                    }
-                    sharpInstance = sharpInstance || createSharpInstance();
-                    return sharpInstance[operation.name](...args);
-                }
-            });
-            if (sharpInstance) {
-                pipeline.add(sharpInstance);
+            // Would make sense to move the _sharpCacheSet property to the type, but that breaks some test scenarios:
+            if (impro.sharp && typeof impro.sharp.cache !== 'undefined' && !impro._sharpCacheSet) {
+                sharp.cache(impro.sharp.cache);
+                impro._sharpCacheSet = true;
             }
+            var sharpInstance = sharp();
+            if (impro.maxInputPixels) {
+                sharpInstance = sharpInstance.limitInputPixels(impro.maxInputPixels);
+            }
+            operations.forEach(function (operation) {
+                var args = operation.args;
+                if (operation.name === 'resize' && typeof impro.maxOutputPixels === 'number' && args[0] * args[1] > impro.maxOutputPixels) {
+                    throw new errors.OutputDimensionsExceeded('resize: Target dimensions of ' + args[0] + 'x' + args[1] + ' exceed maxOutputPixels (' + impro.maxOutputPixels + ')');
+                }
+                // Compensate for https://github.com/lovell/sharp/issues/276
+                if (operation.name === 'extract' && args.length >= 4) {
+                    args = [ { left: args[0], top: args[1], width: args[2], height: args[3] } ];
+                }
+                return sharpInstance[operation.name](...args);
+            });
+            pipeline.add(sharpInstance);
         }
     });
 }
