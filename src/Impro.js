@@ -414,13 +414,7 @@ Pipeline.prototype.flush = function () {
         };
 
         this._queuedOperations.forEach((operation, i) => {
-            if (Impro.isOperationByEngineNameAndName[operation.name]) {
-                // Should the engine names be registered as exclusive operations of the engines themselves?
-                if (candidateEngineNames && candidateEngineNames.indexOf(operation.name) === -1) {
-                    udAdDøren(i);
-                }
-                candidateEngineNames = [operation.name];
-            } else if (Impro.engineNamesByOperationName[operation.name]) {
+            if (Impro.engineNamesByOperationName[operation.name]) {
                 // Hack: This should be moved into the specific engines:
                 var conversionToContentType = mime.types[operation.name];
                 if (conversionToContentType) {
@@ -437,13 +431,9 @@ Pipeline.prototype.flush = function () {
                         var supported = Impro.isSupportedByEngineNameAndContentType[engineName];
                         return (
                             this.impro[engineName] !== false &&
-                            (operation.name === 'metadata' || (this.targetContentType ? supported[this.targetContentType] : supported['*']))
+                            (engineName === operation.name || supported['*'] || (this.targetContentType && supported[this.targetContentType]))
                         );
                     });
-                }
-                // Move into engines somehow
-                if (operation.name === 'jpeg' || operation.name === 'png' || operation.name === 'webp') {
-                    this.targetContentType = 'image/' + operation.name;
                 }
             }
         });
@@ -549,7 +539,7 @@ Impro.registerEngine = function (options) {
     Impro.registerMethod(engineName);
     Impro.supportedOptions.push(engineName); // Allow disabling via new Impro({<engineName>: false})
 
-    (options.operations || []).forEach(function (operationName) {
+    [engineName].concat(options.operations || []).forEach(function (operationName) {
         Impro.isOperationByEngineNameAndName[engineName][operationName] = true;
         (Impro.engineNamesByOperationName[operationName] = Impro.engineNamesByOperationName[operationName] || []).push(engineName);
         Impro.registerMethod(operationName);
