@@ -376,7 +376,7 @@ Impro.prototype.pipeline = function (options, operations) {
 
 function Pipeline(impro, options) {
     Stream.Duplex.call(this);
-    this.operations = [];
+    this._queuedOperations = [];
     options = options || {};
     this.ended = false;
     this.impro = impro;
@@ -391,9 +391,64 @@ function Pipeline(impro, options) {
 
 util.inherits(Pipeline, Stream.Duplex);
 
-Pipeline.prototype._freeze = function () {
-    if (!this._frozen) {
-        this.flush();
+Pipeline.prototype.flush = function () {
+    if (!this._flushed) {
+        this._flushed = true;
+        this.usedEngines = [];
+        var startIndex = 0;
+        var candidateEngineNames;
+        var udAdDøren = (upToIndex) => {
+            if (startIndex < upToIndex) {
+                var engineName = candidateEngineNames[0];
+                var options;
+                if (this._queuedOperations[startIndex].name === engineName) {
+                    options = this._queuedOperations[startIndex].args;
+                    startIndex += 1;
+                }
+                var operations = this._queuedOperations.slice(startIndex, upToIndex);
+                Impro.EngineByName[engineName].execute(this, operations, options);
+                operations.forEach(operation => operation.engineName = engineName);
+                this.usedEngines.push({name: engineName, operations});
+                startIndex = upToIndex;
+            }
+        };
+
+        this._queuedOperations.forEach((operation, i) => {
+            if (Impro.isOperationByEngineNameAndName[operation.name]) {
+                // Should the engine names be registered as exclusive operations of the engines themselves?
+                if (candidateEngineNames && candidateEngineNames.indexOf(operation.name) === -1) {
+                    udAdDøren(i);
+                }
+                candidateEngineNames = [operation.name];
+            } else if (Impro.engineNamesByOperationName[operation.name]) {
+                // Hack: This should be moved into the specific engines:
+                var conversionToContentType = mime.types[operation.name];
+                if (conversionToContentType) {
+                    this.targetContentType = conversionToContentType;
+                }
+                var filteredCandidateEngineNames = candidateEngineNames && candidateEngineNames.filter(
+                    (engineName) => Impro.engineNamesByOperationName[operation.name].indexOf(engineName) !== -1
+                );
+                if (filteredCandidateEngineNames && filteredCandidateEngineNames.length > 0) {
+                    candidateEngineNames = filteredCandidateEngineNames;
+                } else {
+                    udAdDøren(i);
+                    candidateEngineNames = Impro.engineNamesByOperationName[operation.name].filter((engineName) => {
+                        var supported = Impro.isSupportedByEngineNameAndContentType[engineName];
+                        return (
+                            this.impro[engineName] !== false &&
+                            (operation.name === 'metadata' || (this.targetContentType ? supported[this.targetContentType] : supported['*']))
+                        );
+                    });
+                }
+                // Move into engines somehow
+                if (operation.name === 'jpeg' || operation.name === 'png' || operation.name === 'webp') {
+                    this.targetContentType = 'image/' + operation.name;
+                }
+            }
+        });
+        udAdDøren(this._queuedOperations.length);
+        this._queuedOperations = undefined;
         this._streams.push(new Stream.PassThrough());
         this._streams.forEach(function (stream, i) {
             if (i < this._streams.length - 1) {
@@ -407,21 +462,21 @@ Pipeline.prototype._freeze = function () {
             }
             stream.on('error', this._fail.bind(this));
         }, this);
-        this._frozen = true;
         this.on('finish', function () {
             this._streams[0].end();
         }.bind(this));
     }
+    return this;
 };
 
 Pipeline.prototype._write = function (chunk, encoding, cb) {
-    this._freeze();
+    this.flush();
     this._streams[0].write(chunk, encoding);
     cb();
 };
 
 Pipeline.prototype._read = function (size) {
-    this._freeze();
+    this.flush();
     this._streams[this._streams.length - 1].read(size);
 };
 
@@ -432,92 +487,30 @@ Pipeline.prototype._fail = function (err) {
     }
 };
 
-Pipeline.prototype.flush = function () {
-    if (this.currentEngine) {
-        this.currentEngine.flush();
-        this.currentEngine = undefined;
+Pipeline.prototype.add = function (operation) {
+    // FIXME: Make a separate method for this
+    if (operation && typeof operation.pipe === 'function') {
+        this._streams.push(operation);
+        return this;
     }
-    return this;
-};
-
-Pipeline.prototype.add = function (options) {
-    if (this._frozen) {
+    if (this._flushed) {
         throw new Error('Cannot add more operations after the streaming has begun');
     }
-    if (options && typeof options.pipe === 'function') {
-        this._streams.push(options);
-    } else if (Array.isArray(options)) {
-        options.forEach(function (operation) {
-            this.add(operation);
-        }, this);
-    } else if (typeof options === 'string') {
-        this.impro.parse(options).operations.forEach(function (operation) {
-            this.add(operation);
-        }, this);
-    } else if (options && options.operations) {
-        options.operations.forEach(function (operation) {
-            this.add(operation);
-        }, this);
-    } else if (typeof options.name === 'string') {
-        var operationName = options.name;
-        var operationArgs = options.args;
-        var filter;
-        if (operationName === 'type') {
-            if (this.currentEngine || this._streams.length > 0) {
-                throw new Error('type must be called before any operations are performed');
-            } else if (operationArgs.length !== 1 || typeof operationArgs[0] !== 'string') {
-                throw new Error('type must be given as a string');
-            } else {
-                var contentType = mime.types[operationArgs[0]] || operationArgs[0];
-                this.sourceContentType = this.targetContentType = contentType;
-            }
-        } else if (Impro.isOperationByEngineNameAndName[operationName]) {
-            // Should the engine names be registered as exclusive operations of the engines themselves?
-            this.flush();
-            this.defaultEngineName = operationName;
-            this.currentEngineName = operationName;
-            this.currentEngine = new Impro.EngineByName[this.currentEngineName](this, operationArgs);
-        } else if (Impro.engineNamesByOperationName[operationName]) {
-            // Hack: This should be moved into the specific engines:
-            var conversionToContentType = mime.types[operationName];
-            if (conversionToContentType) {
-                this.targetContentType = conversionToContentType;
-            }
-
-            // Check if at least one of the engines supporting this operation is allowed
-            var candidateEngineNames = Impro.engineNamesByOperationName[operationName].filter(function (engineName) {
-                var supported = Impro.isSupportedByEngineNameAndContentType[engineName];
-                return (
-                    (operationName === 'metadata' || engineName === this.currentEngineName || (this.targetContentType ? supported[this.targetContentType] : supported['*'])) &&
-                    this.impro[engineName] !== false
-                );
-            }, this);
-            if (candidateEngineNames.length > 0) {
-                if (this.currentEngineName && !Impro.isOperationByEngineNameAndName[this.currentEngineName]) {
-                    this.currentEngine.flush();
-                }
-
-                if (!this.currentEngineName || candidateEngineNames.indexOf(this.currentEngineName) === -1) {
-                    if (candidateEngineNames.indexOf(this.defaultEngineName) !== -1) {
-                        this.currentEngineName = this.defaultEngineName;
-                    } else {
-                        this.currentEngineName = candidateEngineNames[0];
-                    }
-                    this.currentEngine = new Impro.EngineByName[this.currentEngineName](this);
-                }
-                if (operationName === 'setFormat' && operationArgs.length > 0) {
-                    var targetFormat = operationArgs[0].toLowerCase();
-                    if (targetFormat === 'jpg') {
-                        targetFormat = 'jpeg';
-                    }
-                    this.targetContentType = 'image/' + targetFormat;
-                } else if (operationName === 'jpeg' || operationName === 'png' || operationName === 'webp') {
-                    this.targetContentType = 'image/' + operationName;
-                }
-                this.operations.push({name: operationName, args: operationArgs, engineName: this.currentEngineName});
-                this.currentEngine.op(operationName, operationArgs);
-            }
+    if (Array.isArray(operation)) {
+        operation.forEach(operation => this.add(operation));
+    } else if (typeof operation === 'string') {
+        this.impro.parse(operation).operations.forEach(operation => this.add(operation));
+    } else if (operation.name === 'type') {
+        if (operation.args.length !== 1 || typeof operation.args[0] !== 'string') {
+            throw new Error('type must be given as a string');
+        } else {
+            var contentType = mime.types[operation.args[0]] || operation.args[0];
+            this.sourceContentType = this.targetContentType = contentType;
         }
+    } else if (operation && typeof operation.name === 'string') {
+        this._queuedOperations.push(operation);
+    } else {
+        throw new Error('add: Unsupported argument: ' + operation);
     }
     return this;
 };
@@ -538,7 +531,7 @@ Impro.registerMethod = function (operationName) {
     };
 };
 
-Impro.registerMethod('sourceType');
+Impro.registerMethod('type');
 
 Impro.isOperationByEngineNameAndName = {};
 
@@ -552,7 +545,7 @@ Impro.registerEngine = function (options) {
     var engineName = options.name;
     Impro.defaultEngineName = Impro.defaultEngineName || engineName;
     Impro.isOperationByEngineNameAndName[engineName] = {};
-    Impro.EngineByName[options.name] = options.class;
+    Impro.EngineByName[options.name] = options;
     Impro.registerMethod(engineName);
     Impro.supportedOptions.push(engineName); // Allow disabling via new Impro({<engineName>: false})
 
@@ -567,42 +560,28 @@ Impro.registerEngine = function (options) {
     });
 };
 
-function Engine(pipeline) {
-    this.pipeline = pipeline;
-}
-
-Engine.prototype.flush = function () {};
-Engine.prototype.op = function () {};
-
 var Gifsicle = requireOr('gifsicle-stream');
 if (Gifsicle) {
-    function GifsicleEngine(pipeline) {
-        Engine.call(this, pipeline);
-        this.queue = [];
-    }
-    util.inherits(GifsicleEngine, Engine);
-
-    GifsicleEngine.prototype.op = function (name, args) {
-        this.queue.push({name: name, args: args});
-    };
-
-    GifsicleEngine.prototype.flush = function () {
-        if (this.queue.length > 0) {
+    Impro.registerEngine({
+        name: 'gifsicle',
+        operations: [ 'crop', 'rotate', 'progressive', 'extract', 'resize', 'ignoreAspectRatio' ],
+        contentTypes: [ 'image/gif' ],
+        execute: function (pipeline, operations) {
             var gifsicleArgs = [];
             var seenOperationThatMustComeBeforeExtract = false;
-            var flush = function () {
+            function flush()  {
                 if (gifsicleArgs.length > 0) {
-                    this.pipeline.add(new Gifsicle(gifsicleArgs));
+                    pipeline.add(new Gifsicle(gifsicleArgs));
                     seenOperationThatMustComeBeforeExtract = false;
                     gifsicleArgs = [];
                 }
-            }.bind(this);
+            };
 
-            var ignoreAspectRatio = this.queue.some(function (operation) {
+            var ignoreAspectRatio = operations.some(function (operation) {
                 return operation.name === 'ignoreAspectRatio';
             });
 
-            this.queue.forEach(function (operation) {
+            operations.forEach(function (operation) {
                 if (operation.name === 'resize') {
                     seenOperationThatMustComeBeforeExtract = true;
                     gifsicleArgs.push('--resize' + (ignoreAspectRatio ? '' : '-fit'), operation.args[0] + 'x' + operation.args[1]);
@@ -619,228 +598,184 @@ if (Gifsicle) {
                 }
             }, this);
             flush();
-            this.pipeline.targetContentType = 'image/gif';
-            this.queue = [];
+            pipeline.targetContentType = 'image/gif';
         }
-    };
-
-    Impro.registerEngine({
-        name: 'gifsicle',
-        class: GifsicleEngine,
-        operations: [ 'crop', 'rotate', 'progressive', 'extract', 'resize', 'ignoreAspectRatio' ],
-        contentTypes: [ 'image/gif' ]
     });
 }
 
 var Inkscape = requireOr('inkscape');
 if (Inkscape) {
-    function InkscapeEngine(pipeline, args) {
-        Engine.call(this, pipeline);
-        if (Array.isArray(args)) {
-            this.args = args;
-        } else if (typeof args !== 'undefined') {
-            this.args = [String(args)];
-        } else {
-            this.args = [];
-        }
-    }
-    util.inherits(InkscapeEngine, Engine);
-
-    InkscapeEngine.prototype.op = function (name, args) {
-        this.outputFormat = name;
-    };
-
-    InkscapeEngine.prototype.flush = function () {
-        if (this.outputFormat === 'pdf') {
-            this.pipeline.targetContentType = 'application/pdf';
-            this.args.push('--export-pdf');
-        } else if (this.outputFormat === 'eps') {
-            this.pipeline.targetContentType = 'application/eps';
-            this.args.push('--export-eps');
-        } else if (!this.outputFormat || this.outputFormat === 'png') {
-            this.pipeline.targetContentType = 'image/png';
-            this.args.push('--export-png');
-        }
-        this.pipeline.add(new Inkscape(this.args));
-    };
-
     Impro.registerEngine({
         name: 'inkscape',
-        class: InkscapeEngine,
         contentTypes: [ 'image/svg+xml' ],
-        operations: [ 'pdf', 'eps', 'png' ]
+        operations: [ 'pdf', 'eps', 'png' ],
+        execute: function (pipeline, operations, options) {
+            var outputFormat = operations.length > 0 ? operations[operations.length - 1].name : 'png';
+            var args = (operations[0] && operations[0].args) || [];
+            if (outputFormat === 'pdf') {
+                pipeline.targetContentType = 'application/pdf';
+                args.push('--export-pdf');
+            } else if (outputFormat === 'eps') {
+                pipeline.targetContentType = 'application/eps';
+                args.push('--export-eps');
+            } else if (!outputFormat || outputFormat === 'png') {
+                pipeline.targetContentType = 'image/png';
+                args.push('--export-png');
+            }
+            pipeline.add(new Inkscape(args));
+        }
     });
 }
 
 var sharp = requireOr('sharp');
 if (sharp) {
-    function SharpEngine(pipeline) {
-        Engine.call(this, pipeline);
-        this.queue = [];
-    }
-
-    util.inherits(SharpEngine, Engine);
-
-    SharpEngine.prototype.op = function (name, args) {
-        if (name === 'metadata') {
-            this.flush();
-            var sharpInstance = this.createSharpInstance();
-            var duplexStream = new Stream.Duplex();
-            var animatedGifDetector;
-            var isAnimated;
-            if ((this.pipeline.targetContentType === 'image/gif' || !this.pipeline.targetContentType) && createAnimatedGifDetector) {
-                animatedGifDetector = createAnimatedGifDetector();
-                animatedGifDetector.on('animated', function () {
-                    isAnimated = true;
-                    this.emit('decided');
-                    animatedGifDetector = null;
-                });
-
-                duplexStream.on('finish', function () {
-                    if (typeof isAnimated === 'undefined') {
-                        isAnimated = false;
-                        if (animatedGifDetector) {
-                            animatedGifDetector.emit('decided', false);
-                            animatedGifDetector = null;
-                        }
-                    }
-                });
-            }
-            duplexStream._write = function (chunk, encoding, cb) {
-                if (animatedGifDetector) {
-                    animatedGifDetector.write(chunk);
-                }
-                if (sharpInstance.write(chunk, encoding) === false && !animatedGifDetector) {
-                    sharpInstance.once('drain', cb);
-                } else {
-                    cb();
-                }
-            };
-            var alreadyKnownMetadata = { contentType: this.pipeline.targetContentType };
-            if (this.pipeline._streams.length === 0) {
-                _.extend(alreadyKnownMetadata, this.pipeline.sourceMetadata);
-            }
-            duplexStream._read = function (size) {
-                sharpInstance.metadata(function (err, metadata) {
-                    if (err) {
-                        metadata = _.defaults({ error: err.message }, alreadyKnownMetadata);
-                    }
-                    if (metadata.format === 'magick') {
-                        // https://github.com/lovell/sharp/issues/377
-                        metadata.contentType = alreadyKnownMetadata.contentType;
-                        metadata.format = alreadyKnownMetadata.contentType && alreadyKnownMetadata.contentType.replace(/^image\//, '');
-                    } else if (metadata.format) {
-                        // metadata.format is one of 'jpeg', 'png', 'webp' so this should be safe:
-                        metadata.contentType = 'image/' + metadata.format;
-                    }
-                    _.defaults(metadata, alreadyKnownMetadata);
-                    if (metadata.exif) {
-                        var exifData;
-                        try {
-                            exifData = exifReader(metadata.exif);
-                        } catch (e) {
-                            // Error: Invalid EXIF
-                        }
-                        metadata.exif = undefined;
-                        if (exifData) {
-                            _.defaults(metadata, exifData);
-                        }
-                    }
-                    if (metadata.icc) {
-                        try {
-                            metadata.icc = icc.parse(metadata.icc);
-                        } catch (e) {
-                            // Error: Error: Invalid ICC profile, remove the Buffer
-                            metadata.icc = undefined;
-                        }
-                    }
-                    function proceed() {
-                        duplexStream.push(JSON.stringify(metadata));
-                        duplexStream.push(null);
-                    }
-                    if (typeof isAnimated === 'boolean') {
-                        metadata.animated = isAnimated;
-                        proceed();
-                    } else if (animatedGifDetector) {
-                        animatedGifDetector.on('decided', function (isAnimated) {
-                            metadata.animated = isAnimated;
-                            proceed();
-                        });
-                    } else {
-                        proceed();
-                    }
-                });
-            };
-            duplexStream.on('finish', function () {
-                sharpInstance.end();
-            });
-            this.pipeline.add(duplexStream);
-            this.pipeline.targetContentType = 'application/json; charset=utf-8';
-        } else {
-            this.queue.push({name: name, args: args});
-            if (name === 'png' || name === 'gif' || name === 'jpeg') {
-                this.pipeline.targetContentType = 'image/' + name;
-            }
-        }
-    };
-
-    SharpEngine.prototype.createSharpInstance = function () {
-        var impro = this.pipeline.impro;
-        if (impro.sharp && typeof impro.sharp.cache !== 'undefined' && !impro._sharpCacheSet) {
-            sharp.cache(impro.sharp.cache);
-            impro._sharpCacheSet = true;
-        }
-        var sharpInstance = sharp();
-        if (impro.maxInputPixels) {
-            sharpInstance = sharpInstance.limitInputPixels(impro.maxInputPixels);
-        }
-        return sharpInstance;
-    };
-
-    SharpEngine.prototype.flush = function () {
-        if (this.queue.length > 0) {
-            var impro = this.pipeline.impro;
-            this.pipeline.add(this.queue.reduce(function (sharpInstance, operation) {
-                var args = operation.args;
-                if (operation.name === 'resize' && typeof impro.maxOutputPixels === 'number' && args[0] * args[1] > impro.maxOutputPixels) {
-                    throw new errors.OutputDimensionsExceeded('resize: Target dimensions of ' + args[0] + 'x' + args[1] + ' exceed maxOutputPixels (' + impro.maxOutputPixels + ')');
-                }
-                // Compensate for https://github.com/lovell/sharp/issues/276
-                if (operation.name === 'extract' && args.length >= 4) {
-                    args = [ { left: args[0], top: args[1], width: args[2], height: args[3] } ];
-                }
-                return sharpInstance[operation.name].apply(sharpInstance, args);
-            }, this.createSharpInstance()));
-            this.queue = [];
-        }
-    };
-
     Impro.registerEngine({
         name: 'sharp',
         operations: ['metadata', 'resize', 'extract', 'sequentialRead', 'crop', 'max', 'background', 'embed', 'flatten', 'rotate', 'flip', 'flop', 'withoutEnlargement', 'ignoreAspectRatio', 'sharpen', 'interpolateWith', 'gamma', 'grayscale', 'greyscale', 'jpeg', 'png', 'webp', 'quality', 'progressive', 'withMetadata', 'compressionLevel'],
-        class: SharpEngine,
-        contentTypes: [ 'image/jpeg', 'image/png', 'image/webp', '*' ]
+        contentTypes: [ 'image/jpeg', 'image/png', 'image/webp', '*' ],
+        execute: function (pipeline, operations, options) {
+            function createSharpInstance() {
+                var impro = pipeline.impro;
+                if (impro.sharp && typeof impro.sharp.cache !== 'undefined' && !impro._sharpCacheSet) {
+                    sharp.cache(impro.sharp.cache);
+                    impro._sharpCacheSet = true;
+                }
+                var sharpInstance = sharp();
+                if (impro.maxInputPixels) {
+                    sharpInstance = sharpInstance.limitInputPixels(impro.maxInputPixels);
+                }
+                return sharpInstance;
+            }
+            var impro = pipeline.impro;
+            var sharpInstance;
+            operations.forEach(function (operation) {
+                if (operation.name === 'metadata') {
+                    if (sharpInstance) {
+                        pipeline.add(sharpInstance);
+                        sharpInstance = undefined;
+                    }
+                    var metadataSharpInstance = createSharpInstance();
+                    var duplexStream = new Stream.Duplex();
+                    var animatedGifDetector;
+                    var isAnimated;
+                    if ((pipeline.targetContentType === 'image/gif' || !pipeline.targetContentType) && createAnimatedGifDetector) {
+                        animatedGifDetector = createAnimatedGifDetector();
+                        animatedGifDetector.on('animated', function () {
+                            isAnimated = true;
+                            this.emit('decided');
+                            animatedGifDetector = null;
+                        });
+
+                        duplexStream.on('finish', function () {
+                            if (typeof isAnimated === 'undefined') {
+                                isAnimated = false;
+                                if (animatedGifDetector) {
+                                    animatedGifDetector.emit('decided', false);
+                                    animatedGifDetector = null;
+                                }
+                            }
+                        });
+                    }
+                    duplexStream._write = function (chunk, encoding, cb) {
+                        if (animatedGifDetector) {
+                            animatedGifDetector.write(chunk);
+                        }
+                        if (metadataSharpInstance.write(chunk, encoding) === false && !animatedGifDetector) {
+                            metadataSharpInstance.once('drain', cb);
+                        } else {
+                            cb();
+                        }
+                    };
+                    var alreadyKnownMetadata = { contentType: pipeline.targetContentType };
+                    if (pipeline._streams.length === 0) {
+                        _.extend(alreadyKnownMetadata, pipeline.sourceMetadata);
+                    }
+                    duplexStream._read = function (size) {
+                        metadataSharpInstance.metadata(function (err, metadata) {
+                            if (err) {
+                                metadata = _.defaults({ error: err.message }, alreadyKnownMetadata);
+                            }
+                            if (metadata.format === 'magick') {
+                                // https://github.com/lovell/sharp/issues/377
+                                metadata.contentType = alreadyKnownMetadata.contentType;
+                                metadata.format = alreadyKnownMetadata.contentType && alreadyKnownMetadata.contentType.replace(/^image\//, '');
+                            } else if (metadata.format) {
+                                // metadata.format is one of 'jpeg', 'png', 'webp' so this should be safe:
+                                metadata.contentType = 'image/' + metadata.format;
+                            }
+                            _.defaults(metadata, alreadyKnownMetadata);
+                            if (metadata.exif) {
+                                var exifData;
+                                try {
+                                    exifData = exifReader(metadata.exif);
+                                } catch (e) {
+                                    // Error: Invalid EXIF
+                                }
+                                metadata.exif = undefined;
+                                if (exifData) {
+                                    _.defaults(metadata, exifData);
+                                }
+                            }
+                            if (metadata.icc) {
+                                try {
+                                    metadata.icc = icc.parse(metadata.icc);
+                                } catch (e) {
+                                    // Error: Error: Invalid ICC profile, remove the Buffer
+                                    metadata.icc = undefined;
+                                }
+                            }
+                            function proceed() {
+                                duplexStream.push(JSON.stringify(metadata));
+                                duplexStream.push(null);
+                            }
+                            if (typeof isAnimated === 'boolean') {
+                                metadata.animated = isAnimated;
+                                proceed();
+                            } else if (animatedGifDetector) {
+                                animatedGifDetector.on('decided', function (isAnimated) {
+                                    metadata.animated = isAnimated;
+                                    proceed();
+                                });
+                            } else {
+                                proceed();
+                            }
+                        });
+                    };
+                    duplexStream.on('finish', function () {
+                        metadataSharpInstance.end();
+                    });
+                    pipeline.add(duplexStream);
+                    pipeline.targetContentType = 'application/json; charset=utf-8';
+                } else {
+                    var args = operation.args;
+                    if (operation.name === 'resize' && typeof impro.maxOutputPixels === 'number' && args[0] * args[1] > impro.maxOutputPixels) {
+                        throw new errors.OutputDimensionsExceeded('resize: Target dimensions of ' + args[0] + 'x' + args[1] + ' exceed maxOutputPixels (' + impro.maxOutputPixels + ')');
+                    }
+                    // Compensate for https://github.com/lovell/sharp/issues/276
+                    if (operation.name === 'extract' && args.length >= 4) {
+                        args = [ { left: args[0], top: args[1], width: args[2], height: args[3] } ];
+                    }
+                    sharpInstance = sharpInstance || createSharpInstance();
+                    return sharpInstance[operation.name](...args);
+                }
+            });
+            if (sharpInstance) {
+                pipeline.add(sharpInstance);
+            }
+        }
     });
 }
 
 var gm = requireOr('gm');
 if (gm) {
-    function GmEngine(pipeline) {
-        Engine.call(this, pipeline);
-        this.queue = [];
-    }
-
-    GmEngine.prototype.op = function (name, args) {
-        this.queue.push({name: name, args: args});
-        if (name === 'png' || name === 'gif' || name === 'jpeg') {
-            this.pipeline.targetContentType = 'image/' + name;
-        }
-    };
-
-    GmEngine.prototype.flush = function () {
-        if (this.queue.length > 0) {
-            var pipeline = this.pipeline;
-            var operations = this.queue;
+    Impro.registerEngine({
+        name: 'gm',
+        operations: ['gif', 'png', 'jpeg', 'extract'].concat(Object.keys(gm.prototype).filter(function (propertyName) {
+            return (!/^_|^(?:name|emit|.*Listeners?|on|once|size|orientation|format|depth|color|res|filesize|identity|write|stream)$/.test(propertyName) &&
+                typeof gm.prototype[propertyName] === 'function');
+        })),
+        contentTypes: [ 'image/gif', 'image/jpeg', 'image/png', 'image/x-icon', 'image/vnd.microsoft.icon', '*' ],
+        execute: function (pipeline, operations) {
             // For some reason the gm module doesn't expose itself as a readable/writable stream,
             // so we need to wrap it into one:
 
@@ -959,94 +894,63 @@ if (gm) {
                 }
                 readStream.emit('end');
             };
-            this.pipeline.add(readWriteStream);
-            this.queue = [];
+            pipeline.add(readWriteStream);
         }
-    };
-
-    Impro.registerEngine({
-        name: 'gm',
-        operations: ['gif', 'png', 'jpeg', 'extract'].concat(Object.keys(gm.prototype).filter(function (propertyName) {
-            return (!/^_|^(?:name|emit|.*Listeners?|on|once|size|orientation|format|depth|color|res|filesize|identity|write|stream)$/.test(propertyName) &&
-                typeof gm.prototype[propertyName] === 'function');
-        })),
-        class: GmEngine,
-        contentTypes: [ 'image/gif', 'image/jpeg', 'image/png', 'image/x-icon', 'image/vnd.microsoft.icon', '*' ]
     });
 }
 
 var OptiPng = requireOr('optipng');
 if (OptiPng) {
-    function OptiPngEngine(pipeline, options) {
-        Engine.call(this, pipeline);
-        pipeline.add(new OptiPng(options));
-    }
-    util.inherits(OptiPngEngine, Engine);
-
     Impro.registerEngine({
         name: 'optipng',
-        class: OptiPngEngine,
-        contentTypes: [ 'image/png' ]
+        contentTypes: [ 'image/png' ],
+        execute: function (pipeline, operations, options) {
+            pipeline.add(new OptiPng(options));
+        }
     });
 }
 
 var PngCrush = requireOr('pngcrush');
 if (PngCrush) {
-    function PngCrushEngine(pipeline, options) {
-        Engine.call(this, pipeline);
-        pipeline.add(new PngCrush(options));
-    }
-    util.inherits(PngCrushEngine, Engine);
-
     Impro.registerEngine({
         name: 'pngcrush',
-        class: PngCrushEngine,
-        contentTypes: [ 'image/png' ]
+        contentTypes: [ 'image/png' ],
+        execute: function (pipeline, operations, options) {
+            pipeline.add(new PngCrush(options));
+        }
     });
 }
 
 var PngQuant = requireOr('pngquant');
 if (PngQuant) {
-    function PngQuantEngine(pipeline, options) {
-        Engine.call(this, pipeline);
-        pipeline.add(new PngQuant(options));
-    }
-    util.inherits(PngQuantEngine, Engine);
-
     Impro.registerEngine({
         name: 'pngquant',
-        class: PngQuantEngine,
-        contentTypes: [ 'image/png' ]
+        contentTypes: [ 'image/png' ],
+        execute: function (pipeline, operations, options) {
+            pipeline.add(new PngQuant(options));
+        }
     });
 }
 
 var JpegTran = requireOr('jpegtran');
 if (JpegTran) {
-    function JpegTranEngine(pipeline, options) {
-        Engine.call(this, pipeline);
-        pipeline.add(new JpegTran(options));
-    }
-    util.inherits(JpegTranEngine, Engine);
-
     Impro.registerEngine({
         name: 'jpegtran',
-        class: JpegTranEngine,
-        contentTypes: [ 'image/jpeg' ]
+        contentTypes: [ 'image/jpeg' ],
+        execute: function (pipeline, operations, options) {
+            pipeline.add(new JpegTran(options));
+        }
     });
 }
 
 var SvgFilter = requireOr('svgfilter');
 if (SvgFilter) {
-    function SvgFilterEngine(pipeline, args) {
-        Engine.call(this, pipeline);
-        pipeline.add(new SvgFilter(args[0]));
-    }
-    util.inherits(SvgFilterEngine, Engine);
-
     Impro.registerEngine({
         name: 'svgfilter',
-        class: SvgFilterEngine,
-        contentTypes: [ 'image/svg+xml' ]
+        contentTypes: [ 'image/svg+xml' ],
+        execute: function (pipeline, operations, options) {
+            pipeline.add(new SvgFilter(options[0]));
+        }
     });
 }
 

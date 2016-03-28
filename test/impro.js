@@ -111,7 +111,7 @@ describe('Impro', function () {
         });
 
         it('should honor an explicit type conversion', function () {
-            return expect(impro().type('image/jpeg').gif(), 'to satisfy', {
+            return expect(impro().type('image/jpeg').gif().flush(), 'to satisfy', {
                 targetContentType: 'image/gif'
             });
         });
@@ -128,10 +128,10 @@ describe('Impro', function () {
     });
 
     it('should maintain an array of engines that have been applied', function () {
-        return expect(impro.resize(10, 10).gm().extract(10, 20, 30, 40).flush(), 'to satisfy', {
-            operations: [
-                {name: 'resize', args: [10, 10], engineName: 'sharp'},
-                {name: 'extract', args: [10, 20, 30, 40], engineName: 'gm'}
+        return expect(impro.sharp().resize(10, 10).gm().extract(10, 20, 30, 40).flush(), 'to satisfy', {
+            usedEngines: [
+                {name: 'sharp', operations: [{name: 'resize', args: [10, 10]}]},
+                {name: 'gm', operations: [{name: 'extract', args: [10, 20, 30, 40]}]}
             ]
         });
     });
@@ -148,8 +148,7 @@ describe('Impro', function () {
                 'turtle.jpg',
                 'when piped through',
                 impro().metadata(),
-                'to yield output satisfying when decoded as', 'utf-8',
-                'when passed as parameter to', JSON.parse, 'to satisfy', {
+                'to yield JSON output satisfying', {
                     contentType: 'image/jpeg',
                     width: 481,
                     height: 424,
@@ -166,8 +165,7 @@ describe('Impro', function () {
                 'turtle.jpg',
                 'when piped through',
                 impro({ filesize: 105836, etag: 'W/"foobar"' }).metadata(),
-                'to yield output satisfying when decoded as', 'utf-8',
-                'when passed as parameter to', JSON.parse, 'to satisfy', {
+                'to yield JSON output satisfying', {
                     contentType: 'image/jpeg',
                     filesize: 105836,
                     etag: /^W\//
@@ -180,8 +178,7 @@ describe('Impro', function () {
                 'turtle.jpg',
                 'when piped through',
                 impro({ filesize: 105836, etag: 'W/"foobar"' }).resize(10, 10).metadata(),
-                'to yield output satisfying when decoded as', 'utf-8',
-                'when passed as parameter to', JSON.parse, 'to satisfy', {
+                'to yield JSON output satisfying', {
                     contentType: 'image/jpeg',
                     filesize: undefined,
                     etag: undefined,
@@ -199,8 +196,6 @@ describe('Impro', function () {
                 'to yield JSON output satisfying', {
                     error: 'Input buffer contains unsupported image format',
                     contentType: 'text/plain; charset=UTF-8'
-                    // filesize: 4,
-                    // etag: expect.it('to be a string')
                 }
             );
         });
@@ -297,7 +292,7 @@ describe('Impro', function () {
             return expect(
                 impro.type('gif').resize(10, 10).flush(),
                 'to satisfy',
-                { _streams: [ expect.it('to be a', require('gifsicle-stream')) ] }
+                { usedEngines: [{name: 'gifsicle'}]}
             );
         });
 
@@ -305,7 +300,7 @@ describe('Impro', function () {
             return expect(
                 impro({gifsicle: false}).type('gif').resize(10, 10).flush(),
                 'to satisfy',
-                { _streams: [ expect.it('not to be a', require('gifsicle-stream')) ] }
+                { usedEngines: [{ name: 'gm'}]}
             );
         });
     });
