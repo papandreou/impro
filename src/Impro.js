@@ -397,7 +397,7 @@ Pipeline.prototype.flush = function () {
         this.usedEngines = [];
         var startIndex = 0;
         var candidateEngineNames;
-        var udAdDøren = (upToIndex) => {
+        var _flush = (upToIndex) => {
             if (startIndex < upToIndex) {
                 var engineName = candidateEngineNames[0];
                 var options;
@@ -426,7 +426,7 @@ Pipeline.prototype.flush = function () {
                 if (filteredCandidateEngineNames && filteredCandidateEngineNames.length > 0) {
                     candidateEngineNames = filteredCandidateEngineNames;
                 } else {
-                    udAdDøren(i);
+                    _flush(i);
                     candidateEngineNames = Impro.engineNamesByOperationName[operation.name].filter((engineName) => {
                         var supported = Impro.isSupportedByEngineNameAndContentType[engineName];
                         return (
@@ -437,7 +437,7 @@ Pipeline.prototype.flush = function () {
                 }
             }
         });
-        udAdDøren(this._queuedOperations.length);
+        _flush(this._queuedOperations.length);
         this._queuedOperations = undefined;
         this._streams.push(new Stream.PassThrough());
         this._streams.forEach(function (stream, i) {
