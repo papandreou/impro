@@ -9,11 +9,10 @@ var icc = require('icc');
 var errors = require('./errors');
 var createAnimatedGifDetector = requireOr('animated-gif-detector');
 
+mime.extensions['image/vnd.microsoft.icon'] = 'ico';
+
 function getMockFileNameForContentType(contentType) {
     if (contentType) {
-        if (contentType === 'image/vnd.microsoft.icon') {
-            return '.ico';
-        }
         return mime.extensions[contentType];
     }
 }
@@ -380,7 +379,6 @@ function Pipeline(impro, options) {
     options = options || {};
     this.ended = false;
     this.impro = impro;
-    this.targetContentType = options && options.sourceContentType;
     this._streams = [];
     this.defaultEngineName = options.defaultEngineName || impro.defaultEngineName;
     this.sourceMetadata = _.omit(options, ['defaultEngineName', 'type']);
@@ -406,7 +404,7 @@ Pipeline.prototype.flush = function () {
                     startIndex += 1;
                 }
                 var operations = this._queuedOperations.slice(startIndex, upToIndex);
-                Impro.EngineByName[engineName].execute(this, operations, options);
+                Impro.engineByName[engineName].execute(this, operations, options);
                 operations.forEach(operation => operation.engineName = engineName);
                 this.usedEngines.push({name: engineName, operations});
                 startIndex = upToIndex;
@@ -415,10 +413,9 @@ Pipeline.prototype.flush = function () {
 
         this._queuedOperations.forEach((operation, i) => {
             if (Impro.engineNamesByOperationName[operation.name]) {
-                // Hack: This should be moved into the specific engines:
-                var conversionToContentType = mime.types[operation.name];
-                if (conversionToContentType) {
-                    this.targetContentType = conversionToContentType;
+                if (Impro.isTypeByName[operation.name]) {
+                    this.targetType = operation.name;
+                    this.targetContentType = mime.types[operation.name];
                 }
                 var filteredCandidateEngineNames = candidateEngineNames && candidateEngineNames.filter(
                     (engineName) => Impro.engineNamesByOperationName[operation.name].indexOf(engineName) !== -1
@@ -428,10 +425,10 @@ Pipeline.prototype.flush = function () {
                 } else {
                     _flush(i);
                     candidateEngineNames = Impro.engineNamesByOperationName[operation.name].filter((engineName) => {
-                        var supported = Impro.isSupportedByEngineNameAndContentType[engineName];
+                        var isSupportedByType = Impro.isSupportedByEngineNameAndInputType[engineName];
                         return (
                             this.impro[engineName] !== false &&
-                            (engineName === operation.name || supported['*'] || (this.targetContentType && supported[this.targetContentType]))
+                            (engineName === operation.name || isSupportedByType['*'] || (this.targetType && isSupportedByType[this.targetType]))
                         );
                     });
                 }
@@ -492,10 +489,21 @@ Pipeline.prototype.add = function (operation) {
         this.impro.parse(operation).operations.forEach(operation => this.add(operation));
     } else if (operation.name === 'type') {
         if (operation.args.length !== 1 || typeof operation.args[0] !== 'string') {
-            throw new Error('type must be given as a string');
+            throw new Error('Type must be given as a string');
         } else {
-            var contentType = mime.types[operation.args[0]] || operation.args[0];
-            this.sourceContentType = this.targetContentType = contentType;
+            var type = operation.args[0];
+            if (Impro.isTypeByName[type]) {
+                this.sourceType = this.targetType = type;
+                this.targetContentType = mime.types[type];
+            } else {
+                var extension = mime.extensions[type.replace(/\s*;.*$/, '')];
+                if (extension) {
+                    if (Impro.isTypeByName[extension]) {
+                        this.sourceType = this.targetType = extension;
+                    }
+                    this.targetContentType = type;
+                }
+            }
         }
     } else if (operation && typeof operation.name === 'string') {
         this._queuedOperations.push(operation);
@@ -527,15 +535,19 @@ Impro.isOperationByEngineNameAndName = {};
 
 Impro.engineNamesByOperationName = {};
 
-Impro.EngineByName = {};
+Impro.engineByName = {};
 
-Impro.isSupportedByEngineNameAndContentType = {};
+Impro.isSupportedByEngineNameAndInputType = {};
+
+Impro.isSupportedByEngineNameAndOutputType = {};
+
+Impro.isTypeByName = {};
 
 Impro.registerEngine = function (options) {
     var engineName = options.name;
     Impro.defaultEngineName = Impro.defaultEngineName || engineName;
     Impro.isOperationByEngineNameAndName[engineName] = {};
-    Impro.EngineByName[options.name] = options;
+    Impro.engineByName[options.name] = options;
     Impro.registerMethod(engineName);
     Impro.supportedOptions.push(engineName); // Allow disabling via new Impro({<engineName>: false})
 
@@ -544,9 +556,17 @@ Impro.registerEngine = function (options) {
         (Impro.engineNamesByOperationName[operationName] = Impro.engineNamesByOperationName[operationName] || []).push(engineName);
         Impro.registerMethod(operationName);
     });
-    Impro.isSupportedByEngineNameAndContentType[engineName] = {};
-    (options.contentTypes || []).forEach(function (contentType) {
-        Impro.isSupportedByEngineNameAndContentType[engineName][contentType] = true;
+    Impro.isSupportedByEngineNameAndInputType[engineName] = {};
+    (options.inputTypes || []).forEach(function (type) {
+        Impro.isTypeByName[type] = true;
+        Impro.isSupportedByEngineNameAndInputType[engineName][type] = true;
+    });
+    Impro.isSupportedByEngineNameAndOutputType[engineName] = {};
+    (options.outputTypes || []).forEach(function (type) {
+        Impro.registerMethod(type);
+        (Impro.engineNamesByOperationName[type] = Impro.engineNamesByOperationName[type] || []).push(engineName);
+        Impro.isTypeByName[type] = true;
+        Impro.isSupportedByEngineNameAndOutputType[engineName][type] = true;
     });
 };
 
@@ -555,7 +575,8 @@ if (Gifsicle) {
     Impro.registerEngine({
         name: 'gifsicle',
         operations: [ 'crop', 'rotate', 'progressive', 'extract', 'resize', 'ignoreAspectRatio' ],
-        contentTypes: [ 'image/gif' ],
+        inputTypes: [ 'gif' ],
+        outputTypes: [ 'gif' ],
         execute: function (pipeline, operations) {
             var gifsicleArgs = [];
             var seenOperationThatMustComeBeforeExtract = false;
@@ -588,6 +609,7 @@ if (Gifsicle) {
                 }
             }, this);
             flush();
+            pipeline.targetType = 'gif';
             pipeline.targetContentType = 'image/gif';
         }
     });
@@ -597,18 +619,17 @@ var Inkscape = requireOr('inkscape');
 if (Inkscape) {
     Impro.registerEngine({
         name: 'inkscape',
-        contentTypes: [ 'image/svg+xml' ],
-        operations: [ 'pdf', 'eps', 'png' ],
+        inputTypes: [ 'svg' ],
+        outputTypes: [ 'pdf', 'eps', 'png' ],
         execute: function (pipeline, operations, options) {
             var outputFormat = operations.length > 0 ? operations[operations.length - 1].name : 'png';
             var args = (operations[0] && operations[0].args) || [];
             if (outputFormat === 'pdf') {
-                pipeline.targetContentType = 'application/pdf';
                 args.push('--export-pdf');
             } else if (outputFormat === 'eps') {
-                pipeline.targetContentType = 'application/eps';
                 args.push('--export-eps');
             } else if (!outputFormat || outputFormat === 'png') {
+                pipeline.targetType = 'png';
                 pipeline.targetContentType = 'image/png';
                 args.push('--export-png');
             }
@@ -621,14 +642,15 @@ var sharp = requireOr('sharp');
 if (sharp) {
     Impro.registerEngine({
         name: 'sharpMetadata',
-        operations: ['metadata'],
-        contentTypes: ['*'],
+        operations: [ 'metadata' ],
+        inputTypes: [ '*' ],
+        outputTypes: [ 'json' ],
         execute: function (pipeline, operations, options) {
             var sharpInstance = sharp();
             var duplexStream = new Stream.Duplex();
             var animatedGifDetector;
             var isAnimated;
-            if ((pipeline.targetContentType === 'image/gif' || !pipeline.targetContentType) && createAnimatedGifDetector) {
+            if ((pipeline.targetType === 'gif' || !pipeline.targetType) && createAnimatedGifDetector) {
                 animatedGifDetector = createAnimatedGifDetector();
                 animatedGifDetector.on('animated', function () {
                     isAnimated = true;
@@ -656,7 +678,10 @@ if (sharp) {
                     cb();
                 }
             };
-            var alreadyKnownMetadata = { contentType: pipeline.targetContentType };
+            var alreadyKnownMetadata = {
+                format: pipeline.targetType,
+                contentType: pipeline.targetContentType || mime.types[pipeline.targetType]
+            };
             if (pipeline._streams.length === 0) {
                 _.extend(alreadyKnownMetadata, pipeline.sourceMetadata);
             }
@@ -667,8 +692,7 @@ if (sharp) {
                     }
                     if (metadata.format === 'magick') {
                         // https://github.com/lovell/sharp/issues/377
-                        metadata.contentType = alreadyKnownMetadata.contentType;
-                        metadata.format = alreadyKnownMetadata.contentType && alreadyKnownMetadata.contentType.replace(/^image\//, '');
+                        metadata.format = undefined;
                     } else if (metadata.format) {
                         // metadata.format is one of 'jpeg', 'png', 'webp' so this should be safe:
                         metadata.contentType = 'image/' + metadata.format;
@@ -715,14 +739,16 @@ if (sharp) {
                 sharpInstance.end();
             });
             pipeline.add(duplexStream);
+            pipeline.targetType = 'json';
             pipeline.targetContentType = 'application/json; charset=utf-8';
         }
     });
 
     Impro.registerEngine({
         name: 'sharp',
-        operations: ['resize', 'extract', 'sequentialRead', 'crop', 'max', 'background', 'embed', 'flatten', 'rotate', 'flip', 'flop', 'withoutEnlargement', 'ignoreAspectRatio', 'sharpen', 'interpolateWith', 'gamma', 'grayscale', 'greyscale', 'jpeg', 'png', 'webp', 'quality', 'progressive', 'withMetadata', 'compressionLevel'],
-        contentTypes: [ 'image/jpeg', 'image/png', 'image/webp', '*' ],
+        operations: ['resize', 'extract', 'sequentialRead', 'crop', 'max', 'background', 'embed', 'flatten', 'rotate', 'flip', 'flop', 'withoutEnlargement', 'ignoreAspectRatio', 'sharpen', 'interpolateWith', 'gamma', 'grayscale', 'greyscale', 'quality', 'progressive', 'withMetadata', 'compressionLevel'],
+        inputTypes: [ 'jpeg', 'png', 'webp', '*' ],
+        outputTypes: [ 'jpeg', 'png', 'webp' ],
         execute: function (pipeline, operations, options) {
             var impro = pipeline.impro;
             // Would make sense to move the _sharpCacheSet property to the type, but that breaks some test scenarios:
@@ -758,7 +784,8 @@ if (gm) {
             return (!/^_|^(?:name|emit|.*Listeners?|on|once|size|orientation|format|depth|color|res|filesize|identity|write|stream)$/.test(propertyName) &&
                 typeof gm.prototype[propertyName] === 'function');
         })),
-        contentTypes: [ 'image/gif', 'image/jpeg', 'image/png', 'image/x-icon', 'image/vnd.microsoft.icon', '*' ],
+        inputTypes: [ 'gif', 'jpeg', 'png', 'ico', '*' ],
+        outputTypes: [ 'gif', 'jpeg', 'png', 'ico' ],
         execute: function (pipeline, operations) {
             // For some reason the gm module doesn't expose itself as a readable/writable stream,
             // so we need to wrap it into one:
@@ -887,7 +914,8 @@ var OptiPng = requireOr('optipng');
 if (OptiPng) {
     Impro.registerEngine({
         name: 'optipng',
-        contentTypes: [ 'image/png' ],
+        inputTypes: [ 'png' ],
+        outputTypes: [ 'png' ],
         execute: function (pipeline, operations, options) {
             pipeline.add(new OptiPng(options));
         }
@@ -898,7 +926,8 @@ var PngCrush = requireOr('pngcrush');
 if (PngCrush) {
     Impro.registerEngine({
         name: 'pngcrush',
-        contentTypes: [ 'image/png' ],
+        inputTypes: [ 'png' ],
+        outputTypes: [ 'png' ],
         execute: function (pipeline, operations, options) {
             pipeline.add(new PngCrush(options));
         }
@@ -909,7 +938,8 @@ var PngQuant = requireOr('pngquant');
 if (PngQuant) {
     Impro.registerEngine({
         name: 'pngquant',
-        contentTypes: [ 'image/png' ],
+        inputTypes: [ 'png' ],
+        outputTypes: [ 'png' ],
         execute: function (pipeline, operations, options) {
             pipeline.add(new PngQuant(options));
         }
@@ -920,7 +950,8 @@ var JpegTran = requireOr('jpegtran');
 if (JpegTran) {
     Impro.registerEngine({
         name: 'jpegtran',
-        contentTypes: [ 'image/jpeg' ],
+        inputTypes: [ 'jpeg' ],
+        outputTypes: [ 'jpeg' ],
         execute: function (pipeline, operations, options) {
             pipeline.add(new JpegTran(options));
         }
@@ -931,7 +962,8 @@ var SvgFilter = requireOr('svgfilter');
 if (SvgFilter) {
     Impro.registerEngine({
         name: 'svgfilter',
-        contentTypes: [ 'image/svg+xml' ],
+        inputTypes: [ 'svg' ],
+        outputTypes: [ 'svg' ],
         execute: function (pipeline, operations, options) {
             pipeline.add(new SvgFilter(options[0]));
         }
