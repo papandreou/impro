@@ -397,6 +397,14 @@ Pipeline.prototype.flush = function () {
         var candidateEngineNames;
         var _flush = (upToIndex) => {
             if (startIndex < upToIndex) {
+                if (this.targetType) {
+                    candidateEngineNames = candidateEngineNames.filter(function (engineName) {
+                        return Impro.engineByName[engineName].defaultOutputType || Impro.isSupportedByEngineNameAndOutputType[engineName][this.targetType];
+                    }, this);
+                }
+                if (candidateEngineNames.length === 0) {
+                    throw new Error('No supported engine can carry out this sequence of operations');
+                }
                 var engineName = candidateEngineNames[0];
                 var options;
                 if (this._queuedOperations[startIndex].name === engineName) {
@@ -620,6 +628,7 @@ if (Inkscape) {
     Impro.registerEngine({
         name: 'inkscape',
         inputTypes: [ 'svg' ],
+        defaultOutputType: 'png',
         outputTypes: [ 'pdf', 'eps', 'png' ],
         execute: function (pipeline, operations, options) {
             var outputFormat = operations.length > 0 ? operations[operations.length - 1].name : 'png';
