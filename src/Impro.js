@@ -435,6 +435,7 @@ Pipeline.prototype.flush = function () {
                     candidateEngineNames = Impro.engineNamesByOperationName[operation.name].filter((engineName) => {
                         var isSupportedByType = Impro.isSupportedByEngineNameAndInputType[engineName];
                         return (
+                            !Impro.engineByName[engineName].unavailable,
                             this.impro[engineName] !== false &&
                             (engineName === operation.name || isSupportedByType['*'] || (this.targetType && isSupportedByType[this.targetType]))
                         );
@@ -553,6 +554,9 @@ Impro.isTypeByName = {};
 
 Impro.registerEngine = function (options) {
     var engineName = options.name;
+    if (typeof options.unavailable === 'undefined') {
+        options.unavailable = true;
+    }
     Impro.defaultEngineName = Impro.defaultEngineName || engineName;
     Impro.isOperationByEngineNameAndName[engineName] = {};
     Impro.engineByName[options.name] = options;
@@ -648,335 +652,330 @@ if (Inkscape) {
 }
 
 var sharp = requireOr('sharp');
-if (sharp) {
-    Impro.registerEngine({
-        name: 'sharpMetadata',
-        operations: [ 'metadata' ],
-        inputTypes: [ '*' ],
-        outputTypes: [ 'json' ],
-        execute: function (pipeline, operations, options) {
-            var sharpInstance = sharp();
-            var duplexStream = new Stream.Duplex();
-            var animatedGifDetector;
-            var isAnimated;
-            if ((pipeline.targetType === 'gif' || !pipeline.targetType) && createAnimatedGifDetector) {
-                animatedGifDetector = createAnimatedGifDetector();
-                animatedGifDetector.on('animated', function () {
-                    isAnimated = true;
-                    this.emit('decided');
-                    animatedGifDetector = null;
-                });
+Impro.registerEngine({
+    name: 'sharpMetadata',
+    unavailable: !sharp,
+    operations: [ 'metadata' ],
+    inputTypes: [ '*' ],
+    outputTypes: [ 'json' ],
+    execute: function (pipeline, operations, options) {
+        var sharpInstance = sharp();
+        var duplexStream = new Stream.Duplex();
+        var animatedGifDetector;
+        var isAnimated;
+        if ((pipeline.targetType === 'gif' || !pipeline.targetType) && createAnimatedGifDetector) {
+            animatedGifDetector = createAnimatedGifDetector();
+            animatedGifDetector.on('animated', function () {
+                isAnimated = true;
+                this.emit('decided');
+                animatedGifDetector = null;
+            });
 
-                duplexStream.on('finish', function () {
-                    if (typeof isAnimated === 'undefined') {
-                        isAnimated = false;
-                        if (animatedGifDetector) {
-                            animatedGifDetector.emit('decided', false);
-                            animatedGifDetector = null;
-                        }
+            duplexStream.on('finish', function () {
+                if (typeof isAnimated === 'undefined') {
+                    isAnimated = false;
+                    if (animatedGifDetector) {
+                        animatedGifDetector.emit('decided', false);
+                        animatedGifDetector = null;
                     }
-                });
-            }
-            duplexStream._write = function (chunk, encoding, cb) {
-                if (animatedGifDetector) {
-                    animatedGifDetector.write(chunk);
                 }
-                if (sharpInstance.write(chunk, encoding) === false && !animatedGifDetector) {
-                    sharpInstance.once('drain', cb);
-                } else {
-                    cb();
-                }
-            };
-            var alreadyKnownMetadata = {
-                format: pipeline.targetType,
-                contentType: pipeline.targetContentType || mime.types[pipeline.targetType]
-            };
-            if (pipeline._streams.length === 0) {
-                _.extend(alreadyKnownMetadata, pipeline.sourceMetadata);
+            });
+        }
+        duplexStream._write = function (chunk, encoding, cb) {
+            if (animatedGifDetector) {
+                animatedGifDetector.write(chunk);
             }
-            duplexStream._read = function (size) {
-                sharpInstance.metadata(function (err, metadata) {
-                    if (err) {
-                        metadata = _.defaults({ error: err.message }, alreadyKnownMetadata);
+            if (sharpInstance.write(chunk, encoding) === false && !animatedGifDetector) {
+                sharpInstance.once('drain', cb);
+            } else {
+                cb();
+            }
+        };
+        var alreadyKnownMetadata = {
+            format: pipeline.targetType,
+            contentType: pipeline.targetContentType || mime.types[pipeline.targetType]
+        };
+        if (pipeline._streams.length === 0) {
+            _.extend(alreadyKnownMetadata, pipeline.sourceMetadata);
+        }
+        duplexStream._read = function (size) {
+            sharpInstance.metadata(function (err, metadata) {
+                if (err) {
+                    metadata = _.defaults({ error: err.message }, alreadyKnownMetadata);
+                }
+                if (metadata.format === 'magick') {
+                    // https://github.com/lovell/sharp/issues/377
+                    metadata.format = undefined;
+                } else if (metadata.format) {
+                    // metadata.format is one of 'jpeg', 'png', 'webp' so this should be safe:
+                    metadata.contentType = 'image/' + metadata.format;
+                }
+                _.defaults(metadata, alreadyKnownMetadata);
+                if (metadata.exif) {
+                    var exifData;
+                    try {
+                        exifData = exifReader(metadata.exif);
+                    } catch (e) {
+                        // Error: Invalid EXIF
                     }
-                    if (metadata.format === 'magick') {
-                        // https://github.com/lovell/sharp/issues/377
-                        metadata.format = undefined;
-                    } else if (metadata.format) {
-                        // metadata.format is one of 'jpeg', 'png', 'webp' so this should be safe:
-                        metadata.contentType = 'image/' + metadata.format;
+                    metadata.exif = undefined;
+                    if (exifData) {
+                        _.defaults(metadata, exifData);
                     }
-                    _.defaults(metadata, alreadyKnownMetadata);
-                    if (metadata.exif) {
-                        var exifData;
-                        try {
-                            exifData = exifReader(metadata.exif);
-                        } catch (e) {
-                            // Error: Invalid EXIF
-                        }
-                        metadata.exif = undefined;
-                        if (exifData) {
-                            _.defaults(metadata, exifData);
-                        }
+                }
+                if (metadata.icc) {
+                    try {
+                        metadata.icc = icc.parse(metadata.icc);
+                    } catch (e) {
+                        // Error: Error: Invalid ICC profile, remove the Buffer
+                        metadata.icc = undefined;
                     }
-                    if (metadata.icc) {
-                        try {
-                            metadata.icc = icc.parse(metadata.icc);
-                        } catch (e) {
-                            // Error: Error: Invalid ICC profile, remove the Buffer
-                            metadata.icc = undefined;
-                        }
-                    }
-                    function proceed() {
-                        duplexStream.push(JSON.stringify(metadata));
-                        duplexStream.push(null);
-                    }
-                    if (typeof isAnimated === 'boolean') {
+                }
+                function proceed() {
+                    duplexStream.push(JSON.stringify(metadata));
+                    duplexStream.push(null);
+                }
+                if (typeof isAnimated === 'boolean') {
+                    metadata.animated = isAnimated;
+                    proceed();
+                } else if (animatedGifDetector) {
+                    animatedGifDetector.on('decided', function (isAnimated) {
                         metadata.animated = isAnimated;
                         proceed();
-                    } else if (animatedGifDetector) {
-                        animatedGifDetector.on('decided', function (isAnimated) {
-                            metadata.animated = isAnimated;
-                            proceed();
-                        });
-                    } else {
-                        proceed();
-                    }
-                });
-            };
-            duplexStream.on('finish', function () {
-                sharpInstance.end();
+                    });
+                } else {
+                    proceed();
+                }
             });
-            pipeline.add(duplexStream);
-            pipeline.targetType = 'json';
-            pipeline.targetContentType = 'application/json; charset=utf-8';
-        }
-    });
+        };
+        duplexStream.on('finish', function () {
+            sharpInstance.end();
+        });
+        pipeline.add(duplexStream);
+        pipeline.targetType = 'json';
+        pipeline.targetContentType = 'application/json; charset=utf-8';
+    }
+});
 
-    Impro.registerEngine({
-        name: 'sharp',
-        operations: ['resize', 'extract', 'sequentialRead', 'crop', 'max', 'background', 'embed', 'flatten', 'rotate', 'flip', 'flop', 'withoutEnlargement', 'ignoreAspectRatio', 'sharpen', 'interpolateWith', 'gamma', 'grayscale', 'greyscale', 'quality', 'progressive', 'withMetadata', 'compressionLevel'],
-        inputTypes: [ 'jpeg', 'png', 'webp', '*' ],
-        outputTypes: [ 'jpeg', 'png', 'webp' ],
-        execute: function (pipeline, operations, options) {
-            var impro = pipeline.impro;
-            // Would make sense to move the _sharpCacheSet property to the type, but that breaks some test scenarios:
-            if (impro.sharp && typeof impro.sharp.cache !== 'undefined' && !impro._sharpCacheSet) {
-                sharp.cache(impro.sharp.cache);
-                impro._sharpCacheSet = true;
-            }
-            var sharpInstance = sharp();
-            if (impro.maxInputPixels) {
-                sharpInstance = sharpInstance.limitInputPixels(impro.maxInputPixels);
-            }
-            operations.forEach(function (operation) {
-                var args = operation.args;
-                if (operation.name === 'resize' && typeof impro.maxOutputPixels === 'number' && args[0] * args[1] > impro.maxOutputPixels) {
-                    throw new errors.OutputDimensionsExceeded('resize: Target dimensions of ' + args[0] + 'x' + args[1] + ' exceed maxOutputPixels (' + impro.maxOutputPixels + ')');
-                }
-                // Compensate for https://github.com/lovell/sharp/issues/276
-                if (operation.name === 'extract' && args.length >= 4) {
-                    args = [ { left: args[0], top: args[1], width: args[2], height: args[3] } ];
-                }
-                return sharpInstance[operation.name](...args);
-            });
-            pipeline.add(sharpInstance);
+Impro.registerEngine({
+    name: 'sharp',
+    unavailable: !sharp,
+    operations: ['resize', 'extract', 'sequentialRead', 'crop', 'max', 'background', 'embed', 'flatten', 'rotate', 'flip', 'flop', 'withoutEnlargement', 'ignoreAspectRatio', 'sharpen', 'interpolateWith', 'gamma', 'grayscale', 'greyscale', 'quality', 'progressive', 'withMetadata', 'compressionLevel'],
+    inputTypes: [ 'jpeg', 'png', 'webp', '*' ],
+    outputTypes: [ 'jpeg', 'png', 'webp' ],
+    execute: function (pipeline, operations, options) {
+        var impro = pipeline.impro;
+        // Would make sense to move the _sharpCacheSet property to the type, but that breaks some test scenarios:
+        if (impro.sharp && typeof impro.sharp.cache !== 'undefined' && !impro._sharpCacheSet) {
+            sharp.cache(impro.sharp.cache);
+            impro._sharpCacheSet = true;
         }
-    });
-}
+        var sharpInstance = sharp();
+        if (impro.maxInputPixels) {
+            sharpInstance = sharpInstance.limitInputPixels(impro.maxInputPixels);
+        }
+        operations.forEach(function (operation) {
+            var args = operation.args;
+            if (operation.name === 'resize' && typeof impro.maxOutputPixels === 'number' && args[0] * args[1] > impro.maxOutputPixels) {
+                throw new errors.OutputDimensionsExceeded('resize: Target dimensions of ' + args[0] + 'x' + args[1] + ' exceed maxOutputPixels (' + impro.maxOutputPixels + ')');
+            }
+            // Compensate for https://github.com/lovell/sharp/issues/276
+            if (operation.name === 'extract' && args.length >= 4) {
+                args = [ { left: args[0], top: args[1], width: args[2], height: args[3] } ];
+            }
+            return sharpInstance[operation.name](...args);
+        });
+        pipeline.add(sharpInstance);
+    }
+});
 
 var gm = requireOr('gm');
-if (gm) {
-    Impro.registerEngine({
-        name: 'gm',
-        operations: ['gif', 'png', 'jpeg', 'extract'].concat(Object.keys(gm.prototype).filter(function (propertyName) {
-            return (!/^_|^(?:name|emit|.*Listeners?|on|once|size|orientation|format|depth|color|res|filesize|identity|write|stream)$/.test(propertyName) &&
-                typeof gm.prototype[propertyName] === 'function');
-        })),
-        inputTypes: [ 'gif', 'jpeg', 'png', 'ico', '*' ],
-        outputTypes: [ 'gif', 'jpeg', 'png', 'ico' ],
-        execute: function (pipeline, operations) {
-            // For some reason the gm module doesn't expose itself as a readable/writable stream,
-            // so we need to wrap it into one:
+Impro.registerEngine({
+    name: 'gm',
+    unavailable: !gm,
+    operations: ['gif', 'png', 'jpeg', 'extract'].concat(Object.keys(gm.prototype).filter(function (propertyName) {
+        return (!/^_|^(?:name|emit|.*Listeners?|on|once|size|orientation|format|depth|color|res|filesize|identity|write|stream)$/.test(propertyName) &&
+            typeof gm.prototype[propertyName] === 'function');
+    })),
+    inputTypes: [ 'gif', 'jpeg', 'png', 'ico', '*' ],
+    outputTypes: [ 'gif', 'jpeg', 'png', 'ico' ],
+    execute: function (pipeline, operations) {
+        // For some reason the gm module doesn't expose itself as a readable/writable stream,
+        // so we need to wrap it into one:
 
-            var readStream = new Stream();
-            readStream.readable = true;
+        var readStream = new Stream();
+        readStream.readable = true;
 
-            var readWriteStream = new Stream();
-            readWriteStream.readable = readWriteStream.writable = true;
-            var spawned = false;
-            readWriteStream.write = function (chunk) {
-                if (!spawned) {
-                    spawned = true;
-                    var seenData = false,
-                        hasEnded = false,
-                        gmInstance = gm(readStream, getMockFileNameForContentType(operations[0].sourceContentType));
-                    if (pipeline.impro.maxInputPixels) {
-                        gmInstance.limit('pixels', pipeline.impro.maxInputPixels);
+        var readWriteStream = new Stream();
+        readWriteStream.readable = readWriteStream.writable = true;
+        var spawned = false;
+        readWriteStream.write = function (chunk) {
+            if (!spawned) {
+                spawned = true;
+                var seenData = false,
+                    hasEnded = false,
+                    gmInstance = gm(readStream, getMockFileNameForContentType(operations[0].sourceContentType));
+                if (pipeline.impro.maxInputPixels) {
+                    gmInstance.limit('pixels', pipeline.impro.maxInputPixels);
+                }
+                var resize;
+                var crop;
+                var withoutEnlargement;
+                var ignoreAspectRatio;
+                for (var i = 0 ; i < operations.length ; i += 1) {
+                    var operation = operations[i];
+                    if (operation.name === 'resize') {
+                        resize = operation;
+                    } else if (operation.name === 'crop') {
+                        crop = operation;
+                    } else if (operation.name === 'withoutEnlargement') {
+                        withoutEnlargement = operation;
+                    } else if (operation.name === 'ignoreAspectRatio') {
+                        ignoreAspectRatio = operation;
                     }
-                    var resize;
-                    var crop;
-                    var withoutEnlargement;
-                    var ignoreAspectRatio;
-                    for (var i = 0 ; i < operations.length ; i += 1) {
-                        var operation = operations[i];
-                        if (operation.name === 'resize') {
-                            resize = operation;
-                        } else if (operation.name === 'crop') {
-                            crop = operation;
-                        } else if (operation.name === 'withoutEnlargement') {
-                            withoutEnlargement = operation;
-                        } else if (operation.name === 'ignoreAspectRatio') {
-                            ignoreAspectRatio = operation;
-                        }
-                    }
-                    if (withoutEnlargement && resize) {
-                        resize.args[1] += '>';
-                    }
-                    if (ignoreAspectRatio && resize) {
-                        resize.args[1] += '!';
-                    }
-                    if (resize && crop) {
-                        operations.push({
-                            name: 'extent',
-                            args: [].concat(resize.args)
-                        });
-                        resize.args.push('^');
-                    }
-                    operations.reduce(function (gmInstance, operation) {
-                        var args = operation.args;
-                        if (operation.name === 'resize' && typeof pipeline.impro.maxOutputPixels === 'number' && args[0] * args[1] > pipeline.impro.maxOutputPixels) {
-                            throw new errors.OutputDimensionsExceeded('resize: Target dimensions of ' + args[0] + 'x' + args[1] + ' exceed maxOutputPixels (' + pipeline.impro.maxOutputPixels + ')');
-                        }
-                        if (operation.name === 'rotate' && operation.args.length === 1) {
-                            operation = _.extend({}, operation);
-                            operation.args = ['transparent', operation.args[0]];
-                        }
-                        if (operation.name === 'extract') {
-                            operation.name = 'crop';
-                            operation.args = [operation.args[2], operation.args[3], operation.args[0], operation.args[1]];
-                        } else if (operation.name === 'crop') {
-                            operation.name = 'gravity';
-                            operation.args = [
-                                {
-                                    northwest: 'NorthWest',
-                                    north: 'North',
-                                    northeast: 'NorthEast',
-                                    west: 'West',
-                                    center: 'Center',
-                                    east: 'East',
-                                    southwest: 'SouthWest',
-                                    south: 'South',
-                                    southeast: 'SouthEast'
-                                }[String(operation.args[0]).toLowerCase()] || 'Center'
-                            ];
-                        }
-                        if (operation.name === 'progressive') {
-                            operation.name = 'interlace';
-                            operation.args = [ 'line' ];
-                        }
-                        // There are many, many more that could be supported:
-                        if (operation.name === 'webp' || operation.name === 'png' || operation.name === 'jpeg' || operation.name === 'gif') {
-                            operation = _.extend({}, operation);
-                            operation.args.unshift(operation.name);
-                            operation.name = 'setFormat';
-                        }
-                        if (typeof gmInstance[operation.name] === 'function') {
-                            return gmInstance[operation.name].apply(gmInstance, operation.args);
-                        } else {
-                            return gmInstance;
-                        }
-                    }, gmInstance).stream(function (err, stdout, stderr) {
-                        if (err) {
-                            hasEnded = true;
-                            return readWriteStream.emit('error', err);
-                        }
-                        stdout.on('data', function (chunk) {
-                            seenData = true;
-                            readWriteStream.emit('data', chunk);
-                        }).on('end', function () {
-                            if (!hasEnded) {
-                                if (seenData) {
-                                    readWriteStream.emit('end');
-                                } else {
-                                    readWriteStream.emit('error', new Error('The gm stream ended without emitting any data'));
-                                }
-                                hasEnded = true;
-                            }
-                        });
+                }
+                if (withoutEnlargement && resize) {
+                    resize.args[1] += '>';
+                }
+                if (ignoreAspectRatio && resize) {
+                    resize.args[1] += '!';
+                }
+                if (resize && crop) {
+                    operations.push({
+                        name: 'extent',
+                        args: [].concat(resize.args)
                     });
+                    resize.args.push('^');
                 }
-                readStream.emit('data', chunk);
-            };
-            readWriteStream.end = function (chunk) {
-                if (chunk) {
-                    readWriteStream.write(chunk);
-                }
-                readStream.emit('end');
-            };
-            pipeline.add(readWriteStream);
-        }
-    });
-}
+                operations.reduce(function (gmInstance, operation) {
+                    var args = operation.args;
+                    if (operation.name === 'resize' && typeof pipeline.impro.maxOutputPixels === 'number' && args[0] * args[1] > pipeline.impro.maxOutputPixels) {
+                        throw new errors.OutputDimensionsExceeded('resize: Target dimensions of ' + args[0] + 'x' + args[1] + ' exceed maxOutputPixels (' + pipeline.impro.maxOutputPixels + ')');
+                    }
+                    if (operation.name === 'rotate' && operation.args.length === 1) {
+                        operation = _.extend({}, operation);
+                        operation.args = ['transparent', operation.args[0]];
+                    }
+                    if (operation.name === 'extract') {
+                        operation.name = 'crop';
+                        operation.args = [operation.args[2], operation.args[3], operation.args[0], operation.args[1]];
+                    } else if (operation.name === 'crop') {
+                        operation.name = 'gravity';
+                        operation.args = [
+                            {
+                                northwest: 'NorthWest',
+                                north: 'North',
+                                northeast: 'NorthEast',
+                                west: 'West',
+                                center: 'Center',
+                                east: 'East',
+                                southwest: 'SouthWest',
+                                south: 'South',
+                                southeast: 'SouthEast'
+                            }[String(operation.args[0]).toLowerCase()] || 'Center'
+                        ];
+                    }
+                    if (operation.name === 'progressive') {
+                        operation.name = 'interlace';
+                        operation.args = [ 'line' ];
+                    }
+                    // There are many, many more that could be supported:
+                    if (operation.name === 'webp' || operation.name === 'png' || operation.name === 'jpeg' || operation.name === 'gif') {
+                        operation = _.extend({}, operation);
+                        operation.args.unshift(operation.name);
+                        operation.name = 'setFormat';
+                    }
+                    if (typeof gmInstance[operation.name] === 'function') {
+                        return gmInstance[operation.name].apply(gmInstance, operation.args);
+                    } else {
+                        return gmInstance;
+                    }
+                }, gmInstance).stream(function (err, stdout, stderr) {
+                    if (err) {
+                        hasEnded = true;
+                        return readWriteStream.emit('error', err);
+                    }
+                    stdout.on('data', function (chunk) {
+                        seenData = true;
+                        readWriteStream.emit('data', chunk);
+                    }).on('end', function () {
+                        if (!hasEnded) {
+                            if (seenData) {
+                                readWriteStream.emit('end');
+                            } else {
+                                readWriteStream.emit('error', new Error('The gm stream ended without emitting any data'));
+                            }
+                            hasEnded = true;
+                        }
+                    });
+                });
+            }
+            readStream.emit('data', chunk);
+        };
+        readWriteStream.end = function (chunk) {
+            if (chunk) {
+                readWriteStream.write(chunk);
+            }
+            readStream.emit('end');
+        };
+        pipeline.add(readWriteStream);
+    }
+});
 
 var OptiPng = requireOr('optipng');
-if (OptiPng) {
-    Impro.registerEngine({
-        name: 'optipng',
-        inputTypes: [ 'png' ],
-        outputTypes: [ 'png' ],
-        execute: function (pipeline, operations, options) {
-            pipeline.add(new OptiPng(options));
-        }
-    });
-}
+Impro.registerEngine({
+    name: 'optipng',
+    unavailable: !OptiPng,
+    inputTypes: [ 'png' ],
+    outputTypes: [ 'png' ],
+    execute: function (pipeline, operations, options) {
+        pipeline.add(new OptiPng(options));
+    }
+});
 
 var PngCrush = requireOr('pngcrush');
-if (PngCrush) {
-    Impro.registerEngine({
-        name: 'pngcrush',
-        inputTypes: [ 'png' ],
-        outputTypes: [ 'png' ],
-        execute: function (pipeline, operations, options) {
-            pipeline.add(new PngCrush(options));
-        }
-    });
-}
+
+Impro.registerEngine({
+    name: 'pngcrush',
+    unavailable: !PngCrush,
+    inputTypes: [ 'png' ],
+    outputTypes: [ 'png' ],
+    execute: function (pipeline, operations, options) {
+        pipeline.add(new PngCrush(options));
+    }
+});
 
 var PngQuant = requireOr('pngquant');
-if (PngQuant) {
-    Impro.registerEngine({
-        name: 'pngquant',
-        inputTypes: [ 'png' ],
-        outputTypes: [ 'png' ],
-        execute: function (pipeline, operations, options) {
-            pipeline.add(new PngQuant(options));
-        }
-    });
-}
+Impro.registerEngine({
+    name: 'pngquant',
+    unavailable: !PngQuant,
+    inputTypes: [ 'png' ],
+    outputTypes: [ 'png' ],
+    execute: function (pipeline, operations, options) {
+        pipeline.add(new PngQuant(options));
+    }
+});
 
 var JpegTran = requireOr('jpegtran');
-if (JpegTran) {
-    Impro.registerEngine({
-        name: 'jpegtran',
-        inputTypes: [ 'jpeg' ],
-        outputTypes: [ 'jpeg' ],
-        execute: function (pipeline, operations, options) {
-            pipeline.add(new JpegTran(options));
-        }
-    });
-}
+Impro.registerEngine({
+    name: 'jpegtran',
+    unavailable: !JpegTran,
+    inputTypes: [ 'jpeg' ],
+    outputTypes: [ 'jpeg' ],
+    execute: function (pipeline, operations, options) {
+        pipeline.add(new JpegTran(options));
+    }
+});
 
 var SvgFilter = requireOr('svgfilter');
-if (SvgFilter) {
-    Impro.registerEngine({
-        name: 'svgfilter',
-        inputTypes: [ 'svg' ],
-        outputTypes: [ 'svg' ],
-        execute: function (pipeline, operations, options) {
-            pipeline.add(new SvgFilter(options[0]));
-        }
-    });
-}
+Impro.registerEngine({
+    name: 'svgfilter',
+    unavailable: !SvgFilter,
+    inputTypes: [ 'svg' ],
+    outputTypes: [ 'svg' ],
+    execute: function (pipeline, operations, options) {
+        pipeline.add(new SvgFilter(options[0]));
+    }
+});
 
 module.exports = Impro;
