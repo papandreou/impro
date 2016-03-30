@@ -369,7 +369,7 @@ describe('Impro', function () {
             return expect(
                 'turtle.jpg',
                 'when piped through',
-                impro('jpegtran=-grayscale,-flip,horizontal'),
+                impro.jpegtran().grayscale().flip('horizontal'),
                 'to yield output satisfying',
                 expect.it('to have metadata satisfying', {
                     format: 'JPEG',

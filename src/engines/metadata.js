@@ -12,6 +12,9 @@ module.exports = {
     unavailable: !sharp,
     inputTypes: [ '*' ],
     outputTypes: [ 'json' ],
+    validateOperation: function (name, args) {
+        return name === 'metadata' && args.length === 0 || (args.length === 1 && args[0] === true);
+    },
     execute: function (pipeline, operations, options) {
         var sharpInstance = sharp();
         var duplexStream = new Stream.Duplex();

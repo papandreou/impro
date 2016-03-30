@@ -7,18 +7,21 @@ module.exports = {
     inputTypes: [ 'svg' ],
     defaultOutputType: 'png',
     outputTypes: [ 'pdf', 'eps', 'png' ],
+    validateOperation: function (name, args) {
+        return args.length === 0;
+    },
     execute: function (pipeline, operations, options) {
         var outputFormat = operations.length > 0 ? operations[operations.length - 1].name : 'png';
-        var args = (operations[0] && operations[0].args) || [];
+        var commandLineArgs = (operations[0] && operations[0].commandLineArgs) || [];
         if (outputFormat === 'pdf') {
-            args.push('--export-pdf');
+            commandLineArgs.push('--export-pdf');
         } else if (outputFormat === 'eps') {
-            args.push('--export-eps');
+            commandLineArgs.push('--export-eps');
         } else if (!outputFormat || outputFormat === 'png') {
             pipeline.targetType = 'png';
             pipeline.targetContentType = 'image/png';
-            args.push('--export-png');
+            commandLineArgs.push('--export-png');
         }
-        pipeline.add(new Inkscape(args));
+        pipeline.add(new Inkscape(commandLineArgs));
     }
 };

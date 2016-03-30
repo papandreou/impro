@@ -6,7 +6,15 @@ module.exports = {
     unavailable: !OptiPng,
     inputTypes: [ 'png' ],
     outputTypes: [ 'png' ],
+    operations: [ 'o' ],
+    validateOperation: function (name, args) {
+        return name === 'o' && args.length === 1 && args[0] >= 0 && args[0] <= 7;
+    },
     execute: function (pipeline, operations, options) {
-        pipeline.add(new OptiPng(options));
+        var commandLineArgs = [];
+        operations.forEach(({name, args}) => {
+            commandLineArgs.push('-' + name, ...args);
+        });
+        pipeline.add(new OptiPng(commandLineArgs));
     }
 };

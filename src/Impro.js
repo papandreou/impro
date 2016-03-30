@@ -1,307 +1,10 @@
 /*global JSON*/
 var Stream = require('stream');
-var requireOr = require('require-or');
 var _ = require('lodash');
 var util = require('util');
 var mime = require('mime');
 
 mime.extensions['image/vnd.microsoft.icon'] = 'ico';
-
-function isNumberWithin(num, min, max) {
-    return typeof num === 'number' && num >= min && num <= max;
-}
-
-function isValidOperation(name, args) {
-    var maxDimension = 16384;
-    switch (name) {
-    case 'crop':
-        return args.length === 1 && /^(?:east|west|center|north(?:|west|east)|south(?:|west|east))/.test(args[0]);
-    case 'rotate':
-        return args.length === 0 || (args.length === 1 && (args[0] === 0 || args[0] === 90 || args[0] === 180 || args[0] === 270));
-    case 'resize':
-        return args.length === 2 && isNumberWithin(args[0], 1, maxDimension) && isNumberWithin(args[1], 1, maxDimension);
-    case 'extract':
-        return args.length === 4 && isNumberWithin(args[0], 0, maxDimension - 1) && isNumberWithin(args[1], 0, maxDimension - 1) && isNumberWithin(args[2], 1, maxDimension) && isNumberWithin(args[3], 1, maxDimension);
-    case 'interpolateWith':
-        return args.length === 1 && /^(?:nearest|bilinear|vertexSplitQuadraticBasisSpline|bicubic|locallyBoundedBicubic|nohalo)$/.test(args[0]);
-    case 'background':
-        return args.length === 1 && /^#[0-9a-f]{6}$/.test(args[0]);
-    case 'blur':
-        return args.length === 0 || (args.length === 1 && isNumberWithin(args[0], 0.3, 1000));
-    case 'sharpen':
-        return args.length <= 3 &&
-            (typeof args[0] === 'undefined' || typeof args[0] === 'number') &&
-            (typeof args[1] === 'undefined' || typeof args[1] === 'number') &&
-            (typeof args[2] === 'undefined' || typeof args[2] === 'number');
-    case 'threshold':
-        return args.length === 0 || (args.length === 1 && isNumberWithin(args[0], 0, 255));
-    case 'gamma':
-        return args.length === 0 || (args.length === 1 && isNumberWithin(args[0], 1, 3));
-    case 'quality':
-        return args.length === 1 && isNumberWithin(args[0], 1, 100);
-    case 'tile':
-        return args.length <= 2 &&
-            (typeof args[0] === 'undefined' || isNumberWithin(args[0], 1, 8192)) &&
-            (typeof args[1] === 'undefined' || isNumberWithin(args[0], 0, 8192));
-    case 'compressionLevel':
-        return args.length === 1 && isNumberWithin(args[0], 0, 9);
-    case 'png':
-    case 'jpeg':
-    case 'gif':
-    case 'webp':
-    case 'withoutEnlargement':
-    case 'progressive':
-    case 'ignoreAspectRatio':
-    case 'embed':
-    case 'max':
-    case 'min':
-    case 'negate':
-    case 'flatten':
-    case 'flip':
-    case 'flop':
-    case 'grayscale':
-    case 'greyscale':
-    case 'normalize':
-    case 'withMetadata':
-    case 'withoutChromaSubsampling':
-    case 'withoutAdaptiveFiltering':
-    case 'trellisQuantization':
-    case 'trellisQuantisation':
-    case 'overshootDeringing':
-    case 'optimizeScans':
-    case 'optimiseScans':
-        return args.length === 0;
-    // Not supported: overlayWith
-
-    case 'metadata':
-        return args.length === 0 || (args.length === 1 && args[0] === true);
-
-    // Engines:
-    case 'sharp':
-    case 'gm':
-        return args.length === 0;
-
-    // FIXME: Add validation code for all the below.
-    // https://github.com/papandreou/express-processimage/issues/4
-    // Other engines:
-    case 'pngcrush':
-    case 'pngquant':
-    case 'jpegtran':
-    case 'optipng':
-    case 'svgfilter':
-    case 'inkscape':
-        return true;
-
-    // Graphicsmagick specific operations:
-    // FIXME: Add validation code for all the below.
-    // https://github.com/papandreou/express-processimage/issues/4
-    case 'setFormat':
-    case 'identify':
-    case 'selectFrame':
-    case 'subCommand':
-    case 'adjoin':
-    case 'affine':
-    case 'alpha':
-    case 'append':
-    case 'authenticate':
-    case 'average':
-    case 'backdrop':
-    case 'blackThreshold':
-    case 'bluePrimary':
-    case 'border':
-    case 'borderColor':
-    case 'box':
-    case 'channel':
-    case 'chop':
-    case 'clip':
-    case 'coalesce':
-    case 'colorize':
-    case 'colorMap':
-    case 'compose':
-    case 'compress':
-    case 'convolve':
-    case 'createDirectories':
-    case 'deconstruct':
-    case 'define':
-    case 'delay':
-    case 'displace':
-    case 'display':
-    case 'dispose':
-    case 'dissolve':
-    case 'encoding':
-    case 'endian':
-    case 'file':
-    case 'flatten':
-    case 'foreground':
-    case 'frame':
-    case 'fuzz':
-    case 'gaussian':
-    case 'geometry':
-    case 'greenPrimary':
-    case 'highlightColor':
-    case 'highlightStyle':
-    case 'iconGeometry':
-    case 'intent':
-    case 'lat':
-    case 'level':
-    case 'list':
-    case 'log':
-    case 'loop':
-    case 'map':
-    case 'mask':
-    case 'matte':
-    case 'matteColor':
-    case 'maximumError':
-    case 'mode':
-    case 'monitor':
-    case 'mosaic':
-    case 'motionBlur':
-    case 'name':
-    case 'noop':
-    case 'normalize':
-    case 'opaque':
-    case 'operator':
-    case 'orderedDither':
-    case 'outputDirectory':
-    case 'page':
-    case 'pause':
-    case 'pen':
-    case 'ping':
-    case 'pointSize':
-    case 'preview':
-    case 'process':
-    case 'profile':
-    case 'progress':
-    case 'randomThreshold':
-    case 'recolor':
-    case 'redPrimary':
-    case 'remote':
-    case 'render':
-    case 'repage':
-    case 'sample':
-    case 'samplingFactor':
-    case 'scene':
-    case 'scenes':
-    case 'screen':
-    case 'set':
-    case 'segment':
-    case 'shade':
-    case 'shadow':
-    case 'sharedMemory':
-    case 'shave':
-    case 'shear':
-    case 'silent':
-    case 'rawSize':
-    case 'snaps':
-    case 'stegano':
-    case 'stereo':
-    case 'textFont':
-    case 'texture':
-    case 'threshold':
-    case 'thumbnail':
-    case 'tile':
-    case 'title':
-    case 'transform':
-    case 'transparent':
-    case 'treeDepth':
-    case 'update':
-    case 'units':
-    case 'unsharp':
-    case 'usePixmap':
-    case 'view':
-    case 'virtualPixel':
-    case 'visual':
-    case 'watermark':
-    case 'wave':
-    case 'whitePoint':
-    case 'whiteThreshold':
-    case 'window':
-    case 'windowGroup':
-    case 'strip':
-    case 'interlace':
-    case 'setFormat':
-    case 'resizeExact':
-    case 'scale':
-    case 'filter':
-    case 'density':
-    case 'noProfile':
-    case 'resample':
-    case 'rotate':
-    case 'magnify':
-    case 'minify':
-    case 'quality':
-    case 'charcoal':
-    case 'modulate':
-    case 'antialias':
-    case 'bitdepth':
-    case 'colors':
-    case 'colorspace':
-    case 'comment':
-    case 'contrast':
-    case 'cycle':
-    case 'despeckle':
-    case 'dither':
-    case 'monochrome':
-    case 'edge':
-    case 'emboss':
-    case 'enhance':
-    case 'equalize':
-    case 'gamma':
-    case 'implode':
-    case 'label':
-    case 'limit':
-    case 'median':
-    case 'negative':
-    case 'noise':
-    case 'paint':
-    case 'raise':
-    case 'lower':
-    case 'region':
-    case 'roll':
-    case 'sharpen':
-    case 'solarize':
-    case 'spread':
-    case 'swirl':
-    case 'type':
-    case 'trim':
-    case 'extent':
-    case 'gravity':
-    case 'background':
-    case 'fill':
-    case 'stroke':
-    case 'strokeWidth':
-    case 'font':
-    case 'fontSize':
-    case 'draw':
-    case 'drawPoint':
-    case 'drawLine':
-    case 'drawRectangle':
-    case 'drawArc':
-    case 'drawEllipse':
-    case 'drawCircle':
-    case 'drawPolyline':
-    case 'drawPolygon':
-    case 'drawBezier':
-    case 'drawText':
-    case 'setDraw':
-    case 'thumb':
-    case 'thumbExact':
-    case 'morph':
-    case 'sepia':
-    case 'autoOrient':
-    case 'in':
-    case 'out':
-    case 'preprocessor':
-    case 'addSrcFormatter':
-    case 'inputIs':
-    case 'compare':
-    case 'composite':
-    case 'montage':
-        return true;
-    default:
-        return false;
-    }
-}
 
 function Impro(options, operations) {
     if (typeof options === 'string' || Array.isArray(options)) {
@@ -317,6 +20,19 @@ function Impro(options, operations) {
 }
 
 Impro.supportedOptions = [ 'defaultEngineName', 'allowOperation', 'maxInputPixels', 'maxOutputPixels', 'root', 'engines' ];
+
+Impro.prototype.isValidOperation = function (name, args) {
+    var engineNames = Impro.engineNamesByOperationName[name];
+    return engineNames && engineNames.some(function (engineName) {
+        var isValid = Impro.engineByName[engineName].validateOperation(name, args);
+        return isValid || (typeof isValid === 'undefined' && args.length === 0);
+    });
+};
+
+Impro.prototype.isValidOperationForEngine = function (engineName, name, args) {
+    var isValid = Impro.engineNamesByOperationName[name].indexOf(engineName) !== -1 && Impro.engineByName[engineName].validateOperation(name, args);
+    return isValid || (typeof isValid === 'undefined' && args.length === 0);
+};
 
 Impro.prototype.parse = function (queryString) {
     var keyValuePairs = queryString.split('&');
@@ -341,7 +57,7 @@ Impro.prototype.parse = function (queryString) {
                     }
                 }) : [];
 
-            if (!isValidOperation(operationName, operationArgs) || (typeof this.allowOperation === 'function' && !this.allowOperation(operationName, operationArgs))) {
+            if (!this.isValidOperation(operationName, operationArgs) || (typeof this.allowOperation === 'function' && !this.allowOperation(operationName, operationArgs))) {
                 leftOverQueryStringFragments.push(keyValuePair);
             } else {
                 operations.push({ name: operationName, args: operationArgs });
@@ -416,7 +132,7 @@ Pipeline.prototype.flush = function () {
                     this.targetContentType = mime.types[operation.name];
                 }
                 var filteredCandidateEngineNames = candidateEngineNames && candidateEngineNames.filter(
-                    (engineName) => Impro.engineNamesByOperationName[operation.name].indexOf(engineName) !== -1
+                    engineName => this.impro.isValidOperationForEngine(engineName, operation.name, operation.args)
                 );
                 if (filteredCandidateEngineNames && filteredCandidateEngineNames.length > 0) {
                     candidateEngineNames = filteredCandidateEngineNames;
@@ -546,6 +262,10 @@ Impro.use = function (options) {
     var engineName = options.name;
     if (typeof options.unavailable === 'undefined') {
         options.unavailable = true;
+    }
+    if (typeof options.validateOperation === 'undefined') {
+        // Will allow all options.operations that don't take any arguments:
+        options.validateOperation = function () {};
     }
     Impro.defaultEngineName = Impro.defaultEngineName || engineName;
     Impro.isOperationByEngineNameAndName[engineName] = {};

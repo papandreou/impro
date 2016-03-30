@@ -1,12 +1,33 @@
 var requireOr = require('require-or');
 var Gifsicle = requireOr('gifsicle-stream');
 
+function isNumberWithin(num, min, max) {
+    return typeof num === 'number' && num >= min && num <= max;
+}
+
+var maxDimension = 16384;
+
 module.exports = {
     name: 'gifsicle',
     unavailable: !Gifsicle,
     operations: [ 'crop', 'rotate', 'progressive', 'extract', 'resize', 'ignoreAspectRatio', 'withoutEnlargement' ],
     inputTypes: [ 'gif' ],
     outputTypes: [ 'gif' ],
+    validateOperation: function (name, args) {
+        switch (name) {
+        case 'crop':
+            // FIXME: .crop(gravity) is presently ignored, seems like there's no mapping to gifsicle switches
+            return args.length === 1 && /^(?:east|west|center|north(?:|west|east)|south(?:|west|east))/.test(args[0]);
+        case 'rotate':
+            return args.length === 0 || (args.length === 1 && (args[0] === 0 || args[0] === 90 || args[0] === 180 || args[0] === 270));
+        case 'resize':
+            return args.length === 2 && isNumberWithin(args[0], 1, maxDimension) && isNumberWithin(args[1], 1, maxDimension);
+        case 'extract':
+            return args.length === 4 && isNumberWithin(args[0], 0, maxDimension - 1) && isNumberWithin(args[1], 0, maxDimension - 1) && isNumberWithin(args[2], 1, maxDimension) && isNumberWithin(args[3], 1, maxDimension);
+        case 'quality':
+            return args.length === 1 && isNumberWithin(args[0], 1, 100);
+        }
+    },
     execute: function (pipeline, operations) {
         var gifsicleArgs = [];
         var seenOperationThatMustComeBeforeExtract = false;

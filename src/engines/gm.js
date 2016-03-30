@@ -11,6 +11,12 @@ function getMockFileNameForContentType(contentType) {
     }
 }
 
+function isNumberWithin(num, min, max) {
+    return typeof num === 'number' && num >= min && num <= max;
+}
+
+var maxDimension = 16384;
+
 module.exports = {
     name: 'gm',
     unavailable: !gm,
@@ -18,8 +24,27 @@ module.exports = {
         return (!/^_|^(?:name|emit|.*Listeners?|on|once|size|orientation|format|depth|color|res|filesize|identity|write|stream)$/.test(propertyName) &&
             typeof gm.prototype[propertyName] === 'function');
     })),
-    inputTypes: [ 'gif', 'jpeg', 'png', 'ico', '*' ],
-    outputTypes: [ 'gif', 'jpeg', 'png', 'ico' ],
+    inputTypes: [ 'gif', 'jpeg', 'png', 'ico', 'tga', 'tiff', '*' ],
+    outputTypes: [ 'gif', 'jpeg', 'png', 'ico', 'tga', 'tiff' ],
+    validateOperation: function (name, args) {
+        switch (name) {
+        // Operations that emulate sharp's API:
+        case 'withoutEnlargement':
+        case 'ignoreAspectRatio':
+        case 'progressive':
+            return args.length === 0;
+        case 'crop':
+            return args.length === 1 && /^(?:east|west|center|north(?:|west|east)|south(?:|west|east))/.test(args[0]);
+        case 'rotate':
+            return args.length === 0 || (args.length === 1 && (args[0] === 0 || args[0] === 90 || args[0] === 180 || args[0] === 270));
+        case 'resize':
+            return args.length === 2 && isNumberWithin(args[0], 1, maxDimension) && isNumberWithin(args[1], 1, maxDimension);
+        case 'extract':
+            return args.length === 4 && isNumberWithin(args[0], 0, maxDimension - 1) && isNumberWithin(args[1], 0, maxDimension - 1) && isNumberWithin(args[2], 1, maxDimension) && isNumberWithin(args[3], 1, maxDimension);
+        case 'quality':
+            return args.length === 1 && isNumberWithin(args[0], 1, 100);
+        }
+    },
     execute: function (pipeline, operations) {
         // For some reason the gm module doesn't expose itself as a readable/writable stream,
         // so we need to wrap it into one:
