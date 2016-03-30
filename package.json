@@ -1,6 +1,6 @@
 {
   "name": "impro",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "Image processing engine",
   "author": "Andreas Lind <andreas@one.com>",
   "main": "index.js",
