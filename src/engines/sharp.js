@@ -11,7 +11,7 @@ var maxDimension = 16384;
 module.exports = {
     name: 'sharp',
     unavailable: !sharp,
-    operations: ['resize', 'extract', 'sequentialRead', 'crop', 'max', 'background', 'embed', 'flatten', 'rotate', 'flip', 'flop', 'withoutEnlargement', 'ignoreAspectRatio', 'sharpen', 'interpolateWith', 'gamma', 'grayscale', 'greyscale', 'quality', 'progressive', 'withMetadata', 'compressionLevel'],
+    operations: [ 'resize', 'extract', 'sequentialRead', 'crop', 'max', 'background', 'embed', 'flatten', 'negate', 'rotate', 'flip', 'flop', 'withoutEnlargement', 'ignoreAspectRatio', 'blur', 'sharpen', 'threshold', 'interpolateWith', 'gamma', 'grayscale', 'greyscale', 'quality', 'progressive', 'withMetadata', 'compressionLevel', 'normalize', 'normalise', 'withoutAdaptiveFiltering', 'trellisQuantisation', 'trellisQuantization', 'overshootDeringing', 'optimizeScans', 'optimiseScans' ],
     inputTypes: [ 'jpeg', 'png', 'webp', 'svg', 'tiff', '*' ],
     outputTypes: [ 'jpeg', 'png', 'webp', 'tiff', 'dzi' ],
     validateOperation: function (name, args) {
