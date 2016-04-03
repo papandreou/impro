@@ -52,13 +52,17 @@ module.exports = {
     execute: function (pipeline, operations, options) {
         var impro = pipeline.impro;
         // Would make sense to move the _sharpCacheSet property to the type, but that breaks some test scenarios:
-        if (impro.sharp && typeof impro.sharp.cache !== 'undefined' && !impro._sharpCacheSet) {
-            sharp.cache(impro.sharp.cache);
+        var sharpOptions = impro.sharp || {};
+        if (sharpOptions.cache !== 'undefined' && !impro._sharpCacheSet) {
+            sharp.cache(sharpOptions.cache);
             impro._sharpCacheSet = true;
         }
         var sharpInstance = sharp();
         if (impro.maxInputPixels) {
             sharpInstance = sharpInstance.limitInputPixels(impro.maxInputPixels);
+        }
+        if (sharpOptions.sequentialRead) {
+            sharpInstance = sharpInstance.sequentialRead();
         }
         operations.forEach(function (operation) {
             var args = operation.args;

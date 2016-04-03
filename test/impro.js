@@ -251,6 +251,24 @@ describe('Impro', function () {
             });
         });
 
+        it('should allow passing a sequentialRead option', function () {
+            var sequentialReadSpy = sinon.spy(require('sharp').prototype, 'sequentialRead');
+            return expect(
+                'turtle.jpg',
+                'when piped through',
+                new Impro({sharp: {sequentialRead: true}}).resize(10, 10),
+                'to yield output satisfying to have metadata satisfying', {
+                    format: 'JPEG'
+                }
+            ).then(function () {
+                expect(sequentialReadSpy, 'to have calls satisfying', function () {
+                    sequentialReadSpy();
+                });
+            }).finally(function () {
+                sequentialReadSpy.restore();
+            });
+        });
+
         it('should only call sharp.cache once, even after processing multiple images', function () {
             var cacheSpy = sinon.spy(require('sharp'), 'cache');
             var improInstance = new Impro({sharp: {cache: 123}});
