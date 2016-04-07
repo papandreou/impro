@@ -6,8 +6,7 @@ var expect = require('unexpected').clone()
     .use(require('unexpected-resemble'));
 var sinon = require('sinon');
 
-var Impro = require('../');
-var impro = Impro;
+var impro = require('../');
 
 var memoizeSync = require('memoizesync');
 var pathModule = require('path');
@@ -25,37 +24,28 @@ expect.addAssertion('<Stream> to yield JSON output satisfying <any>', function (
     return expect(subject, 'to yield output satisfying when decoded as', 'utf-8', 'when passed as parameter to', JSON.parse, 'to satisfy', value);
 });
 
-describe('Impro', function () {
-    describe('when instantiated with new', function () {
-        it('should return a new instance', function () {
-            expect(new Impro(), 'to be an', Impro);
-        });
-    });
-
-    describe('when called without new', function () {
-        it('should return a pipeline', function () {
-            // Use 'to be a' when Pipeline is exposed via its own file
-            expect(impro().constructor.name, 'to equal', 'Pipeline');
-        });
+describe('impro', function () {
+    it('should be an instance of impro.Impro', function () {
+        expect(impro, 'to be an', impro.Impro);
     });
 
     describe('when passed an object', function () {
         it('should interpret unsupported properties as source metadata', function () {
-            expect(impro({foo: 'bar'}).sourceMetadata, 'to equal', {foo: 'bar'});
+            expect(impro.set({foo: 'bar'}).sourceMetadata, 'to equal', {foo: 'bar'});
         });
 
         it('should support a type property', function () {
-            expect(impro({type: 'gif'}).targetContentType, 'to equal', 'image/gif');
+            expect(impro.set({type: 'gif'}).targetContentType, 'to equal', 'image/gif');
         });
 
         it('should support a type property that is a full Content-Type', function () {
-            expect(impro({type: 'image/gif'}).targetContentType, 'to equal', 'image/gif');
+            expect(impro.set({type: 'image/gif'}).targetContentType, 'to equal', 'image/gif');
         });
     });
 
     describe('#parse', function () {
         it('should return an object with the operations and the leftover parameters, given a query string', function () {
-            expect(new Impro().parse('foo=bar&resize=120,120'), 'to equal', {
+            expect(impro.parse('foo=bar&resize=120,120'), 'to equal', {
                 operations: [
                     { name: 'resize', args: [ 120, 120 ] }
                 ],
@@ -69,7 +59,7 @@ describe('Impro', function () {
             return expect(
                 'turtle.jpg',
                 'when piped through',
-                impro('resize=40,15&crop=center'),
+                impro.add('resize=40,15&crop=center'),
                 'to yield output satisfying to resemble',
                 load('turtleCroppedCenter.jpg')
             );
@@ -81,7 +71,7 @@ describe('Impro', function () {
             return expect(
                 'turtle.jpg',
                 'when piped through',
-                impro([
+                impro.add([
                     { name: 'resize', args: [ 40, 15 ] },
                     { name: 'crop', args: [ 'center' ] }
                 ]),
@@ -96,7 +86,7 @@ describe('Impro', function () {
             return expect(
                 'turtle.jpg',
                 'when piped through',
-                impro().resize(40, 15).crop('center'),
+                impro.resize(40, 15).crop('center'),
                 'to yield output satisfying to resemble',
                 load('turtleCroppedCenter.jpg')
             );
@@ -105,13 +95,13 @@ describe('Impro', function () {
 
     describe('when given a source content type', function () {
         it('should default to output an image of the same type', function () {
-            return expect(impro().type('image/jpeg').resize(40, 15).crop('center'), 'to satisfy', {
+            return expect(impro.type('image/jpeg').resize(40, 15).crop('center'), 'to satisfy', {
                 targetContentType: 'image/jpeg'
             });
         });
 
         it('should honor an explicit type conversion', function () {
-            return expect(impro().type('image/jpeg').gif().flush(), 'to satisfy', {
+            return expect(impro.type('image/jpeg').gif().flush(), 'to satisfy', {
                 targetContentType: 'image/gif'
             });
         });
@@ -121,7 +111,7 @@ describe('Impro', function () {
         return expect(
             'turtle.jpg',
             'when piped through',
-            impro().gm().resize(40, 15).crop('center'),
+            impro.gm().resize(40, 15).crop('center'),
             'to yield output satisfying to resemble',
             load('turtleCroppedCenterGm.jpg')
         );
@@ -137,7 +127,7 @@ describe('Impro', function () {
     });
 
     it('should not provide a targetContentType when no source content type is given and no explicit conversion has been performed', function () {
-        return expect(impro().resize(40, 15).crop('center'), 'to satisfy', {
+        return expect(impro.resize(40, 15).crop('center'), 'to satisfy', {
             targetContentType: undefined
         });
     });
@@ -147,7 +137,7 @@ describe('Impro', function () {
             return expect(
                 'turtle.jpg',
                 'when piped through',
-                impro().metadata(),
+                impro.metadata(),
                 'to yield JSON output satisfying', {
                     contentType: 'image/jpeg',
                     width: 481,
@@ -164,7 +154,7 @@ describe('Impro', function () {
             return expect(
                 'turtle.jpg',
                 'when piped through',
-                impro({ filesize: 105836, etag: 'W/"foobar"' }).metadata(),
+                impro.set({ filesize: 105836, etag: 'W/"foobar"' }).metadata(),
                 'to yield JSON output satisfying', {
                     contentType: 'image/jpeg',
                     filesize: 105836,
@@ -177,7 +167,7 @@ describe('Impro', function () {
             return expect(
                 'turtle.jpg',
                 'when piped through',
-                impro({ filesize: 105836, etag: 'W/"foobar"' }).resize(10, 10).metadata(),
+                impro.set({ filesize: 105836, etag: 'W/"foobar"' }).resize(10, 10).metadata(),
                 'to yield JSON output satisfying', {
                     contentType: 'image/jpeg',
                     filesize: undefined,
@@ -192,7 +182,7 @@ describe('Impro', function () {
             return expect(
                 'something.txt',
                 'when piped through',
-                impro().type('text/plain; charset=UTF-8').metadata(),
+                impro.type('text/plain; charset=UTF-8').metadata(),
                 'to yield JSON output satisfying', {
                     error: 'Input buffer contains unsupported image format',
                     contentType: 'text/plain; charset=UTF-8'
@@ -204,7 +194,7 @@ describe('Impro', function () {
             return expect(
                 'animated.gif',
                 'when piped through',
-                impro().metadata(),
+                impro.metadata(),
                 'to yield JSON output satisfying', {
                     animated: true
                 }
@@ -215,7 +205,7 @@ describe('Impro', function () {
             return expect(
                 'bulb.gif',
                 'when piped through',
-                impro().metadata(),
+                impro.metadata(),
                 'to yield JSON output satisfying', {
                     animated: false
                 }
@@ -227,7 +217,7 @@ describe('Impro', function () {
         return expect(
             'testImage.png',
             'when piped through',
-            impro().add({ name: 'optipng', args: [ '-o7' ]}),
+            impro.add({ name: 'optipng', args: [ '-o7' ]}),
             'to yield output satisfying to have length', 149
         );
     });
@@ -238,7 +228,7 @@ describe('Impro', function () {
             return expect(
                 'turtle.jpg',
                 'when piped through',
-                new Impro({sharp: {cache: 123}}).resize(10, 10),
+                impro.set({sharp: {cache: 123}}).resize(10, 10),
                 'to yield output satisfying to have metadata satisfying', {
                     format: 'JPEG'
                 }
@@ -256,7 +246,7 @@ describe('Impro', function () {
             return expect(
                 'turtle.jpg',
                 'when piped through',
-                new Impro({sharp: {sequentialRead: true}}).resize(10, 10),
+                impro.set({sharp: {sequentialRead: true}}).resize(10, 10),
                 'to yield output satisfying to have metadata satisfying', {
                     format: 'JPEG'
                 }
@@ -271,7 +261,7 @@ describe('Impro', function () {
 
         it('should only call sharp.cache once, even after processing multiple images', function () {
             var cacheSpy = sinon.spy(require('sharp'), 'cache');
-            var improInstance = new Impro({sharp: {cache: 123}});
+            var improInstance = impro.set({sharp: {cache: 123}});
             return expect(
                 'turtle.jpg',
                 'when piped through',
@@ -316,7 +306,7 @@ describe('Impro', function () {
 
         it('should use another engine for gifs when gifsicle is disabled', function () {
             return expect(
-                impro({gifsicle: false}).type('gif').resize(10, 10).flush(),
+                impro.set({gifsicle: false}).type('gif').resize(10, 10).flush(),
                 'to satisfy',
                 { usedEngines: [{name: 'gm'}]}
             );
@@ -408,13 +398,13 @@ describe('Impro', function () {
     describe('with a maxOutputPixels setting', function () {
         it('should refuse to resize an image to exceed the max number of pixels', function () {
             expect(function () {
-                new Impro({maxOutputPixels: 2}).resize(100, 100).flush();
+                impro.set({maxOutputPixels: 2}).type('jpeg').resize(100, 100).flush();
             }, 'to throw', 'resize: Target dimensions of 100x100 exceed maxOutputPixels (2)');
         });
 
         it.skip('should refuse to resize an image to exceed the max number of pixels, gm', function () {
             expect(function () {
-                new Impro({maxOutputPixels: 2}).gm().resize(100, 100).flush();
+                impro.set({maxOutputPixels: 2}).gm().resize(100, 100).flush();
             }, 'to throw', 'resize: Target dimensions of 100x100 exceed maxOutputPixels (2)');
         });
     });

@@ -58,16 +58,16 @@ module.exports = {
             impro._sharpCacheSet = true;
         }
         var sharpInstance = sharp();
-        if (impro.maxInputPixels) {
-            sharpInstance = sharpInstance.limitInputPixels(impro.maxInputPixels);
+        if (pipeline.maxInputPixels) {
+            sharpInstance = sharpInstance.limitInputPixels(pipeline.maxInputPixels);
         }
         if (sharpOptions.sequentialRead) {
             sharpInstance = sharpInstance.sequentialRead();
         }
         operations.forEach(function (operation) {
             var args = operation.args;
-            if (operation.name === 'resize' && typeof impro.maxOutputPixels === 'number' && args[0] * args[1] > impro.maxOutputPixels) {
-                throw new errors.OutputDimensionsExceeded('resize: Target dimensions of ' + args[0] + 'x' + args[1] + ' exceed maxOutputPixels (' + impro.maxOutputPixels + ')');
+            if (operation.name === 'resize' && typeof pipeline.maxOutputPixels === 'number' && args[0] * args[1] > pipeline.maxOutputPixels) {
+                throw new errors.OutputDimensionsExceeded('resize: Target dimensions of ' + args[0] + 'x' + args[1] + ' exceed maxOutputPixels (' + pipeline.maxOutputPixels + ')');
             }
             // Compensate for https://github.com/lovell/sharp/issues/276
             if (operation.name === 'extract' && args.length >= 4) {
