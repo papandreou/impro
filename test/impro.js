@@ -223,8 +223,8 @@ describe('impro', function () {
     });
 
     describe('with the sharp engine', function () {
-        it('should allow passing a cache option', function () {
-            var cacheSpy = sinon.spy(require('sharp'), 'cache');
+        it('should allow passing a cache option', sinon.test(function () {
+            var cacheSpy = this.spy(require('sharp'), 'cache');
             return expect(
                 'turtle.jpg',
                 'when piped through',
@@ -236,13 +236,11 @@ describe('impro', function () {
                 expect(cacheSpy, 'to have calls satisfying', function () {
                     cacheSpy(123);
                 });
-            }).finally(function () {
-                cacheSpy.restore();
             });
-        });
+        }));
 
-        it('should allow passing a sequentialRead option', function () {
-            var sequentialReadSpy = sinon.spy(require('sharp').prototype, 'sequentialRead');
+        it('should allow passing a sequentialRead option', sinon.test(function () {
+            var sequentialReadSpy = this.spy(require('sharp').prototype, 'sequentialRead');
             return expect(
                 'turtle.jpg',
                 'when piped through',
@@ -254,13 +252,11 @@ describe('impro', function () {
                 expect(sequentialReadSpy, 'to have calls satisfying', function () {
                     sequentialReadSpy();
                 });
-            }).finally(function () {
-                sequentialReadSpy.restore();
             });
-        });
+        }));
 
-        it('should only call sharp.cache once, even after processing multiple images', function () {
-            var cacheSpy = sinon.spy(require('sharp'), 'cache');
+        it('should only call sharp.cache once, even after processing multiple images', sinon.test(function () {
+            var cacheSpy = this.spy(require('sharp'), 'cache');
             var improInstance = impro.set({sharp: {cache: 123}});
             return expect(
                 'turtle.jpg',
@@ -277,9 +273,8 @@ describe('impro', function () {
                     format: 'JPEG'
                 }
             ))
-            .then(() => expect(cacheSpy, 'to have calls satisfying', () => cacheSpy(123)))
-            .finally(() => cacheSpy.restore());
-        });
+            .then(() => expect(cacheSpy, 'to have calls satisfying', () => cacheSpy(123)));
+        }));
     });
 
     describe('with the gifsicle engine', function () {
@@ -304,7 +299,7 @@ describe('impro', function () {
             );
         });
 
-        it('should use another engine for gifs when gifsicle is disabled', function () {
+        it('should use gm for gifs when gifsicle is disabled', function () {
             return expect(
                 impro.set({gifsicle: false}).type('gif').resize(10, 10).flush(),
                 'to satisfy',

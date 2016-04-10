@@ -4,7 +4,9 @@ var _ = require('lodash');
 var util = require('util');
 var mime = require('mime');
 
-mime.extensions['image/vnd.microsoft.icon'] = 'ico';
+mime.define({
+    'image/vnd.microsoft.icon': ['ico']
+});
 
 function Impro(options, operations) {
     if (typeof options === 'string' || Array.isArray(options)) {
@@ -44,78 +46,81 @@ function Impro(options, operations) {
     util.inherits(Pipeline, Stream.Duplex);
 
     Pipeline.prototype.flush = function () {
-        if (!this._flushed) {
-            this._flushed = true;
-            this.usedEngines = [];
-            var startIndex = 0;
-            var candidateEngineNames;
-            var _flush = (upToIndex) => {
-                if (startIndex < upToIndex) {
-                    if (this.targetType) {
-                        candidateEngineNames = candidateEngineNames.filter(engineName => {
-                            return this.impro.engineByName[engineName].defaultOutputType || this.impro.isSupportedByEngineNameAndOutputType[engineName][this.targetType];
-                        });
-                    }
-                    if (candidateEngineNames.length === 0) {
-                        throw new Error('No supported engine can carry out this sequence of operations');
-                    }
-                    var engineName = candidateEngineNames[0];
-                    var options;
-                    if (this._queuedOperations[startIndex].name === engineName) {
-                        options = this._queuedOperations[startIndex].args;
-                        startIndex += 1;
-                    }
-                    var operations = this._queuedOperations.slice(startIndex, upToIndex);
-                    this.impro.engineByName[engineName].execute(this, operations, options);
-                    operations.forEach(operation => operation.engineName = engineName);
-                    this.usedEngines.push({name: engineName, operations});
-                    startIndex = upToIndex;
-                }
-            };
-
-            this._queuedOperations.forEach((operation, i) => {
-                if (this.impro.engineNamesByOperationName[operation.name]) {
-                    if (this.impro.isTypeByName[operation.name]) {
-                        this.targetType = operation.name;
-                        this.targetContentType = mime.types[operation.name];
-                    }
-                    var filteredCandidateEngineNames = candidateEngineNames && candidateEngineNames.filter(
-                        engineName => this.impro.isValidOperationForEngine(engineName, operation.name, operation.args)
-                    );
-                    if (filteredCandidateEngineNames && filteredCandidateEngineNames.length > 0) {
-                        candidateEngineNames = filteredCandidateEngineNames;
-                    } else {
-                        _flush(i);
-                        candidateEngineNames = this.impro.engineNamesByOperationName[operation.name].filter(engineName => {
-                            var isSupportedByType = this.impro.isSupportedByEngineNameAndInputType[engineName];
-                            return (
-                                !this.impro.engineByName[engineName].unavailable,
-                                this.impro[engineName] !== false &&
-                                (engineName === operation.name || isSupportedByType['*'] || (this.targetType && isSupportedByType[this.targetType]))
-                            );
-                        });
-                    }
-                }
-            });
-            _flush(this._queuedOperations.length);
-            this._queuedOperations = undefined;
-            this._streams.push(new Stream.PassThrough());
-            this._streams.forEach(function (stream, i) {
-                if (i < this._streams.length - 1) {
-                    stream.pipe(this._streams[i + 1]);
-                } else {
-                    stream.on('readable', function () {
-                        this.push(stream.read());
-                    }.bind(this)).on('end', function () {
-                        this.push(null);
-                    }.bind(this));
-                }
-                stream.on('error', this._fail.bind(this));
-            }, this);
-            this.on('finish', function () {
-                this._streams[0].end();
-            }.bind(this));
+        if (this._flushed) {
+            return this;
         }
+
+        this._flushed = true;
+        this.usedEngines = [];
+        var startIndex = 0;
+        var candidateEngineNames;
+        var _flush = (upToIndex) => {
+            if (startIndex < upToIndex) {
+                if (this.targetType) {
+                    candidateEngineNames = candidateEngineNames.filter(engineName => {
+                        return this.impro.engineByName[engineName].defaultOutputType || this.impro.isSupportedByEngineNameAndOutputType[engineName][this.targetType];
+                    });
+                }
+                if (candidateEngineNames.length === 0) {
+                    throw new Error('No supported engine can carry out this sequence of operations');
+                }
+                var engineName = candidateEngineNames[0];
+                var options;
+                if (this._queuedOperations[startIndex].name === engineName) {
+                    options = this._queuedOperations[startIndex].args;
+                    startIndex += 1;
+                }
+                var operations = this._queuedOperations.slice(startIndex, upToIndex);
+                this.impro.engineByName[engineName].execute(this, operations, options);
+                operations.forEach(operation => operation.engineName = engineName);
+                this.usedEngines.push({name: engineName, operations});
+                startIndex = upToIndex;
+            }
+        };
+
+        this._queuedOperations.forEach((operation, i) => {
+            if (this.impro.engineNamesByOperationName[operation.name]) {
+                if (this.impro.isTypeByName[operation.name]) {
+                    this.targetType = operation.name;
+                    this.targetContentType = mime.types[operation.name];
+                }
+                var filteredCandidateEngineNames = candidateEngineNames && candidateEngineNames.filter(
+                    engineName => this.impro.isValidOperationForEngine(engineName, operation.name, operation.args)
+                );
+                if (filteredCandidateEngineNames && filteredCandidateEngineNames.length > 0) {
+                    candidateEngineNames = filteredCandidateEngineNames;
+                } else {
+                    _flush(i);
+                    candidateEngineNames = this.impro.engineNamesByOperationName[operation.name].filter(engineName => {
+                        var isSupportedByType = this.impro.isSupportedByEngineNameAndInputType[engineName];
+                        return (
+                            !this.impro.engineByName[engineName].unavailable,
+                            this.impro[engineName] !== false &&
+                            (engineName === operation.name || isSupportedByType['*'] || (this.targetType && isSupportedByType[this.targetType]))
+                        );
+                    });
+                }
+            }
+        });
+        _flush(this._queuedOperations.length);
+        this._queuedOperations = undefined;
+        this._streams.push(new Stream.PassThrough());
+        this._streams.forEach(function (stream, i) {
+            if (i < this._streams.length - 1) {
+                stream.pipe(this._streams[i + 1]);
+            } else {
+                stream.on('readable', function () {
+                    this.push(stream.read());
+                }.bind(this)).on('end', function () {
+                    this.push(null);
+                }.bind(this));
+            }
+            stream.on('error', this._fail.bind(this));
+        }, this);
+        this.on('finish', function () {
+            this._streams[0].end();
+        }.bind(this));
+
         return this;
     };
 
