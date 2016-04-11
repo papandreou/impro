@@ -27,13 +27,13 @@ export default class Impro {
 
         _.extend(this, {defaultEngineName: Impro.defaultEngineName}, _.pick(options, this.supportedOptions));
 
-        this.PrivatePipeline = class extends Pipeline {};
+        this._Pipeline = class extends Pipeline {};
 
         ['type', 'source', 'maxInputPixels', 'maxOutputPixels'].forEach(propertyName => this.registerMethod(propertyName));
     }
 
-    createPrivatePipeline(options, operations) {
-        var pipeline = new this.PrivatePipeline(this, options);
+    createPipeline(options, operations) {
+        var pipeline = new this._Pipeline(this, options);
         if (operations) {
             pipeline.add(operations);
         }
@@ -41,17 +41,17 @@ export default class Impro {
     }
 
     registerMethod(operationName, fn) {
-        if (!this.PrivatePipeline.prototype[operationName]) {
-            this.PrivatePipeline.prototype[operationName] = fn || function (...args) {
+        if (!this._Pipeline.prototype[operationName]) {
+            this._Pipeline.prototype[operationName] = fn || function (...args) {
                 return this.add({name: operationName, args});
             };
         }
-        this[operationName] = (...args) => this.createPrivatePipeline()[operationName](...args);
+        this[operationName] = (...args) => this.createPipeline()[operationName](...args);
         return this;
     }
 
     add(...rest) {
-        return this.createPrivatePipeline().add(...rest);
+        return this.createPipeline().add(...rest);
     }
 
     set(options) {
