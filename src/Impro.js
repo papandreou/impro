@@ -159,42 +159,6 @@ function Impro(options, operations) {
             operation.forEach(operation => this.add(operation));
         } else if (typeof operation === 'string') {
             this.impro.parse(operation).operations.forEach(operation => this.add(operation));
-        } else if (operation.name === 'maxOutputPixels') {
-            if (operation.args.length !== 1 || typeof operation.args[0] !== 'number') {
-                throw new Error('Max output pixels must be given as a number');
-            } else {
-                this.options.maxOutputPixels = operation.args[0];
-            }
-        } else if (operation.name === 'maxInputPixels') {
-            if (operation.args.length !== 1 || typeof operation.args[0] !== 'number') {
-                throw new Error('Max input pixels must be given as a number');
-            } else {
-                this.options.maxInputPixels = operation.args[0];
-            }
-        } else if (operation.name === 'type') {
-            if (operation.args.length !== 1 || typeof operation.args[0] !== 'string') {
-                throw new Error('Type must be given as a string');
-            } else {
-                var type = operation.args[0];
-                if (this.impro.isTypeByName[type]) {
-                    this.sourceType = this.targetType = type;
-                    this.targetContentType = mime.types[type];
-                } else {
-                    var extension = mime.extensions[type.replace(/\s*;.*$/, '')];
-                    if (extension) {
-                        if (this.impro.isTypeByName[extension]) {
-                            this.sourceType = this.targetType = extension;
-                        }
-                        this.targetContentType = type;
-                    }
-                }
-            }
-        } else if (operation.name === 'source') {
-            if (operation.args.length !== 1 || typeof operation.args[0] !== 'object') {
-                throw new Error('Source must be given as an object');
-            } else {
-                _.extend(this.sourceMetadata, operation.args[0]);
-            }
         } else if (operation && typeof operation.name === 'string') {
             this._queuedOperations.push(operation);
         } else {
@@ -211,14 +175,61 @@ function Impro(options, operations) {
         return pipeline;
     };
 
-    this.registerMethod = function (operationName) {
-        Pipeline.prototype[operationName] = function (...args) { return this.add({name: operationName, args}); };
+    this.registerMethod = function (operationName, fn) {
+        if (!Pipeline.prototype[operationName]) {
+            Pipeline.prototype[operationName] = fn || function (...args) {
+                return this.add({name: operationName, args});
+            };
 
-        this[operationName] = (...args) => this.createPipeline().add({name: operationName, args});
+            this[operationName] = (...args) => this.createPipeline()[operationName](...args);
+        }
         return this;
     };
 
-    this.registerMethod('type').registerMethod('source').registerMethod('maxOutputPixels').registerMethod('maxInputPixels');
+    this.registerMethod('type', function (type) {
+        if (typeof type !== 'string') {
+            throw new Error('Type must be given as a string');
+        } else {
+            if (this.impro.isTypeByName[type]) {
+                this.sourceType = this.targetType = type;
+                this.targetContentType = mime.types[type];
+            } else {
+                var extension = mime.extensions[type.replace(/\s*;.*$/, '')];
+                if (extension) {
+                    if (this.impro.isTypeByName[extension]) {
+                        this.sourceType = this.targetType = extension;
+                    }
+                    this.targetContentType = type;
+                }
+            }
+        }
+        return this;
+    });
+
+    this.registerMethod('source', function (source) {
+        if (typeof source !== 'object') {
+            throw new Error('Source must be given as an object');
+        }
+        _.extend(this.sourceMetadata, source);
+        return this;
+    });
+
+    this.registerMethod('maxOutputPixels', function (maxOutputPixels) {
+        if (typeof maxOutputPixels !== 'number') {
+            throw new Error('Max input pixels must be given as a number');
+        }
+        this.options.maxOutputPixels = maxOutputPixels;
+        return this;
+    });
+
+    this.registerMethod('maxInputPixels', function (maxInputPixels) {
+        if (typeof maxInputPixels !== 'number') {
+            throw new Error('Max input pixels must be given as a number');
+        }
+        this.options.maxInputPixels = maxInputPixels;
+        return this;
+    });
+
     this.add = function (...rest) {
         return this.createPipeline().add(...rest);
     };

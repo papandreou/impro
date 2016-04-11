@@ -21,7 +21,7 @@ module.exports = {
     name: 'gm',
     unavailable: !gm,
     operations: ['gif', 'png', 'jpeg', 'extract'].concat(Object.keys(gm.prototype).filter(function (propertyName) {
-        return (!/^_|^(?:name|emit|.*Listeners?|on|once|size|orientation|format|depth|color|res|filesize|identity|write|stream)$/.test(propertyName) &&
+        return (!/^_|^(?:name|emit|.*Listeners?|on|once|size|orientation|format|depth|color|res|filesize|identity|write|stream|type)$/.test(propertyName) &&
             typeof gm.prototype[propertyName] === 'function');
     })),
     inputTypes: [ 'gif', 'jpeg', 'png', 'ico', 'tga', 'tiff', '*' ],
