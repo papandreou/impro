@@ -7,7 +7,7 @@ mime.define({
     'image/vnd.microsoft.icon': ['ico']
 });
 
-class Impro {
+export default class Impro {
     constructor(options, operations) {
         if (typeof options === 'string' || Array.isArray(options)) {
             operations = options;
@@ -191,5 +191,3 @@ class Impro {
         };
     }
 }
-
-module.exports = Impro;
