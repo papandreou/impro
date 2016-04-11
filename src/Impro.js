@@ -11,9 +11,9 @@ mime.define({
 function Impro(options, operations) {
     if (typeof options === 'string' || Array.isArray(options)) {
         operations = options;
-        options = {};
+        this.options = {};
     } else {
-        options = options || {};
+        this.options = _.extend({}, options);
     }
 
     this.isOperationByEngineNameAndName = {};
@@ -34,8 +34,9 @@ function Impro(options, operations) {
         this.ended = false;
         this.impro = impro;
         this._streams = [];
+        this.options = {};
         impro.supportedOptions.forEach(optionName => {
-            this[optionName] = typeof options[optionName] !== 'undefined' ? options[optionName] : impro[optionName];
+            this.options[optionName] = typeof options[optionName] !== 'undefined' ? options[optionName] : impro.options[optionName];
         });
         this.sourceMetadata = _.omit(options, impro.supportedOptions);
         if (options.type) {
@@ -67,7 +68,10 @@ function Impro(options, operations) {
                 var engineName = candidateEngineNames[0];
                 var options;
                 if (this._queuedOperations[startIndex].name === engineName) {
-                    options = this._queuedOperations[startIndex].args;
+                    if (this._queuedOperations[startIndex].args.length > 1) {
+                        throw new Error('Engines take a max of one argument');
+                    }
+                    options = this._queuedOperations[startIndex].args[0];
                     startIndex += 1;
                 }
                 var operations = this._queuedOperations.slice(startIndex, upToIndex);
@@ -155,6 +159,18 @@ function Impro(options, operations) {
             operation.forEach(operation => this.add(operation));
         } else if (typeof operation === 'string') {
             this.impro.parse(operation).operations.forEach(operation => this.add(operation));
+        } else if (operation.name === 'maxOutputPixels') {
+            if (operation.args.length !== 1 || typeof operation.args[0] !== 'number') {
+                throw new Error('Max output pixels must be given as a number');
+            } else {
+                this.options.maxOutputPixels = operation.args[0];
+            }
+        } else if (operation.name === 'maxInputPixels') {
+            if (operation.args.length !== 1 || typeof operation.args[0] !== 'number') {
+                throw new Error('Max input pixels must be given as a number');
+            } else {
+                this.options.maxInputPixels = operation.args[0];
+            }
         } else if (operation.name === 'type') {
             if (operation.args.length !== 1 || typeof operation.args[0] !== 'string') {
                 throw new Error('Type must be given as a string');
@@ -172,6 +188,12 @@ function Impro(options, operations) {
                         this.targetContentType = type;
                     }
                 }
+            }
+        } else if (operation.name === 'source') {
+            if (operation.args.length !== 1 || typeof operation.args[0] !== 'object') {
+                throw new Error('Source must be given as an object');
+            } else {
+                _.extend(this.sourceMetadata, operation.args[0]);
             }
         } else if (operation && typeof operation.name === 'string') {
             this._queuedOperations.push(operation);
@@ -202,16 +224,17 @@ function Impro(options, operations) {
                 return this.createPipeline().add({name: operationName, args: Array.prototype.slice.call(arguments)});
             }
         };
+        return this;
     };
 
-    this.registerMethod('type');
+    this.registerMethod('type').registerMethod('source').registerMethod('maxOutputPixels').registerMethod('maxInputPixels');
     this.add = function (...rest) {
         return this.createPipeline().add(...rest);
     };
 }
 
 Impro.prototype.set = function (options) {
-    _.extend(this, options);
+    _.merge(this.engineByName, options);
     return this;
 };
 

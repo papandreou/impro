@@ -61,8 +61,8 @@ module.exports = {
                 var seenData = false,
                     hasEnded = false,
                     gmInstance = gm(readStream, getMockFileNameForContentType(operations[0].sourceContentType));
-                if (pipeline.maxInputPixels) {
-                    gmInstance.limit('pixels', pipeline.maxInputPixels);
+                if (pipeline.options.maxInputPixels) {
+                    gmInstance.limit('pixels', pipeline.options.maxInputPixels);
                 }
                 var resize;
                 var crop;
@@ -97,8 +97,8 @@ module.exports = {
                 operations.reduce(function (gmInstance, operation) {
                     var args = operation.args;
 
-                    if (operation.name === 'resize' && typeof pipeline.maxOutputPixels === 'number' && args[0] * args[1] > pipeline.maxOutputPixels) {
-                        throw new errors.OutputDimensionsExceeded('resize: Target dimensions of ' + args[0] + 'x' + args[1] + ' exceed maxOutputPixels (' + pipeline.maxOutputPixels + ')');
+                    if (operation.name === 'resize' && typeof pipeline.options.maxOutputPixels === 'number' && args[0] * args[1] > pipeline.options.maxOutputPixels) {
+                        throw new errors.OutputDimensionsExceeded('resize: Target dimensions of ' + args[0] + 'x' + args[1] + ' exceed maxOutputPixels (' + pipeline.options.maxOutputPixels + ')');
                     }
                     if (operation.name === 'rotate' && operation.args.length === 1) {
                         operation = _.extend({}, operation);

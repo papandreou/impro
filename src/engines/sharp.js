@@ -50,24 +50,24 @@ module.exports = {
         }
     },
     execute: function (pipeline, operations, options) {
+        options = options || {};
         var impro = pipeline.impro;
         // Would make sense to move the _sharpCacheSet property to the type, but that breaks some test scenarios:
-        var sharpOptions = impro.sharp || {};
-        if (sharpOptions.cache !== 'undefined' && !impro._sharpCacheSet) {
-            sharp.cache(sharpOptions.cache);
+        if (options.cache !== 'undefined' && !impro._sharpCacheSet) {
+            sharp.cache(options.cache);
             impro._sharpCacheSet = true;
         }
         var sharpInstance = sharp();
-        if (pipeline.maxInputPixels) {
-            sharpInstance = sharpInstance.limitInputPixels(pipeline.maxInputPixels);
+        if (pipeline.options.maxInputPixels) {
+            sharpInstance = sharpInstance.limitInputPixels(pipeline.options.maxInputPixels);
         }
-        if (sharpOptions.sequentialRead) {
+        if (options.sequentialRead) {
             sharpInstance = sharpInstance.sequentialRead();
         }
         operations.forEach(function (operation) {
             var args = operation.args;
-            if (operation.name === 'resize' && typeof pipeline.maxOutputPixels === 'number' && args[0] * args[1] > pipeline.maxOutputPixels) {
-                throw new errors.OutputDimensionsExceeded('resize: Target dimensions of ' + args[0] + 'x' + args[1] + ' exceed maxOutputPixels (' + pipeline.maxOutputPixels + ')');
+            if (operation.name === 'resize' && typeof pipeline.options.maxOutputPixels === 'number' && args[0] * args[1] > pipeline.options.maxOutputPixels) {
+                throw new errors.OutputDimensionsExceeded('resize: Target dimensions of ' + args[0] + 'x' + args[1] + ' exceed maxOutputPixels (' + pipeline.options.maxOutputPixels + ')');
             }
             // Compensate for https://github.com/lovell/sharp/issues/276
             if (operation.name === 'extract' && args.length >= 4) {

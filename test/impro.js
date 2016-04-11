@@ -31,15 +31,15 @@ describe('impro', function () {
 
     describe('when passed an object', function () {
         it('should interpret unsupported properties as source metadata', function () {
-            expect(impro.set({foo: 'bar'}).sourceMetadata, 'to equal', {foo: 'bar'});
+            expect(impro.source({foo: 'bar'}).sourceMetadata, 'to equal', {foo: 'bar'});
         });
 
         it('should support a type property', function () {
-            expect(impro.set({type: 'gif'}).targetContentType, 'to equal', 'image/gif');
+            expect(impro.type('gif').targetContentType, 'to equal', 'image/gif');
         });
 
         it('should support a type property that is a full Content-Type', function () {
-            expect(impro.set({type: 'image/gif'}).targetContentType, 'to equal', 'image/gif');
+            expect(impro.type('image/gif').targetContentType, 'to equal', 'image/gif');
         });
     });
 
@@ -154,7 +154,7 @@ describe('impro', function () {
             return expect(
                 'turtle.jpg',
                 'when piped through',
-                impro.set({ filesize: 105836, etag: 'W/"foobar"' }).metadata(),
+                impro.source({ filesize: 105836, etag: 'W/"foobar"' }).metadata(),
                 'to yield JSON output satisfying', {
                     contentType: 'image/jpeg',
                     filesize: 105836,
@@ -167,7 +167,7 @@ describe('impro', function () {
             return expect(
                 'turtle.jpg',
                 'when piped through',
-                impro.set({ filesize: 105836, etag: 'W/"foobar"' }).resize(10, 10).metadata(),
+                impro.source({ filesize: 105836, etag: 'W/"foobar"' }).resize(10, 10).metadata(),
                 'to yield JSON output satisfying', {
                     contentType: 'image/jpeg',
                     filesize: undefined,
@@ -225,10 +225,11 @@ describe('impro', function () {
     describe('with the sharp engine', function () {
         it('should allow passing a cache option', sinon.test(function () {
             var cacheSpy = this.spy(require('sharp'), 'cache');
+            var improInstance = new impro.Impro().use(impro.engines.sharp);
             return expect(
                 'turtle.jpg',
                 'when piped through',
-                impro.set({sharp: {cache: 123}}).resize(10, 10),
+                improInstance.sharp({cache: 123}).resize(10, 10),
                 'to yield output satisfying to have metadata satisfying', {
                     format: 'JPEG'
                 }
@@ -236,15 +237,16 @@ describe('impro', function () {
                 expect(cacheSpy, 'to have calls satisfying', function () {
                     cacheSpy(123);
                 });
-            });
+            }).finally(() => cacheSpy.restore());
         }));
 
         it('should allow passing a sequentialRead option', sinon.test(function () {
             var sequentialReadSpy = this.spy(require('sharp').prototype, 'sequentialRead');
+            var improInstance = new impro.Impro().use(impro.engines.sharp);
             return expect(
                 'turtle.jpg',
                 'when piped through',
-                impro.set({sharp: {sequentialRead: true}}).resize(10, 10),
+                improInstance.sharp({sequentialRead: true}).type('jpeg').resize(10, 10),
                 'to yield output satisfying to have metadata satisfying', {
                     format: 'JPEG'
                 }
@@ -252,28 +254,29 @@ describe('impro', function () {
                 expect(sequentialReadSpy, 'to have calls satisfying', function () {
                     sequentialReadSpy();
                 });
-            });
+            }).finally(() => sequentialReadSpy.restore());
         }));
 
         it('should only call sharp.cache once, even after processing multiple images', sinon.test(function () {
             var cacheSpy = this.spy(require('sharp'), 'cache');
-            var improInstance = impro.set({sharp: {cache: 123}});
+            var improInstance = new impro.Impro().use(impro.engines.sharp);
             return expect(
                 'turtle.jpg',
                 'when piped through',
-                improInstance.type('jpeg').resize(10, 10),
+                improInstance.sharp({cache: 123}).type('jpeg').resize(10, 10),
                 'to yield output satisfying to have metadata satisfying', {
                     format: 'JPEG'
                 }
             ).then(() => expect(
                 'turtle.jpg',
                 'when piped through',
-                improInstance.type('jpeg').resize(10, 10),
+                impro.sharp({cache: 123}).type('jpeg').resize(10, 10),
                 'to yield output satisfying to have metadata satisfying', {
                     format: 'JPEG'
                 }
             ))
-            .then(() => expect(cacheSpy, 'to have calls satisfying', () => cacheSpy(123)));
+            .then(() => expect(cacheSpy, 'to have calls satisfying', () => cacheSpy(123)))
+            .finally(() => cacheSpy.restore());
         }));
     });
 
@@ -393,13 +396,13 @@ describe('impro', function () {
     describe('with a maxOutputPixels setting', function () {
         it('should refuse to resize an image to exceed the max number of pixels', function () {
             expect(function () {
-                impro.set({maxOutputPixels: 2}).type('jpeg').resize(100, 100).flush();
+                impro.maxOutputPixels(2).type('jpeg').resize(100, 100).flush();
             }, 'to throw', 'resize: Target dimensions of 100x100 exceed maxOutputPixels (2)');
         });
 
         it.skip('should refuse to resize an image to exceed the max number of pixels, gm', function () {
             expect(function () {
-                impro.set({maxOutputPixels: 2}).gm().resize(100, 100).flush();
+                impro.maxOutputPixels(2).gm().resize(100, 100).flush();
             }, 'to throw', 'resize: Target dimensions of 100x100 exceed maxOutputPixels (2)');
         });
     });

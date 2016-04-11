@@ -11,6 +11,6 @@ module.exports = {
         return name === 'svgfilter';
     },
     execute: function (pipeline, operations, options) {
-        pipeline.add(new SvgFilter(options[0]));
+        pipeline.add(new SvgFilter(options));
     }
 };

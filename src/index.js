@@ -1,15 +1,17 @@
-var Impro = require('./Impro');
+let Impro = require('./Impro');
+let engines = require('./engines/');
 
 module.exports = new Impro()
-    .use(require('./engines/gifsicle'))
-    .use(require('./engines/sharp'))
-    .use(require('./engines/metadata'))
-    .use(require('./engines/inkscape'))
-    .use(require('./engines/jpegtran'))
-    .use(require('./engines/optipng'))
-    .use(require('./engines/pngquant'))
-    .use(require('./engines/pngcrush'))
-    .use(require('./engines/svgfilter'))
-    .use(require('./engines/gm'));
+    .use(engines.gifsicle)
+    .use(engines.sharp)
+    .use(engines.metadata)
+    .use(engines.inkscape)
+    .use(engines.jpegtran)
+    .use(engines.optipng)
+    .use(engines.pngquant)
+    .use(engines.pngcrush)
+    .use(engines.svgfilter)
+    .use(engines.gm);
 
 module.exports.Impro = Impro;
+module.exports.engines = engines;
