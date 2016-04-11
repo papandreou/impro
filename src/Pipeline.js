@@ -140,4 +140,48 @@ export default class Pipeline extends Stream.Duplex {
         }
         return this;
     }
+
+    type(type) {
+        if (typeof type !== 'string') {
+            throw new Error('Type must be given as a string');
+        } else {
+            if (this.impro.isTypeByName[type]) {
+                this.sourceType = this.targetType = type;
+                this.targetContentType = mime.types[type];
+            } else {
+                var extension = mime.extensions[type.replace(/\s*;.*$/, '')];
+                if (extension) {
+                    if (this.impro.isTypeByName[extension]) {
+                        this.sourceType = this.targetType = extension;
+                    }
+                    this.targetContentType = type;
+                }
+            }
+        }
+        return this;
+    }
+
+    source(source) {
+        if (typeof source !== 'object') {
+            throw new Error('Source must be given as an object');
+        }
+        _.extend(this.sourceMetadata, source);
+        return this;
+    }
+
+    maxOutputPixels(maxOutputPixels) {
+        if (typeof maxOutputPixels !== 'number') {
+            throw new Error('Max input pixels must be given as a number');
+        }
+        this.options.maxOutputPixels = maxOutputPixels;
+        return this;
+    }
+
+    maxInputPixels(maxInputPixels) {
+        if (typeof maxInputPixels !== 'number') {
+            throw new Error('Max input pixels must be given as a number');
+        }
+        this.options.maxInputPixels = maxInputPixels;
+        return this;
+    }
 }

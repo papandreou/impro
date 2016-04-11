@@ -29,49 +29,7 @@ export default class Impro {
 
         this.PrivatePipeline = class extends Pipeline {};
 
-        this.registerMethod('type', function (type) {
-            if (typeof type !== 'string') {
-                throw new Error('Type must be given as a string');
-            } else {
-                if (this.impro.isTypeByName[type]) {
-                    this.sourceType = this.targetType = type;
-                    this.targetContentType = mime.types[type];
-                } else {
-                    var extension = mime.extensions[type.replace(/\s*;.*$/, '')];
-                    if (extension) {
-                        if (this.impro.isTypeByName[extension]) {
-                            this.sourceType = this.targetType = extension;
-                        }
-                        this.targetContentType = type;
-                    }
-                }
-            }
-            return this;
-        });
-
-        this.registerMethod('source', function (source) {
-            if (typeof source !== 'object') {
-                throw new Error('Source must be given as an object');
-            }
-            _.extend(this.sourceMetadata, source);
-            return this;
-        });
-
-        this.registerMethod('maxOutputPixels', function (maxOutputPixels) {
-            if (typeof maxOutputPixels !== 'number') {
-                throw new Error('Max input pixels must be given as a number');
-            }
-            this.options.maxOutputPixels = maxOutputPixels;
-            return this;
-        });
-
-        this.registerMethod('maxInputPixels', function (maxInputPixels) {
-            if (typeof maxInputPixels !== 'number') {
-                throw new Error('Max input pixels must be given as a number');
-            }
-            this.options.maxInputPixels = maxInputPixels;
-            return this;
-        });
+        ['type', 'source', 'maxInputPixels', 'maxOutputPixels'].forEach(propertyName => this.registerMethod(propertyName));
     }
 
     createPrivatePipeline(options, operations) {
@@ -87,8 +45,8 @@ export default class Impro {
             this.PrivatePipeline.prototype[operationName] = fn || function (...args) {
                 return this.add({name: operationName, args});
             };
-            this[operationName] = (...args) => this.createPrivatePipeline()[operationName](...args);
         }
+        this[operationName] = (...args) => this.createPrivatePipeline()[operationName](...args);
         return this;
     }
 
