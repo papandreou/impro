@@ -212,18 +212,9 @@ function Impro(options, operations) {
     };
 
     this.registerMethod = function (operationName) {
-        Pipeline.prototype[operationName] = function () {
-            return this.add({name: operationName, args: Array.prototype.slice.call(arguments)});
-        };
+        Pipeline.prototype[operationName] = function (...args) { return this.add({name: operationName, args}); };
 
-        this[operationName] = function () {
-            // why tf is this necessary?
-            if (this instanceof Pipeline) {
-                return this.add({name: operationName, args: Array.prototype.slice.call(arguments)});
-            } else {
-                return this.createPipeline().add({name: operationName, args: Array.prototype.slice.call(arguments)});
-            }
-        };
+        this[operationName] = (...args) => this.createPipeline().add({name: operationName, args});
         return this;
     };
 
