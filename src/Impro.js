@@ -27,30 +27,7 @@ export default class Impro {
 
         _.extend(this, {defaultEngineName: Impro.defaultEngineName}, _.pick(options, this.supportedOptions));
 
-        class PrivatePipeline extends Pipeline {
-            constructor(impro, options) {
-                super(impro, options);
-            }
-        };
-
-        this.createPrivatePipeline = function (options, operations) {
-            var pipeline = new PrivatePipeline(this, options);
-            if (operations) {
-                pipeline.add(operations);
-            }
-            return pipeline;
-        };
-
-        this.registerMethod = function (operationName, fn) {
-            if (!PrivatePipeline.prototype[operationName]) {
-                PrivatePipeline.prototype[operationName] = fn || function (...args) {
-                    return this.add({name: operationName, args});
-                };
-
-                this[operationName] = (...args) => this.createPrivatePipeline()[operationName](...args);
-            }
-            return this;
-        };
+        this.PrivatePipeline = class extends Pipeline {};
 
         this.registerMethod('type', function (type) {
             if (typeof type !== 'string') {
@@ -95,10 +72,28 @@ export default class Impro {
             this.options.maxInputPixels = maxInputPixels;
             return this;
         });
+    }
 
-        this.add = function (...rest) {
-            return this.createPrivatePipeline().add(...rest);
-        };
+    createPrivatePipeline(options, operations) {
+        var pipeline = new this.PrivatePipeline(this, options);
+        if (operations) {
+            pipeline.add(operations);
+        }
+        return pipeline;
+    }
+
+    registerMethod(operationName, fn) {
+        if (!this.PrivatePipeline.prototype[operationName]) {
+            this.PrivatePipeline.prototype[operationName] = fn || function (...args) {
+                return this.add({name: operationName, args});
+            };
+            this[operationName] = (...args) => this.createPrivatePipeline()[operationName](...args);
+        }
+        return this;
+    }
+
+    add(...rest) {
+        return this.createPrivatePipeline().add(...rest);
     }
 
     set(options) {
