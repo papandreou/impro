@@ -54,11 +54,6 @@ export default class Impro {
         return this.createPipeline().add(...rest);
     }
 
-    set(options) {
-        _.merge(this.engineByName, options);
-        return this;
-    }
-
     use(options) {
         var engineName = options.name;
         if (typeof options.unavailable === 'undefined') {
@@ -71,7 +66,14 @@ export default class Impro {
         this.defaultEngineName = this.defaultEngineName || engineName;
         this.isOperationByEngineNameAndName[engineName] = {};
         this.engineByName[options.name] = options;
-        this.registerMethod(engineName);
+        this.registerMethod(engineName, function (...args) {
+            if (args[0] === false) {
+                this.isDisabledByEngineName[engineName] = true;
+                return this;
+            } else {
+                return this.add({name: engineName, args});
+            }
+        });
         this.supportedOptions.push(engineName); // Allow disabling via new Impro({<engineName>: false})
 
         [engineName].concat(options.operations || []).forEach(operationName => {

@@ -18,6 +18,7 @@ export default class Pipeline extends Stream.Duplex {
         if (options.type) {
             this.type(options.type);
         }
+        this.isDisabledByEngineName = {};
     }
 
     flush() {
@@ -72,7 +73,8 @@ export default class Pipeline extends Stream.Duplex {
                     candidateEngineNames = this.impro.engineNamesByOperationName[operation.name].filter(engineName => {
                         var isSupportedByType = this.impro.isSupportedByEngineNameAndInputType[engineName];
                         return (
-                            !this.impro.engineByName[engineName].unavailable,
+                            !this.isDisabledByEngineName[engineName] &&
+                            !this.impro.engineByName[engineName].unavailable &&
                             this.impro[engineName] !== false &&
                             (engineName === operation.name || isSupportedByType['*'] || (this.targetType && isSupportedByType[this.targetType]))
                         );

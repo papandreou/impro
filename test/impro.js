@@ -304,9 +304,9 @@ describe('impro', function () {
 
         it('should use gm for gifs when gifsicle is disabled', function () {
             return expect(
-                impro.set({gifsicle: false}).type('gif').resize(10, 10).flush(),
+                impro.gifsicle(false).type('gif').resize(10, 10).flush().usedEngines,
                 'to satisfy',
-                { usedEngines: [{name: 'gm'}]}
+                [{name: 'gm'}]
             );
         });
     });
