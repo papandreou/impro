@@ -406,4 +406,28 @@ describe('impro', function () {
             }, 'to throw', 'resize: Target dimensions of 100x100 exceed maxOutputPixels (2)');
         });
     });
+
+    it('should support a file source', function () {
+        return expect(impro.source('turtle.jpg').resize(10, 10), 'to yield output satisfying to have metadata satisfying', {
+            width: 10
+        });
+    });
+
+    it('should support a url source', function () {
+        return expect(impro.source('http://example.com/turtle.jpg').resize(10, 10), 'with http mocked out', {
+            request: 'GET http://example.com/turtle.jpg',
+            response: {
+                statusCode: 200,
+                body: load('turtle.jpg')
+            }
+        }, 'to yield output satisfying to have metadata satisfying', {
+            width: 10
+        });
+    });
+
+    it('should support a Buffer source', function () {
+        return expect(impro.source(load('turtle.jpg')).resize(10, 10), 'to yield output satisfying to have metadata satisfying', {
+            width: 10
+        });
+    });
 });

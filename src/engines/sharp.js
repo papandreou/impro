@@ -14,6 +14,8 @@ module.exports = {
     operations: [ 'resize', 'extract', 'sequentialRead', 'crop', 'max', 'background', 'embed', 'flatten', 'negate', 'rotate', 'flip', 'flop', 'withoutEnlargement', 'ignoreAspectRatio', 'blur', 'sharpen', 'threshold', 'interpolateWith', 'gamma', 'grayscale', 'greyscale', 'quality', 'progressive', 'withMetadata', 'compressionLevel', 'normalize', 'normalise', 'withoutAdaptiveFiltering', 'trellisQuantisation', 'trellisQuantization', 'overshootDeringing', 'optimizeScans', 'optimiseScans' ],
     inputTypes: [ 'jpeg', 'png', 'webp', 'svg', 'tiff', '*' ],
     outputTypes: [ 'jpeg', 'png', 'webp', 'tiff', 'dzi' ],
+    inputMedia: [ 'file', 'stream' ],
+    outputMedia: [ 'file', 'stream' ],
     validateOperation: function (name, args) {
         switch (name) {
         case 'crop':

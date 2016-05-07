@@ -26,6 +26,8 @@ module.exports = {
     })),
     inputTypes: [ 'gif', 'jpeg', 'png', 'ico', 'tga', 'tiff', '*' ],
     outputTypes: [ 'gif', 'jpeg', 'png', 'ico', 'tga', 'tiff' ],
+    inputMedia: [ 'file', 'stream' ],
+    outputMedia: [ 'file', 'stream' ],
     validateOperation: function (name, args) {
         switch (name) {
         // Operations that emulate sharp's API:

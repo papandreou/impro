@@ -53,6 +53,7 @@
     "unexpected": "10.12.0",
     "unexpected-dom": "3.0.2",
     "unexpected-image": "2.0.0",
+    "unexpected-mitm": "9.0.1",
     "unexpected-resemble": "3.0.0",
     "unexpected-sinon": "10.2.0",
     "unexpected-stream": "2.0.3"

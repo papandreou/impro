@@ -7,6 +7,8 @@ module.exports = {
     inputTypes: [ 'png' ],
     outputTypes: [ 'png' ],
     operations: [ 'floyd', 'nofs', 'ordered', 'speed', 'quality', 'posterize', 'iebug' ],
+    inputMedia: [ 'stream' ],
+    outputMedia: [ 'stream' ],
     validateOperation: function (name, args) {
         switch (name) {
         case 'floyd':

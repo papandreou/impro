@@ -7,6 +7,8 @@ module.exports = {
     inputTypes: [ 'svg' ],
     defaultOutputType: 'png',
     outputTypes: [ 'pdf', 'eps', 'png' ],
+    inputMedia: [ 'stream' ],
+    outputMedia: [ 'stream' ],
     validateOperation: function (name, args) {
         return args.length === 0;
     },

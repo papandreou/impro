@@ -11,6 +11,8 @@ export default class Pipeline extends Stream.Duplex {
         this.impro = impro;
         this._streams = [];
         this.options = {};
+        this.sourceMedium = this.medium = 'stream';
+        this.outputMedium = 'stream';
         impro.supportedOptions.forEach(optionName => {
             this.options[optionName] = typeof options[optionName] !== 'undefined' ? options[optionName] : impro.options[optionName];
         });
@@ -50,7 +52,8 @@ export default class Pipeline extends Stream.Duplex {
                     startIndex += 1;
                 }
                 var operations = this._queuedOperations.slice(startIndex, upToIndex);
-                this.impro.engineByName[engineName].execute(this, operations, options);
+                var engine = this.impro.engineByName[engineName];
+                engine.execute(this, operations, options);
                 operations.forEach(operation => operation.engineName = engineName);
                 this.usedEngines.push({name: engineName, operations});
                 startIndex = upToIndex;
@@ -163,12 +166,32 @@ export default class Pipeline extends Stream.Duplex {
         return this;
     }
 
-    source(source) {
-        if (typeof source !== 'object') {
-            throw new Error('Source must be given as an object');
+    source(source, metadata) {
+        if (typeof source === 'object') {
+            metadata = source;
+        } else if (typeof source === 'string') {
+            if (/^https?:\/\//i.test(source)) {
+                this.sourceMedium = this.medium = 'url';
+            } else {
+                this.sourceMedium = this.medium = 'file';
+            }
+            this.source = source;
+        } else {
+            throw new Error('A string or an object is required');
         }
-        _.extend(this.sourceMetadata, source);
+        if (metadata) {
+            _.extend(this.sourceMetadata, metadata);
+        }
         return this;
+    }
+
+    file(fileName) {
+        this.outputMedium = 'file';
+        this.target = fileName;
+    }
+
+    buffer() {
+        this.outputMedium = 'buffer';
     }
 
     maxOutputPixels(maxOutputPixels) {

@@ -13,6 +13,8 @@ module.exports = {
     inputTypes: [ 'jpeg' ],
     outputTypes: [ 'jpeg' ],
     operations: [ 'copy', 'optimize', 'progressive', 'extract', 'grayscale', 'flip', 'perfect', 'rotate', 'transpose', 'transverse', 'trim', 'arithmetic', 'restart', 'maxmemory'],
+    inputMedia: [ 'stream' ],
+    outputMedia: [ 'stream' ],
     validateOperation: function (name, args) {
         switch (name) {
         case 'copy':

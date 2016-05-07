@@ -6,6 +6,8 @@ module.exports = {
     unavailable: !OptiPng,
     inputTypes: [ 'png' ],
     outputTypes: [ 'png' ],
+    inputMedia: [ 'stream' ],
+    outputMedia: [ 'stream' ],
     operations: [ 'o' ],
     validateOperation: function (name, args) {
         return name === 'o' && args.length === 1 && args[0] >= 0 && args[0] <= 7;

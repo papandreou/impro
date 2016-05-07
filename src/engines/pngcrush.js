@@ -6,6 +6,8 @@ module.exports = {
     unavailable: !PngCrush,
     inputTypes: [ 'png' ],
     outputTypes: [ 'png' ],
+    inputMedia: [ 'stream' ],
+    outputMedia: [ 'stream' ],
     operations: [ 'brute', 'rem' ],
     validateOperation: function (name, args) {
         switch (name) {

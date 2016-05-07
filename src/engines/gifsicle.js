@@ -13,6 +13,8 @@ module.exports = {
     operations: [ 'crop', 'rotate', 'progressive', 'extract', 'resize', 'ignoreAspectRatio', 'withoutEnlargement' ],
     inputTypes: [ 'gif' ],
     outputTypes: [ 'gif' ],
+    inputMedia: [ 'stream' ],
+    outputMedia: [ 'stream' ],
     validateOperation: function (name, args) {
         switch (name) {
         case 'crop':

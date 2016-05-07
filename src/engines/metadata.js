@@ -12,6 +12,8 @@ module.exports = {
     unavailable: !sharp,
     inputTypes: [ '*' ],
     outputTypes: [ 'json' ],
+    inputMedia: [ 'file', 'stream' ],
+    outputMedia: [ 'stream' ],
     validateOperation: function (name, args) {
         return name === 'metadata' && args.length === 0 || (args.length === 1 && args[0] === true);
     },

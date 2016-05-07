@@ -6,6 +6,8 @@ module.exports = {
     unavailable: !SvgFilter,
     inputTypes: [ 'svg' ],
     outputTypes: [ 'svg' ],
+    inputMedia: [ 'stream' ],
+    outputMedia: [ 'stream' ],
     validateOperation: function (name, args) {
         // FIXME: This allows arbitrary arguments. Tighten up and expose a finite set of operations.
         return name === 'svgfilter';
