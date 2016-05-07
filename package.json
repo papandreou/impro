@@ -43,7 +43,6 @@
     "inkscape": "0.0.5",
     "jpegtran": "0.2.0",
     "jsdom": "github:papandreou/jsdom#4a83791ba9d20b243723ae5cb50571b302e294ec",
-    "magicpen-media": "1.5.1",
     "memoizesync": "0.5.0",
     "mocha": "2.4.5",
     "nyc": "6.0.0",
