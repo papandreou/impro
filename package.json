@@ -40,7 +40,7 @@
     "mocha": "3.2.0",
     "nyc": "10.1.2",
     "optipng": "1.0.0",
-    "sharp": "0.17.1",
+    "sharp": "0.23.0",
     "sinon": "1.17.7",
     "svgfilter": "1.2.0",
     "unexpected": "10.40.2",

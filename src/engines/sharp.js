@@ -69,6 +69,11 @@ module.exports = {
             if (operation.name === 'resize' && typeof pipeline.options.maxOutputPixels === 'number' && args[0] * args[1] > pipeline.options.maxOutputPixels) {
                 throw new errors.OutputDimensionsExceeded('resize: Target dimensions of ' + args[0] + 'x' + args[1] + ' exceed maxOutputPixels (' + pipeline.options.maxOutputPixels + ')');
             }
+            // in sharp crop is implemented as options to resize
+            if (operation.name === 'crop') {
+                operation.name = 'resize';
+                args = [ { fit: 'cover', gravity: operation.args[0] } ];
+            }
             // Compensate for https://github.com/lovell/sharp/issues/276
             if (operation.name === 'extract' && args.length >= 4) {
                 args = [ { left: args[0], top: args[1], width: args[2], height: args[3] } ];
