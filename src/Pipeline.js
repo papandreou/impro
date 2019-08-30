@@ -2,7 +2,7 @@ var Stream = require('stream');
 var _ = require('lodash');
 let mime = require('mime');
 
-export default class Pipeline extends Stream.Duplex {
+module.exports = class Pipeline extends Stream.Duplex {
     constructor(impro, options) {
         super();
         this._queuedOperations = [];
