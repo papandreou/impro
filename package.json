@@ -37,7 +37,7 @@
     "jpegtran": "1.0.6",
     "jsdom": "^15.1.1",
     "memoizesync": "0.5.0",
-    "mocha": "3.2.0",
+    "mocha": "6.2.0",
     "nyc": "10.1.2",
     "optipng": "1.0.0",
     "sharp": "0.23.0",
