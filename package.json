@@ -17,11 +17,11 @@
     "test": "mocha",
     "lint": "eslint .",
     "clean": "rm -rf lib coverage .nyc_output",
-    "travis": "npm test && npm run lint && npm run coverage && (<coverage/lcov.info coveralls || true)"
+    "travis": "npm run lint && npm run coverage"
   },
   "devDependencies": {
     "animated-gif-detector": "1.1.7",
-    "coveralls": "2.11.9",
+    "coveralls": "^3.0.6",
     "eslint": "^5.16.0",
     "eslint-config-onelint": "4.0.0",
     "gifsicle-stream": "1.0.0",
