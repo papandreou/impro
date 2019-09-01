@@ -16,13 +16,7 @@
     "coverage": "nyc --reporter=lcov -- npm test && echo Coverage Report written to coverage/lcov-repot/index.html",
     "test": "mocha",
     "lint": "eslint .",
-    "build": "babel src --out-dir lib --source-maps inline",
     "clean": "rm -rf lib coverage .nyc_output",
-    "clean:build": "rm -rf lib",
-    "prepublish": "(in-publish && npm run build && npm run prepareIndex) 2> /dev/null || exit 0",
-    "postpublish": "(in-publish && npm run clean:build && npm run restoreIndex) 2> /dev/null || exit 0",
-    "prepareIndex": "mv index.js index.js.tmp && (echo \"module.exports = require('./lib/main');\" > index.js)",
-    "restoreIndex": "rm index.js && mv index.js.tmp index.js",
     "travis": "npm test && npm run lint && npm run coverage && (<coverage/lcov.info coveralls || true)"
   },
   "devDependencies": {
@@ -32,7 +26,6 @@
     "eslint-config-onelint": "4.0.0",
     "gifsicle-stream": "1.0.0",
     "gm": "1.23.0",
-    "in-publish": "2.0.0",
     "inkscape": "1.1.0",
     "jpegtran": "1.0.6",
     "jsdom": "^15.1.1",
