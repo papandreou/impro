@@ -25,7 +25,7 @@
     "eslint": "^5.16.0",
     "eslint-config-onelint": "4.0.0",
     "gifsicle-stream": "1.0.0",
-    "gm": "1.23.0",
+    "gm": "1.23.1",
     "inkscape": "1.1.0",
     "jpegtran": "1.0.6",
     "jsdom": "^15.1.1",
