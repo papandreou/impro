@@ -6,6 +6,12 @@ function isNumberWithin(num, min, max) {
     return typeof num === 'number' && num >= min && num <= max;
 }
 
+function locatePreviousCommand(operations, nameToFind) {
+    return operations.find(operation => {
+        return operation.name === nameToFind;
+    });
+}
+
 var maxDimension = 16384;
 
 module.exports = {
@@ -64,22 +70,35 @@ module.exports = {
         if (options.sequentialRead) {
             sharpInstance = sharpInstance.sequentialRead();
         }
+
+        var operationsForExecution = [];
         operations.forEach(function (operation) {
+            var name = operation.name;
             var args = operation.args;
             if (operation.name === 'resize' && typeof pipeline.options.maxOutputPixels === 'number' && args[0] * args[1] > pipeline.options.maxOutputPixels) {
                 throw new errors.OutputDimensionsExceeded('resize: Target dimensions of ' + args[0] + 'x' + args[1] + ' exceed maxOutputPixels (' + pipeline.options.maxOutputPixels + ')');
             }
             // in sharp crop is implemented as options to resize
             if (operation.name === 'crop') {
-                operation.name = 'resize';
-                args = [ { fit: 'cover', gravity: operation.args[0] } ];
+                name = 'resize';
+                args = [ null, null, { fit: 'cover', position: args[0] } ];
+
+                const locatedOperation = locatePreviousCommand(operationsForExecution, name);
+                if (locatedOperation) {
+                    locatedOperation.args[2] = args[2];
+                    return;
+                }
             }
             // Compensate for https://github.com/lovell/sharp/issues/276
-            if (operation.name === 'extract' && args.length >= 4) {
+            if (name === 'extract' && args.length >= 4) {
                 args = [ { left: args[0], top: args[1], width: args[2], height: args[3] } ];
             }
-            return sharpInstance[operation.name](...args);
+
+            operationsForExecution.push({ name, args });
         });
+
+        operationsForExecution.map(({ name, args }) => sharpInstance[name](...args));
+
         pipeline.add(sharpInstance);
     }
 };
