@@ -186,4 +186,4 @@ module.exports = class Pipeline extends Stream.Duplex {
         this.options.maxInputPixels = maxInputPixels;
         return this;
     }
-}
+};

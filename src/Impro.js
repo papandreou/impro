@@ -1,4 +1,3 @@
-/*global JSON*/
 var _ = require('lodash');
 var mime = require('mime');
 var Pipeline = require('./Pipeline');
@@ -145,4 +144,4 @@ module.exports = class Impro {
             leftover: leftOverQueryStringFragments.join('&')
         };
     }
-}
+};

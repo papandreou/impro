@@ -275,8 +275,8 @@ describe('impro', function () {
                     format: 'JPEG'
                 }
             ))
-            .then(() => expect(cacheSpy, 'to have calls satisfying', () => cacheSpy(123)))
-            .finally(() => cacheSpy.restore());
+                .then(() => expect(cacheSpy, 'to have calls satisfying', () => cacheSpy(123)))
+                .finally(() => cacheSpy.restore());
         }));
     });
 
@@ -286,11 +286,11 @@ describe('impro', function () {
                 'cat.gif',
                 'when piped through',
                 impro.gifsicle().resize(380, 486).extract(150, 150, 100, 100)),
-                'to yield output satisfying',
-                expect.it('to have metadata satisfying', {
-                    size: { width: 100, height: 100 },
-                    Scene: '3 of 4' // Animated
-                }).and('to resemble', load('cat-resized-then-cropped.gif')
+            'to yield output satisfying',
+            expect.it('to have metadata satisfying', {
+                size: { width: 100, height: 100 },
+                Scene: '3 of 4' // Animated
+            }).and('to resemble', load('cat-resized-then-cropped.gif')
             );
         });
 

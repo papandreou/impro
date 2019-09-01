@@ -28,8 +28,8 @@
   "devDependencies": {
     "animated-gif-detector": "1.1.7",
     "coveralls": "2.11.9",
-    "eslint": "2.4.0",
-    "eslint-config-onelint": "1.0.2",
+    "eslint": "^5.16.0",
+    "eslint-config-onelint": "4.0.0",
     "gifsicle-stream": "1.0.0",
     "gm": "1.23.0",
     "in-publish": "2.0.0",
