@@ -1,13 +1,12 @@
-/*global JSON*/
-let _ = require('lodash');
-let mime = require('mime');
-let Pipeline = require('./Pipeline');
+var _ = require('lodash');
+var mime = require('mime');
+var Pipeline = require('./Pipeline');
 
 mime.define({
     'image/vnd.microsoft.icon': ['ico']
 });
 
-export default class Impro {
+module.exports = class Impro {
     constructor(options, operations) {
         if (typeof options === 'string' || Array.isArray(options)) {
             operations = options;
@@ -145,4 +144,4 @@ export default class Impro {
             leftover: leftOverQueryStringFragments.join('&')
         };
     }
-}
+};
