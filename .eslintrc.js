@@ -1,5 +1,9 @@
 module.exports = {
-    extends: [
-        'onelint'
-    ]
+    parserOptions: {
+        ecmaVersion: 6
+    },
+    extends: ['standard', 'prettier', 'prettier/standard'],
+    env: {
+        mocha: true
+    }
 };
