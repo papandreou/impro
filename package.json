@@ -13,7 +13,7 @@
     "rotate"
   ],
   "scripts": {
-    "coverage": "nyc --reporter=lcov --reporter-text -- npm test && echo Coverage Report written to coverage/lcov-report/index.html",
+    "coverage": "nyc --reporter=lcov --reporter=text -- npm test && echo Coverage Report written to coverage/lcov-report/index.html",
     "test": "mocha",
     "lint": "eslint .",
     "clean": "rm -rf lib coverage .nyc_output",
