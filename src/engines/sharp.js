@@ -1,6 +1,6 @@
-var requireOr = require('require-or');
-var sharp = requireOr('sharp');
-var errors = require('../errors');
+const requireOr = require('require-or');
+const sharp = requireOr('sharp');
+const errors = require('../errors');
 
 function isNumberWithin(num, min, max) {
     return typeof num === 'number' && num >= min && num <= max;
@@ -12,7 +12,7 @@ function locatePreviousCommand(operations, nameToFind) {
     });
 }
 
-var maxDimension = 16384;
+const maxDimension = 16384;
 
 module.exports = {
     name: 'sharp',

@@ -1,9 +1,9 @@
-var requireOr = require('require-or');
-var Stream = require('stream');
-var gm = requireOr('gm');
-var mime = require('mime');
-var errors = require('../errors');
-var _ = require('lodash');
+const requireOr = require('require-or');
+const Stream = require('stream');
+const gm = requireOr('gm');
+const mime = require('mime');
+const errors = require('../errors');
+const _ = require('lodash');
 
 function getMockFileNameForContentType(contentType) {
     if (contentType) {
@@ -15,7 +15,7 @@ function isNumberWithin(num, min, max) {
     return typeof num === 'number' && num >= min && num <= max;
 }
 
-var maxDimension = 16384;
+const maxDimension = 16384;
 
 module.exports = {
     name: 'gm',

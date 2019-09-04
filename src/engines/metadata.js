@@ -1,11 +1,11 @@
-var requireOr = require('require-or');
-var sharp = requireOr('sharp');
-var Stream = require('stream');
-var createAnimatedGifDetector = requireOr('animated-gif-detector');
-var mime = require('mime');
-var exifReader = require('exif-reader');
-var icc = require('icc');
-var _ = require('lodash');
+const requireOr = require('require-or');
+const sharp = requireOr('sharp');
+const Stream = require('stream');
+const createAnimatedGifDetector = requireOr('animated-gif-detector');
+const mime = require('mime');
+const exifReader = require('exif-reader');
+const icc = require('icc');
+const _ = require('lodash');
 
 module.exports = {
     name: 'metadata',

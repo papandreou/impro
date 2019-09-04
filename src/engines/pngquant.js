@@ -1,5 +1,5 @@
-var requireOr = require('require-or');
-var PngQuant = requireOr('pngquant');
+const requireOr = require('require-or');
+const PngQuant = requireOr('pngquant');
 
 module.exports = {
     name: 'pngquant',

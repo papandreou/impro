@@ -1,11 +1,11 @@
-var requireOr = require('require-or');
-var Gifsicle = requireOr('gifsicle-stream');
+const requireOr = require('require-or');
+const Gifsicle = requireOr('gifsicle-stream');
 
 function isNumberWithin(num, min, max) {
     return typeof num === 'number' && num >= min && num <= max;
 }
 
-var maxDimension = 16384;
+const maxDimension = 16384;
 
 module.exports = {
     name: 'gifsicle',

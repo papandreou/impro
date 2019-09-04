@@ -1,11 +1,11 @@
-var requireOr = require('require-or');
-var JpegTran = requireOr('jpegtran');
+const requireOr = require('require-or');
+const JpegTran = requireOr('jpegtran');
 
 function isNumberWithin(num, min, max) {
     return typeof num === 'number' && num >= min && num <= max;
 }
 
-var maxDimension = 16384;
+const maxDimension = 16384;
 
 module.exports = {
     name: 'jpegtran',

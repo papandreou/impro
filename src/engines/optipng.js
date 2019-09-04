@@ -1,5 +1,5 @@
-var requireOr = require('require-or');
-var OptiPng = requireOr('optipng');
+const requireOr = require('require-or');
+const OptiPng = requireOr('optipng');
 
 module.exports = {
     name: 'optipng',

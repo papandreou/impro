@@ -1,5 +1,5 @@
-var Stream = require('stream');
-var _ = require('lodash');
+const Stream = require('stream');
+const _ = require('lodash');
 const mime = require('mime');
 
 module.exports = class Pipeline extends Stream.Duplex {

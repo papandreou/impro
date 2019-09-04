@@ -1,5 +1,5 @@
-var requireOr = require('require-or');
-var SvgFilter = requireOr('svgfilter');
+const requireOr = require('require-or');
+const SvgFilter = requireOr('svgfilter');
 
 module.exports = {
     name: 'svgfilter',
