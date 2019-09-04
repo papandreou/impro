@@ -10,25 +10,31 @@ var _ = require('lodash');
 module.exports = {
     name: 'metadata',
     unavailable: !sharp,
-    inputTypes: [ '*' ],
-    outputTypes: [ 'json' ],
-    validateOperation: function (name, args) {
-        return name === 'metadata' && args.length === 0 || (args.length === 1 && args[0] === true);
+    inputTypes: ['*'],
+    outputTypes: ['json'],
+    validateOperation: function(name, args) {
+        return (
+            (name === 'metadata' && args.length === 0) ||
+            (args.length === 1 && args[0] === true)
+        );
     },
-    execute: function (pipeline, operations, options) {
+    execute: function(pipeline, operations, options) {
         var sharpInstance = sharp();
         var duplexStream = new Stream.Duplex();
         var animatedGifDetector;
         var isAnimated;
-        if ((pipeline.targetType === 'gif' || !pipeline.targetType) && createAnimatedGifDetector) {
+        if (
+            (pipeline.targetType === 'gif' || !pipeline.targetType) &&
+            createAnimatedGifDetector
+        ) {
             animatedGifDetector = createAnimatedGifDetector();
-            animatedGifDetector.on('animated', function () {
+            animatedGifDetector.on('animated', function() {
                 isAnimated = true;
                 this.emit('decided');
                 animatedGifDetector = null;
             });
 
-            duplexStream.on('finish', function () {
+            duplexStream.on('finish', function() {
                 if (typeof isAnimated === 'undefined') {
                     isAnimated = false;
                     if (animatedGifDetector) {
@@ -38,11 +44,14 @@ module.exports = {
                 }
             });
         }
-        duplexStream._write = function (chunk, encoding, cb) {
+        duplexStream._write = function(chunk, encoding, cb) {
             if (animatedGifDetector) {
                 animatedGifDetector.write(chunk);
             }
-            if (sharpInstance.write(chunk, encoding) === false && !animatedGifDetector) {
+            if (
+                sharpInstance.write(chunk, encoding) === false &&
+                !animatedGifDetector
+            ) {
                 sharpInstance.once('drain', cb);
             } else {
                 cb();
@@ -50,15 +59,19 @@ module.exports = {
         };
         var alreadyKnownMetadata = {
             format: pipeline.targetType,
-            contentType: pipeline.targetContentType || mime.types[pipeline.targetType]
+            contentType:
+                pipeline.targetContentType || mime.types[pipeline.targetType]
         };
         if (pipeline._streams.length === 0) {
             _.extend(alreadyKnownMetadata, pipeline.sourceMetadata);
         }
-        duplexStream._read = function (size) {
-            sharpInstance.metadata(function (err, metadata) {
+        duplexStream._read = function(size) {
+            sharpInstance.metadata(function(err, metadata) {
                 if (err) {
-                    metadata = _.defaults({ error: err.message }, alreadyKnownMetadata);
+                    metadata = _.defaults(
+                        { error: err.message },
+                        alreadyKnownMetadata
+                    );
                 }
                 if (metadata.format === 'magick') {
                     // https://github.com/lovell/sharp/issues/377
@@ -96,7 +109,7 @@ module.exports = {
                     metadata.animated = isAnimated;
                     proceed();
                 } else if (animatedGifDetector) {
-                    animatedGifDetector.on('decided', function (isAnimated) {
+                    animatedGifDetector.on('decided', function(isAnimated) {
                         metadata.animated = isAnimated;
                         proceed();
                     });
@@ -105,7 +118,7 @@ module.exports = {
                 }
             });
         };
-        duplexStream.on('finish', function () {
+        duplexStream.on('finish', function() {
             sharpInstance.end();
         });
         pipeline.add(duplexStream);

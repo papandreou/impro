@@ -12,7 +12,10 @@ module.exports = class Pipeline extends Stream.Duplex {
         this._streams = [];
         this.options = {};
         impro.supportedOptions.forEach(optionName => {
-            this.options[optionName] = typeof options[optionName] !== 'undefined' ? options[optionName] : impro.options[optionName];
+            this.options[optionName] =
+                typeof options[optionName] !== 'undefined'
+                    ? options[optionName]
+                    : impro.options[optionName];
         });
         this.sourceMetadata = _.omit(options, impro.supportedOptions);
         if (options.type) {
@@ -30,15 +33,25 @@ module.exports = class Pipeline extends Stream.Duplex {
         this.usedEngines = [];
         var startIndex = 0;
         var candidateEngineNames;
-        var _flush = (upToIndex) => {
+        var _flush = upToIndex => {
             if (startIndex < upToIndex) {
                 if (this.targetType) {
-                    candidateEngineNames = candidateEngineNames.filter(engineName => {
-                        return this.impro.engineByName[engineName].defaultOutputType || this.impro.isSupportedByEngineNameAndOutputType[engineName][this.targetType];
-                    });
+                    candidateEngineNames = candidateEngineNames.filter(
+                        engineName => {
+                            return (
+                                this.impro.engineByName[engineName]
+                                    .defaultOutputType ||
+                                this.impro.isSupportedByEngineNameAndOutputType[
+                                    engineName
+                                ][this.targetType]
+                            );
+                        }
+                    );
                 }
                 if (candidateEngineNames.length === 0) {
-                    throw new Error('No supported engine can carry out this sequence of operations');
+                    throw new Error(
+                        'No supported engine can carry out this sequence of operations'
+                    );
                 }
                 var engineName = candidateEngineNames[0];
                 var options;
@@ -49,10 +62,19 @@ module.exports = class Pipeline extends Stream.Duplex {
                     options = this._queuedOperations[startIndex].args[0];
                     startIndex += 1;
                 }
-                var operations = this._queuedOperations.slice(startIndex, upToIndex);
-                this.impro.engineByName[engineName].execute(this, operations, options);
-                operations.forEach(operation => (operation.engineName = engineName));
-                this.usedEngines.push({name: engineName, operations});
+                var operations = this._queuedOperations.slice(
+                    startIndex,
+                    upToIndex
+                );
+                this.impro.engineByName[engineName].execute(
+                    this,
+                    operations,
+                    options
+                );
+                operations.forEach(
+                    operation => (operation.engineName = engineName)
+                );
+                this.usedEngines.push({ name: engineName, operations });
                 startIndex = upToIndex;
             }
         };
@@ -63,20 +85,35 @@ module.exports = class Pipeline extends Stream.Duplex {
                     this.targetType = operation.name;
                     this.targetContentType = mime.types[operation.name];
                 }
-                var filteredCandidateEngineNames = candidateEngineNames && candidateEngineNames.filter(
-                    engineName => this.impro.isValidOperationForEngine(engineName, operation.name, operation.args)
-                );
-                if (filteredCandidateEngineNames && filteredCandidateEngineNames.length > 0) {
+                var filteredCandidateEngineNames =
+                    candidateEngineNames &&
+                    candidateEngineNames.filter(engineName =>
+                        this.impro.isValidOperationForEngine(
+                            engineName,
+                            operation.name,
+                            operation.args
+                        )
+                    );
+                if (
+                    filteredCandidateEngineNames &&
+                    filteredCandidateEngineNames.length > 0
+                ) {
                     candidateEngineNames = filteredCandidateEngineNames;
                 } else {
                     _flush(i);
-                    candidateEngineNames = this.impro.engineNamesByOperationName[operation.name].filter(engineName => {
-                        var isSupportedByType = this.impro.isSupportedByEngineNameAndInputType[engineName];
+                    candidateEngineNames = this.impro.engineNamesByOperationName[
+                        operation.name
+                    ].filter(engineName => {
+                        var isSupportedByType = this.impro
+                            .isSupportedByEngineNameAndInputType[engineName];
                         return (
                             !this.isDisabledByEngineName[engineName] &&
                             !this.impro.engineByName[engineName].unavailable &&
                             this.impro[engineName] !== false &&
-                            (engineName === operation.name || isSupportedByType['*'] || (this.targetType && isSupportedByType[this.targetType]))
+                            (engineName === operation.name ||
+                                isSupportedByType['*'] ||
+                                (this.targetType &&
+                                    isSupportedByType[this.targetType]))
                         );
                     });
                 }
@@ -85,21 +122,32 @@ module.exports = class Pipeline extends Stream.Duplex {
         _flush(this._queuedOperations.length);
         this._queuedOperations = undefined;
         this._streams.push(new Stream.PassThrough());
-        this._streams.forEach(function (stream, i) {
+        this._streams.forEach(function(stream, i) {
             if (i < this._streams.length - 1) {
                 stream.pipe(this._streams[i + 1]);
             } else {
-                stream.on('readable', function () {
-                    this.push(stream.read());
-                }.bind(this)).on('end', function () {
-                    this.push(null);
-                }.bind(this));
+                stream
+                    .on(
+                        'readable',
+                        function() {
+                            this.push(stream.read());
+                        }.bind(this)
+                    )
+                    .on(
+                        'end',
+                        function() {
+                            this.push(null);
+                        }.bind(this)
+                    );
             }
             stream.on('error', this._fail.bind(this));
         }, this);
-        this.on('finish', function () {
-            this._streams[0].end();
-        }.bind(this));
+        this.on(
+            'finish',
+            function() {
+                this._streams[0].end();
+            }.bind(this)
+        );
 
         return this;
     }
@@ -129,12 +177,16 @@ module.exports = class Pipeline extends Stream.Duplex {
             return this;
         }
         if (this._flushed) {
-            throw new Error('Cannot add more operations after the streaming has begun');
+            throw new Error(
+                'Cannot add more operations after the streaming has begun'
+            );
         }
         if (Array.isArray(operation)) {
             operation.forEach(operation => this.add(operation));
         } else if (typeof operation === 'string') {
-            this.impro.parse(operation).operations.forEach(operation => this.add(operation));
+            this.impro
+                .parse(operation)
+                .operations.forEach(operation => this.add(operation));
         } else if (operation && typeof operation.name === 'string') {
             this._queuedOperations.push(operation);
         } else {

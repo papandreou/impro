@@ -4,15 +4,18 @@ var PngCrush = requireOr('pngcrush');
 module.exports = {
     name: 'pngcrush',
     unavailable: !PngCrush,
-    inputTypes: [ 'png' ],
-    outputTypes: [ 'png' ],
-    operations: [ 'brute', 'rem' ],
-    validateOperation: function (name, args) {
+    inputTypes: ['png'],
+    outputTypes: ['png'],
+    operations: ['brute', 'rem'],
+    validateOperation: function(name, args) {
         switch (name) {
-        case 'rem':
-            return args.length >= 1 && args.every(function (arg) {
-                return /^[a-z]{4}$/i.test(arg);
-            });
+            case 'rem':
+                return (
+                    args.length >= 1 &&
+                    args.every(function(arg) {
+                        return /^[a-z]{4}$/i.test(arg);
+                    })
+                );
         }
         // usage: pngcrush [options] infile.png outfile.png
         //        pngcrush -e ext [other options] file.png ...
@@ -72,9 +75,9 @@ module.exports = {
         //             -h (help and legal notices)
         //             -p (pause)
     },
-    execute: function (pipeline, operations, options) {
+    execute: function(pipeline, operations, options) {
         var commandLineArgs = [];
-        operations.forEach(({name, args}) => {
+        operations.forEach(({ name, args }) => {
             if (name === 'rem') {
                 args.forEach(arg => {
                     commandLineArgs.push('-rem', arg);
