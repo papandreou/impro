@@ -1,6 +1,6 @@
 var Stream = require('stream');
 var _ = require('lodash');
-let mime = require('mime');
+const mime = require('mime');
 
 module.exports = class Pipeline extends Stream.Duplex {
     constructor(impro, options) {
@@ -51,7 +51,7 @@ module.exports = class Pipeline extends Stream.Duplex {
                 }
                 var operations = this._queuedOperations.slice(startIndex, upToIndex);
                 this.impro.engineByName[engineName].execute(this, operations, options);
-                operations.forEach(operation => operation.engineName = engineName);
+                operations.forEach(operation => (operation.engineName = engineName));
                 this.usedEngines.push({name: engineName, operations});
                 startIndex = upToIndex;
             }

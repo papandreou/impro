@@ -1,5 +1,5 @@
-let Impro = require('./Impro');
-let engines = require('./engines/');
+const Impro = require('./Impro');
+const engines = require('./engines/');
 
 module.exports = new Impro()
     .use(engines.gifsicle)

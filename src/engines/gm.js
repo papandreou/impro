@@ -58,9 +58,9 @@ module.exports = {
         readWriteStream.write = function (chunk) {
             if (!spawned) {
                 spawned = true;
-                var seenData = false,
-                    hasEnded = false,
-                    gmInstance = gm(readStream, getMockFileNameForContentType(operations[0].sourceContentType));
+                var seenData = false;
+                    var hasEnded = false;
+                    var gmInstance = gm(readStream, getMockFileNameForContentType(operations[0].sourceContentType));
                 if (pipeline.options.maxInputPixels) {
                     gmInstance.limit('pixels', pipeline.options.maxInputPixels);
                 }

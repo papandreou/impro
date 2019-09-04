@@ -116,9 +116,9 @@ module.exports = class Impro {
         keyValuePairs.forEach(function (keyValuePair) {
             var matchKeyValuePair = keyValuePair.match(/^([^=]+)(?:=(.*))?/);
             if (matchKeyValuePair) {
-                var operationName = decodeURIComponent(matchKeyValuePair[1]),
+                var operationName = decodeURIComponent(matchKeyValuePair[1]);
                     // Split by non-URL encoded comma or plus:
-                    operationArgs = matchKeyValuePair[2] ? matchKeyValuePair[2].split(/[\+,]/).map(function (arg) {
+                    var operationArgs = matchKeyValuePair[2] ? matchKeyValuePair[2].split(/[+,]/).map(function (arg) {
                         arg = decodeURIComponent(arg);
                         if (/^\d+$/.test(arg)) {
                             return parseInt(arg, 10);
