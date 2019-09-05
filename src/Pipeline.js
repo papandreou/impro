@@ -33,6 +33,7 @@ module.exports = class Pipeline extends Stream.Duplex {
         this.usedEngines = [];
         var startIndex = 0;
         var candidateEngineNames;
+
         var _flush = upToIndex => {
             if (startIndex < upToIndex) {
                 if (this.targetType) {
@@ -94,6 +95,7 @@ module.exports = class Pipeline extends Stream.Duplex {
                             operation.args
                         )
                     );
+
                 if (
                     filteredCandidateEngineNames &&
                     filteredCandidateEngineNames.length > 0
@@ -101,25 +103,17 @@ module.exports = class Pipeline extends Stream.Duplex {
                     candidateEngineNames = filteredCandidateEngineNames;
                 } else {
                     _flush(i);
-                    candidateEngineNames = this.impro.engineNamesByOperationName[
-                        operation.name
-                    ].filter(engineName => {
-                        var isSupportedByType = this.impro
-                            .isSupportedByEngineNameAndInputType[engineName];
-                        return (
-                            !this.isDisabledByEngineName[engineName] &&
-                            !this.impro.engineByName[engineName].unavailable &&
-                            this.impro[engineName] !== false &&
-                            (engineName === operation.name ||
-                                isSupportedByType['*'] ||
-                                (this.targetType &&
-                                    isSupportedByType[this.targetType]))
-                        );
-                    });
+
+                    candidateEngineNames = this._selectEnginesForOperation(
+                        operation.name,
+                        this.targetType
+                    );
                 }
             }
         });
+
         _flush(this._queuedOperations.length);
+
         this._queuedOperations = undefined;
         this._streams.push(new Stream.PassThrough());
         this._streams.forEach(function(stream, i) {
@@ -140,6 +134,25 @@ module.exports = class Pipeline extends Stream.Duplex {
         );
 
         return this;
+    }
+
+    _selectEnginesForOperation(operationName, targetType) {
+        const impro = this.impro;
+
+        return impro.engineNamesByOperationName[operationName].filter(
+            engineName => {
+                var isSupportedByType =
+                    impro.isSupportedByEngineNameAndInputType[engineName];
+                return (
+                    !this.isDisabledByEngineName[engineName] &&
+                    !impro.engineByName[engineName].unavailable &&
+                    impro[engineName] !== false &&
+                    (engineName === operationName ||
+                        isSupportedByType['*'] ||
+                        (targetType && isSupportedByType[targetType]))
+                );
+            }
+        );
     }
 
     _write(chunk, encoding, cb) {
