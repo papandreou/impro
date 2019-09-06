@@ -5,6 +5,7 @@ var expect = require('unexpected')
     .use(require('unexpected-image'))
     .use(require('unexpected-sinon'))
     .use(require('unexpected-resemble'));
+var path = require('path');
 var sinon = require('sinon');
 
 var impro = require('../');
@@ -12,7 +13,21 @@ var impro = require('../');
 var memoizeSync = require('memoizesync');
 var pathModule = require('path');
 var fs = require('fs');
-var load = memoizeSync(function(fileName) {
+
+var load = memoizeSync(function(fileName, platformsToOverride) {
+    if (
+        Array.isArray(platformsToOverride) &&
+        platformsToOverride.includes(process.platform)
+    ) {
+        const ext = path.extname(fileName);
+        fileName = [
+            path.basename(fileName, ext),
+            '-',
+            process.platform,
+            ext
+        ].join('');
+    }
+
     return fs.readFileSync(
         pathModule.resolve(__dirname, '..', 'testdata', fileName)
     );
@@ -156,7 +171,7 @@ describe('impro', function() {
                 .resize(40, 15)
                 .crop('center'),
             'to yield output satisfying to resemble',
-            load('turtleCroppedCenterGm.jpg')
+            load('turtleCroppedCenterGm.jpg', ['darwin'])
         );
     });
 
