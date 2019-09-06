@@ -5,6 +5,7 @@ var expect = require('unexpected')
     .use(require('unexpected-image'))
     .use(require('unexpected-sinon'))
     .use(require('unexpected-resemble'));
+var childProcess = require('child_process');
 var path = require('path');
 var sinon = require('sinon');
 
@@ -445,6 +446,26 @@ describe('impro', function() {
     });
 
     describe('with the inkscape engine', function() {
+        before(function() {
+            if (process.platform === 'darwin') {
+                // On OS X the most commonly available Inkscape
+                // is built against X11. In practice this means
+                // that while it works for the conversion done
+                // by impro it does so only after X11 starts up.
+                // Harden the test suite against this by doing
+                // a 'pre-flight' request so that everything is
+                // started by the point the tests kick in.
+
+                this.timeout(40000);
+
+                return new Promise(resolve => {
+                    childProcess
+                        .spawn('inkscape', ['--without-gui'])
+                        .on('exit', () => resolve());
+                });
+            }
+        });
+
         it('should convert to png by default', function() {
             return expect(
                 'dialog-information.svg',
