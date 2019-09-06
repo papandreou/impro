@@ -284,16 +284,6 @@ describe('impro', function() {
         });
     });
 
-    it('should run an image through optipng', function() {
-        return expect(
-            'testImage.png',
-            'when piped through',
-            impro.add({ name: 'optipng', args: ['-o7'] }),
-            'to yield output satisfying to have length',
-            149
-        );
-    });
-
     describe('with the sharp engine', function() {
         it(
             'should allow passing a cache option',
@@ -543,6 +533,18 @@ describe('impro', function() {
                     .and('to satisfy', function(buffer) {
                         expect(buffer.length, 'to be within', 1, 105836);
                     })
+            );
+        });
+    });
+
+    describe('with the optipng engine', function() {
+        it('process the image according to the given options', function() {
+            return expect(
+                'testImage.png',
+                'when piped through',
+                impro.add({ name: 'optipng', args: ['-o7'] }),
+                'to yield output satisfying to have length',
+                149
             );
         });
     });
