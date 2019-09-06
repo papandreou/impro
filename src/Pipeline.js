@@ -86,20 +86,24 @@ module.exports = class Pipeline extends Stream.Duplex {
                     this.targetType = operation.name;
                     this.targetContentType = mime.types[operation.name];
                 }
-                var filteredCandidateEngineNames =
-                    candidateEngineNames &&
-                    candidateEngineNames.filter(engineName =>
+
+                if (!candidateEngineNames) {
+                    candidateEngineNames = this._selectEnginesForOperation(
+                        operation.name,
+                        this.targetType
+                    );
+                }
+
+                var filteredCandidateEngineNames = candidateEngineNames.filter(
+                    engineName =>
                         this.impro.isValidOperationForEngine(
                             engineName,
                             operation.name,
                             operation.args
                         )
-                    );
+                );
 
-                if (
-                    filteredCandidateEngineNames &&
-                    filteredCandidateEngineNames.length > 0
-                ) {
+                if (filteredCandidateEngineNames.length > 0) {
                     candidateEngineNames = filteredCandidateEngineNames;
                 } else {
                     _flush(i);
