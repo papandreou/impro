@@ -127,20 +127,10 @@ module.exports = class Pipeline extends Stream.Duplex {
                 stream.pipe(this._streams[i + 1]);
             } else {
                 stream
-                    .on(
-                        'readable',
-                        function() {
-                            this.push(stream.read());
-                        }.bind(this)
-                    )
-                    .on(
-                        'end',
-                        function() {
-                            this.push(null);
-                        }.bind(this)
-                    );
+                    .on('readable', () => this.push(stream.read()))
+                    .on('end', () => this.push(null));
             }
-            stream.on('error', this._fail.bind(this));
+            stream.on('error', () => this._fail());
         }, this);
         this.on(
             'finish',
