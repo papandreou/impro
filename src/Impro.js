@@ -15,9 +15,9 @@ module.exports = class Impro {
             this.options = _.extend({}, options);
         }
 
-        this.isOperationByEngineNameAndName = {};
-        this.engineNamesByOperationName = {};
         this.engineByName = {};
+        this.engineNamesByOperationName = {};
+        this.isOperationByEngineNameAndName = {};
         this.isSupportedByEngineNameAndInputType = {};
         this.isSupportedByEngineNameAndOutputType = {};
         this.isTypeByName = {};
@@ -79,7 +79,7 @@ module.exports = class Impro {
             options.validateOperation = function() {};
         }
         this.defaultEngineName = this.defaultEngineName || engineName;
-        this.isOperationByEngineNameAndName[engineName] = {};
+
         this.engineByName[options.name] = options;
         this.registerMethod(engineName, function(...args) {
             if (args[0] === false) {
@@ -91,6 +91,7 @@ module.exports = class Impro {
         });
         this.supportedOptions.push(engineName); // Allow disabling via new Impro({<engineName>: false})
 
+        this.isOperationByEngineNameAndName[engineName] = {};
         [engineName].concat(options.operations || []).forEach(operationName => {
             this.isOperationByEngineNameAndName[engineName][
                 operationName
@@ -101,17 +102,19 @@ module.exports = class Impro {
             );
             this.registerMethod(operationName);
         });
+
         this.isSupportedByEngineNameAndInputType[engineName] = {};
         (options.inputTypes || []).forEach(type => {
             this.isTypeByName[type] = true;
             this.isSupportedByEngineNameAndInputType[engineName][type] = true;
         });
+
         this.isSupportedByEngineNameAndOutputType[engineName] = {};
         (options.outputTypes || []).forEach(type => {
             this.registerMethod(type);
+            this.isTypeByName[type] = true;
             (this.engineNamesByOperationName[type] =
                 this.engineNamesByOperationName[type] || []).push(engineName);
-            this.isTypeByName[type] = true;
             this.isSupportedByEngineNameAndOutputType[engineName][type] = true;
         });
         return this;
