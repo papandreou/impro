@@ -81,14 +81,7 @@ module.exports = class Impro {
         this.defaultEngineName = this.defaultEngineName || engineName;
 
         this.engineByName[options.name] = options;
-        this.registerMethod(engineName, function(...args) {
-            if (args[0] === false) {
-                this.isDisabledByEngineName[engineName] = true;
-                return this;
-            } else {
-                return this.add({ name: engineName, args });
-            }
-        });
+        this.registerMethod(engineName);
         this.supportedOptions.push(engineName); // Allow disabling via new Impro({<engineName>: false})
 
         this.isOperationByEngineNameAndName[engineName] = {};

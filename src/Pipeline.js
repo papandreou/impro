@@ -82,6 +82,21 @@ module.exports = class Pipeline extends Stream.Duplex {
 
         this._queuedOperations.forEach((operation, i) => {
             if (this.impro.engineNamesByOperationName[operation.name]) {
+                if (
+                    this.impro.engineByName[operation.name] &&
+                    typeof operation.args[0] === 'boolean'
+                ) {
+                    const isEnabled = operation.args[0];
+                    this.isDisabledByEngineName[operation.name] = !isEnabled;
+                    if (i === 0) {
+                        startIndex += 1;
+                    } else {
+                        _flush(i);
+                    }
+                    candidateEngineNames = undefined;
+                    return;
+                }
+
                 if (this.impro.isTypeByName[operation.name]) {
                     this.targetType = operation.name;
                     this.targetContentType = mime.types[operation.name];

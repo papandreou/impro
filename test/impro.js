@@ -585,6 +585,51 @@ describe('impro', function() {
         });
     });
 
+    describe('when manually managing the whether engines are enabled', () => {
+        it('should use gm for gifs when gifsicle is disabled', function() {
+            return expect(
+                impro
+                    .gifsicle(false)
+                    .type('gif')
+                    .resize(10, 10)
+                    .flush().usedEngines,
+                'to satisfy',
+                [{ name: 'gm' }]
+            );
+        });
+
+        it('should allow only temporarily disabling gifsicle', function() {
+            return expect(
+                impro
+                    .gifsicle(false)
+                    .type('gif')
+                    .resize(10, 10)
+                    .gifsicle(true)
+                    .resize(20, 20)
+                    .flush().usedEngines,
+                'to satisfy',
+                [
+                    {
+                        name: 'gm',
+                        operations: [
+                            { name: 'resize', args: [10, 10], engineName: 'gm' }
+                        ]
+                    },
+                    {
+                        name: 'gifsicle',
+                        operations: [
+                            {
+                                name: 'resize',
+                                args: [20, 20],
+                                engineName: 'gifsicle'
+                            }
+                        ]
+                    }
+                ]
+            );
+        });
+    });
+
     describe('with a maxOutputPixels setting', function() {
         it('should refuse to resize an image to exceed the max number of pixels', function() {
             expect(
