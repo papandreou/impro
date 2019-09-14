@@ -17,7 +17,6 @@ module.exports = class Impro {
 
         this.engineByName = {};
         this.engineNamesByOperationName = {};
-        this.isOperationByEngineNameAndName = {};
         this.isSupportedByEngineNameAndInputType = {};
         this.isSupportedByEngineNameAndOutputType = {};
         this.isTypeByName = {};
@@ -85,11 +84,7 @@ module.exports = class Impro {
         this.registerMethod(engineName);
         this.supportedOptions.push(engineName); // Allow disabling via new Impro({<engineName>: false})
 
-        this.isOperationByEngineNameAndName[engineName] = {};
         [engineName].concat(options.operations || []).forEach(operationName => {
-            this.isOperationByEngineNameAndName[engineName][
-                operationName
-            ] = true;
             (this.engineNamesByOperationName[operationName] =
                 this.engineNamesByOperationName[operationName] || []).push(
                 engineName
