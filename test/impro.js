@@ -242,6 +242,29 @@ describe('impro', function() {
             );
         });
 
+        it('should include EXIF metadata in the output JSON', function() {
+            return expect(
+                'exif.jpg',
+                'when piped through',
+                impro.metadata(),
+                'to yield JSON output satisfying',
+                {
+                    image: expect.it('to equal', {
+                        Make: 'Apple',
+                        Model: 'iPhone 6s',
+                        Orientation: 6,
+                        XResolution: 72,
+                        YResolution: 72,
+                        ResolutionUnit: 2,
+                        Software: '11.2',
+                        ModifyDate: '2018-02-02T13:53:21.000Z',
+                        YCbCrPositioning: 1,
+                        ExifOffset: 192
+                    })
+                }
+            );
+        });
+
         it('should include source metadata provided via the meta method', function() {
             return expect(
                 'turtle.jpg',
