@@ -5,23 +5,26 @@ const mime = require('mime');
 module.exports = class Pipeline extends Stream.Duplex {
     constructor(impro, options) {
         super();
+
         this._queuedOperations = [];
-        options = options || {};
+
         this.ended = false;
         this.impro = impro;
         this._streams = [];
+        this.isDisabledByEngineName = {};
         this.options = {};
-        impro.supportedOptions.forEach(optionName => {
+
+        const { type, supportedOptions, ...sourceMetadata } = options || {};
+        supportedOptions.forEach(optionName => {
             this.options[optionName] =
                 typeof options[optionName] !== 'undefined'
                     ? options[optionName]
                     : impro.options[optionName];
         });
-        this.sourceMetadata = _.omit(options, impro.supportedOptions);
-        if (options.type) {
-            this.type(options.type);
+        this.sourceMetadata = sourceMetadata;
+        if (type) {
+            this.type(type);
         }
-        this.isDisabledByEngineName = {};
     }
 
     flush() {

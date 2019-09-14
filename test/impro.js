@@ -87,6 +87,21 @@ describe('impro', function() {
         });
     });
 
+    describe('#createPipeline', () => {
+        it('should allow directly setting an output type option', function() {
+            const customImpro = new impro.Impro().use(impro.engines.gifsicle);
+            const pipeline = customImpro
+                .createPipeline({ type: 'gif' })
+                .flush();
+
+            expect(pipeline, 'to satisfy', {
+                sourceType: 'gif',
+                targetType: 'gif',
+                targetContentType: 'image/gif'
+            });
+        });
+    });
+
     describe('#parse', function() {
         it('should return an object with the operations and the leftover parameters, given a query string', function() {
             expect(impro.parse('foo=bar&resize=120,120'), 'to equal', {

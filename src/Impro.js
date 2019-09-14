@@ -45,7 +45,10 @@ module.exports = class Impro {
     }
 
     createPipeline(options, operations) {
-        var pipeline = new this._Pipeline(this, options);
+        const pipeline = new this._Pipeline(this, {
+            ...options,
+            supportedOptions: this.supportedOptions
+        });
         if (operations) {
             pipeline.add(operations);
         }
