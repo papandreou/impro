@@ -52,13 +52,11 @@ module.exports = class Impro {
         return pipeline;
     }
 
-    registerMethod(operationName, fn) {
+    registerMethod(operationName) {
         if (!this._Pipeline.prototype[operationName]) {
-            this._Pipeline.prototype[operationName] =
-                fn ||
-                function(...args) {
-                    return this.add({ name: operationName, args });
-                };
+            this._Pipeline.prototype[operationName] = function(...args) {
+                return this.add({ name: operationName, args });
+            };
         }
         this[operationName] = (...args) =>
             this.createPipeline()[operationName](...args);
