@@ -1,5 +1,4 @@
 const Stream = require('stream');
-const _ = require('lodash');
 const mime = require('mime');
 
 module.exports = class Pipeline extends Stream.Duplex {
@@ -244,7 +243,7 @@ module.exports = class Pipeline extends Stream.Duplex {
         if (typeof source !== 'object') {
             throw new Error('Source must be given as an object');
         }
-        _.extend(this.sourceMetadata, source);
+        Object.assign(this.sourceMetadata, source);
         return this;
     }
 
