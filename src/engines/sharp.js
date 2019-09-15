@@ -204,6 +204,6 @@ module.exports = {
             sharpInstance[name](...args)
         );
 
-        pipeline.add(sharpInstance);
+        pipeline._attach(sharpInstance);
     }
 };

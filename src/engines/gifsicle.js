@@ -63,7 +63,7 @@ module.exports = {
         var seenOperationThatMustComeBeforeExtract = false;
         function flush() {
             if (gifsicleArgs.length > 0) {
-                pipeline.add(new Gifsicle(gifsicleArgs));
+                pipeline._attach(new Gifsicle(gifsicleArgs));
                 seenOperationThatMustComeBeforeExtract = false;
                 gifsicleArgs = [];
             }

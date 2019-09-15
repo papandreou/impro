@@ -237,6 +237,6 @@ module.exports = {
             }
             readStream.emit('end');
         };
-        pipeline.add(readWriteStream);
+        pipeline._attach(readWriteStream);
     }
 };

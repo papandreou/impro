@@ -17,6 +17,6 @@ module.exports = {
         operations.forEach(({ name, args }) => {
             commandLineArgs.push('-' + name, ...args);
         });
-        pipeline.add(new OptiPng(commandLineArgs));
+        pipeline._attach(new OptiPng(commandLineArgs));
     }
 };

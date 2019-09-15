@@ -236,12 +236,15 @@ module.exports = class Pipeline extends Stream.Duplex {
         this._streams[0].end();
     }
 
-    add(operation) {
-        // FIXME: Make a separate method for this
-        if (operation && typeof operation.pipe === 'function') {
-            this._streams.push(operation);
-            return this;
+    _attach(stream) {
+        if (!(stream && typeof stream.pipe === 'function')) {
+            throw new Error('Cannot attach something that is not a stream');
         }
+
+        this._streams.push(stream);
+    }
+
+    add(operation) {
         if (this._flushed) {
             throw new Error(
                 'Cannot add more operations after the streaming has begun'

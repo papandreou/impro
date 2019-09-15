@@ -26,6 +26,6 @@ module.exports = {
             pipeline.targetContentType = 'image/png';
             commandLineArgs.push('--export-png');
         }
-        pipeline.add(new Inkscape(commandLineArgs));
+        pipeline._attach(new Inkscape(commandLineArgs));
     }
 };

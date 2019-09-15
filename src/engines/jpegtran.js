@@ -84,6 +84,6 @@ module.exports = {
                 commandLineArgs.push('-' + name, ...args);
             }
         });
-        pipeline.add(new JpegTran(commandLineArgs));
+        pipeline._attach(new JpegTran(commandLineArgs));
     }
 };

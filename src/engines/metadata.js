@@ -121,7 +121,7 @@ module.exports = {
         duplexStream.on('finish', function() {
             sharpInstance.end();
         });
-        pipeline.add(duplexStream);
+        pipeline._attach(duplexStream);
         pipeline.targetType = 'json';
         pipeline.targetContentType = 'application/json; charset=utf-8';
     }
