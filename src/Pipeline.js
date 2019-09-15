@@ -15,7 +15,7 @@ module.exports = class Pipeline extends Stream.Duplex {
         this.options = {};
 
         const { type, supportedOptions, ...sourceMetadata } = options || {};
-        supportedOptions.forEach(optionName => {
+        (supportedOptions || []).forEach(optionName => {
             this.options[optionName] =
                 typeof options[optionName] !== 'undefined'
                     ? options[optionName]
