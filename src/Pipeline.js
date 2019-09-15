@@ -5,6 +5,7 @@ module.exports = class Pipeline extends Stream.Duplex {
     constructor(impro, options) {
         super();
 
+        this._onError = err => this._fail(err);
         this._queuedOperations = [];
 
         this.ended = false;
@@ -145,14 +146,11 @@ module.exports = class Pipeline extends Stream.Duplex {
                     .on('readable', () => this.push(stream.read()))
                     .on('end', () => this.push(null));
             }
-            stream.on('error', () => this._fail());
+            // protect against filters emitting errors more than once
+            stream.once('error', err => this._fail(err, i));
         }, this);
-        this.on(
-            'finish',
-            function() {
-                this._streams[0].end();
-            }.bind(this)
-        );
+        this.on('finish', () => this._finish());
+        this.once('error', this._onError);
 
         return this;
     }
@@ -187,11 +185,55 @@ module.exports = class Pipeline extends Stream.Duplex {
         this._streams[this._streams.length - 1].read(size);
     }
 
-    _fail(err) {
-        if (!this.ended) {
-            this.ended = true;
+    _fail(err, streamIndex = -1) {
+        if (this.ended) {
+            return;
+        }
+
+        this.ended = true;
+
+        this._streams.forEach(filter => {
+            if (filter.unpipe) {
+                filter.unpipe();
+            }
+            if (filter.kill) {
+                filter.kill();
+            } else if (filter.destroy) {
+                filter.destroy();
+            } else if (filter.resume) {
+                filter.resume();
+            }
+            if (filter.end) {
+                filter.end();
+            }
+            if (
+                filter._readableState &&
+                filter._readableState.buffer &&
+                filter._readableState.buffer.length > 0
+            ) {
+                filter._readableState.buffer = [];
+            }
+            filter.removeAllListeners();
+            // protect against filters emitting errors more than once
+            filter.on('error', () => {});
+        });
+
+        if (streamIndex > -1) {
+            // unhook pipeline error handler to avoid re-entry
+            this.removeListener('error', this._onError);
+            // now signal the error on the pipeline
             this.emit('error', err);
         }
+    }
+
+    _finish() {
+        if (this.ended) {
+            return;
+        }
+
+        this.ended = true;
+
+        this._streams[0].end();
     }
 
     add(operation) {

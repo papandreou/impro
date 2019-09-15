@@ -668,6 +668,44 @@ describe('impro', function() {
         });
     });
 
+    describe('when there are errors duing streaming', () => {
+        it('should cleanup on pipeline steam error', function() {
+            const pipeline = impro
+                .gifsicle(false)
+                .type('gif')
+                .resize(10, 10)
+                .gifsicle(true)
+                .resize(20, 20)
+                .flush(); // force construstion of the child streams
+            const secondStream = pipeline._streams[1];
+            const error = new Error('Fake error');
+            setImmediate(() => {
+                secondStream.emit('error', error);
+            });
+
+            return expect(pipeline, 'to error with', error);
+        });
+
+        it('should cleanup the pipeline on a top level error', function() {
+            const pipeline = impro
+                .gifsicle(false)
+                .type('gif')
+                .resize(10, 10)
+                .gifsicle(true)
+                .resize(20, 20)
+                .flush(); // force construstion of the child streams
+            const endSpy = sinon.spy(pipeline._streams[0], 'end');
+            const error = new Error('Fake error');
+            setImmediate(() => {
+                pipeline.emit('error', error);
+            });
+
+            return expect(pipeline, 'to error with', error).then(() =>
+                expect(endSpy, 'was called')
+            );
+        });
+    });
+
     describe('with a maxOutputPixels setting', function() {
         it('should refuse to resize an image to exceed the max number of pixels', function() {
             expect(
