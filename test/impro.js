@@ -249,7 +249,7 @@ describe('impro', function() {
                 impro.metadata(),
                 'to yield JSON output satisfying',
                 {
-                    image: expect.it('to equal', {
+                    image: expect.it('to exhaustively satisfy', {
                         Make: 'Apple',
                         Model: 'iPhone 6s',
                         Orientation: 6,
@@ -257,7 +257,7 @@ describe('impro', function() {
                         YResolution: 72,
                         ResolutionUnit: 2,
                         Software: '11.2',
-                        ModifyDate: '2018-02-02T13:53:21.000Z',
+                        ModifyDate: expect.it('to be a string'),
                         YCbCrPositioning: 1,
                         ExifOffset: 192
                     })
