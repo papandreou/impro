@@ -4,6 +4,10 @@
   "description": "Image processing engine",
   "author": "Andreas Lind <andreaslindpetersen@gmail.com>",
   "main": "index.js",
+  "files": [
+    "index.js",
+    "src"
+  ],
   "repository": "papandreou/impro",
   "license": "BSD-3-Clause",
   "keywords": [
