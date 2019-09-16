@@ -7,7 +7,7 @@ function isNumberWithin(num, min, max) {
 }
 
 function locatePreviousCommand(operations, nameToFind) {
-    return operations.find(operation => {
+    return operations.findIndex(operation => {
         return operation.name === nameToFind;
     });
 }
@@ -176,12 +176,17 @@ module.exports = {
                 name = 'resize';
                 args = [null, null, { fit: 'cover', position: args[0] }];
 
-                const locatedOperation = locatePreviousCommand(
+                const locatedIndex = locatePreviousCommand(
                     operationsForExecution,
                     name
                 );
-                if (locatedOperation) {
-                    locatedOperation.args[2] = args[2];
+                if (locatedIndex > -1) {
+                    let locatedOperation = operationsForExecution[locatedIndex];
+                    locatedOperation = {
+                        ...locatedOperation,
+                        args: locatedOperation.args.concat(args[2])
+                    };
+                    operationsForExecution[locatedIndex] = locatedOperation;
                     return;
                 }
             }
@@ -205,5 +210,7 @@ module.exports = {
         );
 
         pipeline._attach(sharpInstance);
+
+        return operationsForExecution;
     }
 };

@@ -444,6 +444,46 @@ describe('impro', function() {
                     .finally(() => cacheSpy.restore());
             })
         );
+
+        it('should combine resize with crop', () => {
+            const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
+
+            const usedEngines = impro
+                .type('jpg')
+                .resize(10, 10)
+                .crop('northwest')
+                .flush().usedEngines;
+
+            return expect(executeSpy.returnValues[0], 'to equal', [
+                {
+                    name: 'resize',
+                    args: [10, 10, { fit: 'cover', position: 'northwest' }]
+                }
+            ])
+                .then(() => {
+                    // check that the external representation is unchanged
+                    return expect(usedEngines, 'to satisfy', [
+                        {
+                            name: 'sharp',
+                            operations: expect.it('to equal', [
+                                {
+                                    name: 'resize',
+                                    args: [10, 10],
+                                    engineName: 'sharp'
+                                },
+                                {
+                                    name: 'crop',
+                                    args: ['northwest'],
+                                    engineName: 'sharp'
+                                }
+                            ])
+                        }
+                    ]);
+                })
+                .finally(() => {
+                    executeSpy.restore();
+                });
+        });
     });
 
     describe('with the gifsicle engine', function() {
