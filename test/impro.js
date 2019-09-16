@@ -445,6 +445,24 @@ describe('impro', function() {
             })
         );
 
+        it('should support rotate', () => {
+            const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
+
+            impro
+                .type('jpg')
+                .rotate(90)
+                .flush();
+
+            return expect(executeSpy.returnValues[0], 'to equal', [
+                {
+                    name: 'rotate',
+                    args: [90]
+                }
+            ]).finally(() => {
+                executeSpy.restore();
+            });
+        });
+
         it('should combine resize with crop', () => {
             const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
 
