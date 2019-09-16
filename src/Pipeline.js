@@ -250,16 +250,12 @@ module.exports = class Pipeline extends Stream.Duplex {
                 'Cannot add more operations after the streaming has begun'
             );
         }
-        if (Array.isArray(operation)) {
-            operation.forEach(operation => this.add(operation));
-        } else if (typeof operation === 'string') {
-            this.impro
-                .parse(operation)
-                .operations.forEach(operation => this.add(operation));
-        } else if (operation && typeof operation.name === 'string') {
+        if (operation && typeof operation.name === 'string') {
             this._queuedOperations.push(operation);
         } else {
-            throw new Error('add: Unsupported argument: ' + operation);
+            throw new Error(
+                `add: Unsupported argument: ${JSON.stringify(operation)}`
+            );
         }
         return this;
     }

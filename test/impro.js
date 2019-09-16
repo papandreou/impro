@@ -100,6 +100,39 @@ describe('impro', function() {
                 targetContentType: 'image/gif'
             });
         });
+
+        it('should process and execute instructions when passed a query string', function() {
+            return expect(
+                'turtle.jpg',
+                'when piped through',
+                impro.createPipeline('resize=40,15&crop=center'),
+                'to yield output satisfying to resemble',
+                load('turtleCroppedCenter.jpg')
+            );
+        });
+
+        it('should process and execute instructions when passed an array of operation objects', function() {
+            return expect(
+                'turtle.jpg',
+                'when piped through',
+                impro.createPipeline([
+                    { name: 'resize', args: [40, 15] },
+                    { name: 'crop', args: ['center'] }
+                ]),
+                'to yield output satisfying to resemble',
+                load('turtleCroppedCenter.jpg')
+            );
+        });
+
+        it('should throw if the operations definition is not supported', function() {
+            return expect(
+                () => {
+                    impro.createPipeline({}, {});
+                },
+                'to throw',
+                'Pipeline creation can only be supplied an operations array or string'
+            );
+        });
     });
 
     describe('#parse', function() {
@@ -108,33 +141,6 @@ describe('impro', function() {
                 operations: [{ name: 'resize', args: [120, 120] }],
                 leftover: 'foo=bar'
             });
-        });
-    });
-
-    describe('when passed a query string', function() {
-        it('should return a duplex stream that executes the processing instructions', function() {
-            return expect(
-                'turtle.jpg',
-                'when piped through',
-                impro.add('resize=40,15&crop=center'),
-                'to yield output satisfying to resemble',
-                load('turtleCroppedCenter.jpg')
-            );
-        });
-    });
-
-    describe('when passed an array of operation objects', function() {
-        it('should return a duplex stream that executes the processing instructions', function() {
-            return expect(
-                'turtle.jpg',
-                'when piped through',
-                impro.add([
-                    { name: 'resize', args: [40, 15] },
-                    { name: 'crop', args: ['center'] }
-                ]),
-                'to yield output satisfying to resemble',
-                load('turtleCroppedCenter.jpg')
-            );
         });
     });
 

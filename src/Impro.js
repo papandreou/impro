@@ -44,13 +44,28 @@ module.exports = class Impro {
     }
 
     createPipeline(options, operations) {
+        if (typeof options === 'string' || Array.isArray(options)) {
+            operations = options;
+            options = undefined;
+        }
+
         const pipeline = new this._Pipeline(this, {
             ...options,
             supportedOptions: this.supportedOptions
         });
+
         if (operations) {
-            pipeline.add(operations);
+            if (typeof operations === 'string') {
+                operations = this.parse(operations).operations;
+            } else if (!Array.isArray(operations)) {
+                throw new Error(
+                    'Pipeline creation can only be supplied an operations array or string'
+                );
+            }
+
+            operations.forEach(operation => pipeline.add(operation));
         }
+
         return pipeline;
     }
 
@@ -65,8 +80,8 @@ module.exports = class Impro {
         return this;
     }
 
-    add(...rest) {
-        return this.createPipeline().add(...rest);
+    add(operation) {
+        return this.createPipeline().add(operation);
     }
 
     use(options) {
