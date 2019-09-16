@@ -153,6 +153,14 @@ module.exports = {
         }
 
         var operationsForExecution = [];
+
+        if (pipeline.targetType) {
+            operationsForExecution.push({
+                name: pipeline.targetType,
+                args: []
+            });
+        }
+
         operations.forEach(function(operation) {
             var name = operation.name;
             var args = operation.args;
@@ -188,6 +196,28 @@ module.exports = {
                     };
                     operationsForExecution[locatedIndex] = locatedOperation;
                     return;
+                }
+            }
+            // in sharp quality is implemented as an option to the target type
+            if (operation.name === 'quality') {
+                const locatedIndex = locatePreviousCommand(
+                    operationsForExecution,
+                    pipeline.targetType
+                );
+                if (locatedIndex > -1) {
+                    let locatedOperation = operationsForExecution[locatedIndex];
+                    locatedOperation = {
+                        ...locatedOperation,
+                        args: [
+                            { ...locatedOperation.args[0], quality: args[0] }
+                        ]
+                    };
+                    operationsForExecution[locatedIndex] = locatedOperation;
+                    return;
+                } else {
+                    throw new Error(
+                        'sharp: quality() operation must follow output type selection'
+                    );
                 }
             }
             // Compensate for https://github.com/lovell/sharp/issues/276

@@ -481,6 +481,50 @@ describe('impro', function() {
             });
         });
 
+        it('should support quality', () => {
+            const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
+
+            const usedEngines = impro
+                .type('jpeg')
+                .quality(88)
+                .flush().usedEngines;
+
+            return expect(executeSpy.returnValues[0], 'to equal', [
+                {
+                    name: 'jpeg',
+                    args: [{ quality: 88 }]
+                }
+            ])
+                .then(() => {
+                    // check that the external representation is unchanged
+                    return expect(usedEngines, 'to satisfy', [
+                        {
+                            name: 'sharp',
+                            operations: expect.it('to equal', [
+                                {
+                                    name: 'quality',
+                                    args: [88],
+                                    engineName: 'sharp'
+                                }
+                            ])
+                        }
+                    ]);
+                })
+                .finally(() => {
+                    executeSpy.restore();
+                });
+        });
+
+        it('should throw on quality without a target type', () => {
+            return expect(
+                () => {
+                    impro.quality(88).flush();
+                },
+                'to throw',
+                'sharp: quality() operation must follow output type selection'
+            );
+        });
+
         it('should support rotate', () => {
             const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
 
