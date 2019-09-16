@@ -27,7 +27,7 @@ module.exports = class Pipeline extends Stream.Duplex {
         }
     }
 
-    flush() {
+    flush(isStream = false) {
         if (this._flushed) {
             return this;
         }
@@ -38,7 +38,11 @@ module.exports = class Pipeline extends Stream.Duplex {
         var candidateEngineNames;
 
         var _flush = upToIndex => {
-            if (startIndex < upToIndex) {
+            if (startIndex >= upToIndex) {
+                return;
+            }
+
+            try {
                 if (this.targetType) {
                     candidateEngineNames = candidateEngineNames.filter(
                         engineName => {
@@ -80,6 +84,12 @@ module.exports = class Pipeline extends Stream.Duplex {
                 );
                 this.usedEngines.push({ name: engineName, operations });
                 startIndex = upToIndex;
+            } catch (e) {
+                if (isStream) {
+                    this._fail(e, this.usedEngines.length + 1);
+                } else {
+                    throw e;
+                }
             }
         };
 
@@ -175,13 +185,13 @@ module.exports = class Pipeline extends Stream.Duplex {
     }
 
     _write(chunk, encoding, cb) {
-        this.flush();
+        this.flush(true);
         this._streams[0].write(chunk, encoding);
         cb();
     }
 
     _read(size) {
-        this.flush();
+        this.flush(true);
         this._streams[this._streams.length - 1].read(size);
     }
 

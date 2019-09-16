@@ -34,6 +34,12 @@ var load = memoizeSync(function(fileName, platformsToOverride) {
     );
 });
 
+var loadAsStream = function(fileName) {
+    return fs.createReadStream(
+        pathModule.resolve(__dirname, '..', 'testdata', fileName)
+    );
+};
+
 expect.addAssertion(
     '<string> when piped through <Stream> <assertion?>',
     function(expect, subject, ...rest) {
@@ -875,6 +881,21 @@ describe('impro', function() {
                         .flush();
                 },
                 'to throw',
+                'resize: Target dimensions of 100x100 exceed maxOutputPixels (2)'
+            );
+        });
+
+        it('should correctly due to max number of pixels after streaming starts', function() {
+            const turtleJpg = loadAsStream('turtle.jpg');
+            const pipeline = impro.maxOutputPixels(2).resize(100, 100);
+            // close the file stream if the pipeline errors
+            pipeline.on('error', () => turtleJpg.close());
+
+            turtleJpg.pipe(turtleJpg);
+
+            return expect(
+                pipeline,
+                'to error with',
                 'resize: Target dimensions of 100x100 exceed maxOutputPixels (2)'
             );
         });
