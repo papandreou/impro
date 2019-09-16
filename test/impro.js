@@ -445,6 +445,42 @@ describe('impro', function() {
             })
         );
 
+        it('should support blur with no argument', () => {
+            const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
+
+            impro
+                .type('jpg')
+                .blur()
+                .flush();
+
+            return expect(executeSpy.returnValues[0], 'to equal', [
+                {
+                    name: 'blur',
+                    args: []
+                }
+            ]).finally(() => {
+                executeSpy.restore();
+            });
+        });
+
+        it('should support blur with an argument', () => {
+            const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
+
+            impro
+                .type('jpg')
+                .blur(0.5)
+                .flush();
+
+            return expect(executeSpy.returnValues[0], 'to equal', [
+                {
+                    name: 'blur',
+                    args: [0.5]
+                }
+            ]).finally(() => {
+                executeSpy.restore();
+            });
+        });
+
         it('should support rotate', () => {
             const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
 
