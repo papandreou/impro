@@ -217,7 +217,7 @@ module.exports = {
                                         readWriteStream.emit(
                                             'error',
                                             new Error(
-                                                'The gm stream ended without emitting any data'
+                                                'gm: stream ended without emitting any data'
                                             )
                                         );
                                     }

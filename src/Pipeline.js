@@ -237,12 +237,6 @@ module.exports = class Pipeline extends Stream.Duplex {
     }
 
     _finish() {
-        if (this.ended) {
-            return;
-        }
-
-        this.ended = true;
-
         this._streams[0].end();
     }
 

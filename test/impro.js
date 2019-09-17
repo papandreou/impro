@@ -664,6 +664,31 @@ describe('impro', function() {
                 expect.it('not to be empty')
             );
         });
+
+        it('should emit an error on a bad conversion', function() {
+            const gmEngine = impro.engineByName.gm;
+            gmEngine.outputTypes.push('ico');
+            const origExecute = gmEngine.execute;
+            gmEngine.execute = function(pipeline, operations) {
+                gmEngine.execute = origExecute;
+
+                // override with an unsupported output type to trigger error path
+                operations[0].name = 'ico';
+
+                origExecute.call(this, pipeline, operations);
+            };
+
+            return expect(
+                'bulb.gif',
+                'when piped through',
+                impro.gm().png(),
+                'to error with',
+                'gm: stream ended without emitting any data'
+            ).finally(() => {
+                gmEngine.execute = origExecute;
+                gmEngine.outputTypes.splice(gmEngine.outputTypes.length - 1, 1);
+            });
+        });
     });
 
     describe('with the inkscape engine', function() {
