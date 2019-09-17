@@ -14,6 +14,7 @@ module.exports = {
     outputTypes: ['jpeg'],
     operations: [
         'copy',
+        'crop',
         'optimize',
         'progressive',
         'extract',
@@ -84,6 +85,9 @@ module.exports = {
                 commandLineArgs.push('-' + name, ...args);
             }
         });
+
         pipeline._attach(new JpegTran(commandLineArgs));
+
+        return commandLineArgs;
     }
 };

@@ -817,6 +817,41 @@ describe('impro', function() {
                     })
             );
         });
+
+        it('should support crop', () => {
+            const executeSpy = sinon.spy(
+                impro.engineByName.jpegtran,
+                'execute'
+            );
+
+            const pipeline = impro
+                .jpegtran()
+                .crop(10, 10, 10, 10)
+                .flush();
+
+            return expect(executeSpy.returnValues[0], 'to equal', [
+                '-crop',
+                '10x10+10+10'
+            ])
+                .then(() => {
+                    // check that the external representation is unchanged
+                    expect(pipeline.usedEngines, 'to equal', [
+                        {
+                            name: 'jpegtran',
+                            operations: [
+                                {
+                                    name: 'crop',
+                                    args: [10, 10, 10, 10],
+                                    engineName: 'jpegtran'
+                                }
+                            ]
+                        }
+                    ]);
+                })
+                .finally(() => {
+                    executeSpy.restore();
+                });
+        });
     });
 
     describe('with the optipng engine', function() {
