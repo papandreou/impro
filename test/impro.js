@@ -6,6 +6,7 @@ var expect = require('unexpected')
     .use(require('unexpected-sinon'))
     .use(require('unexpected-resemble'));
 var childProcess = require('child_process');
+var fileType = require('file-type');
 var path = require('path');
 var sinon = require('sinon');
 
@@ -47,6 +48,15 @@ expect.addAssertion(
         return expect(load(subject), 'when piped through', ...rest);
     }
 );
+
+expect.addAssertion('<Buffer> to have mime type <string>', function(
+    expect,
+    subject,
+    value
+) {
+    expect.errorMode = 'nested';
+    return expect(fileType(subject).mime, 'to equal', value);
+});
 
 expect.addAssertion('<Stream> to yield JSON output satisfying <any>', function(
     expect,
@@ -629,6 +639,29 @@ describe('impro', function() {
                     .flush().usedEngines,
                 'to satisfy',
                 [{ name: 'gm' }]
+            );
+        });
+    });
+
+    describe('with the gm engine', function() {
+        it('should output as a tiff', function() {
+            return expect(
+                'bulb.gif',
+                'when piped through',
+                impro.gm().tiff(),
+                'to yield output satisfying',
+                'to have mime type',
+                'image/tiff'
+            );
+        });
+
+        it('should output as a tga', function() {
+            return expect(
+                'turtle.jpg',
+                'when piped through',
+                impro.gm().tga(),
+                'to yield output satisfying',
+                expect.it('not to be empty')
             );
         });
     });

@@ -30,7 +30,7 @@ module.exports = {
         })
     ),
     inputTypes: ['gif', 'jpeg', 'png', 'ico', 'tga', 'tiff', '*'],
-    outputTypes: ['gif', 'jpeg', 'png', 'ico', 'tga', 'tiff'],
+    outputTypes: ['gif', 'jpeg', 'png', 'tga', 'tiff', 'webp'],
     validateOperation: function(name, args) {
         switch (name) {
             // Operations that emulate sharp's API:
@@ -184,10 +184,7 @@ module.exports = {
                         }
                         // There are many, many more that could be supported:
                         if (
-                            operation.name === 'webp' ||
-                            operation.name === 'png' ||
-                            operation.name === 'jpeg' ||
-                            operation.name === 'gif'
+                            module.exports.outputTypes.includes(operation.name)
                         ) {
                             operation = _.extend({}, operation);
                             operation.args.unshift(operation.name);
