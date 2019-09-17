@@ -982,7 +982,10 @@ describe('impro', function() {
             const turtleJpg = loadAsStream('turtle.jpg');
             const pipeline = impro.maxOutputPixels(2).resize(100, 100);
             // close the file stream if the pipeline errors
-            pipeline.on('error', () => turtleJpg.close());
+            pipeline.on('error', () => {
+                turtleJpg.unpipe();
+                turtleJpg.close();
+            });
 
             turtleJpg.pipe(turtleJpg);
 
