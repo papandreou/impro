@@ -26,8 +26,23 @@ function createGmOperations(operations) {
 
         if (operation.name === 'rotate' && operation.args.length === 1) {
             operation.args = ['transparent', operation.args[0]];
-        }
-        if (operation.name === 'extract') {
+        } else if (operation.name === 'resize') {
+            const args = operation.args;
+            if (
+                typeof pipeline.options.maxOutputPixels === 'number' &&
+                args[0] * args[1] > pipeline.options.maxOutputPixels
+            ) {
+                throw new errors.OutputDimensionsExceeded(
+                    'resize: Target dimensions of ' +
+                        args[0] +
+                        'x' +
+                        args[1] +
+                        ' exceed maxOutputPixels (' +
+                        pipeline.options.maxOutputPixels +
+                        ')'
+                );
+            }
+        } else if (operation.name === 'extract') {
             operation.name = 'crop';
             operation.args = [
                 operation.args[2],
@@ -148,7 +163,7 @@ module.exports = {
         }
     },
     execute: function(pipeline, operations) {
-        var gmOperations = createGmOperations(operations);
+        var gmOperations = createGmOperations(pipeline, operations);
 
         // For some reason the gm module doesn't expose itself as a readable/writable stream,
         // so we need to wrap it into one:
@@ -175,25 +190,6 @@ module.exports = {
 
                 gmOperations
                     .reduce(function(gmInstance, operation) {
-                        var args = operation.args;
-
-                        if (
-                            operation.name === 'resize' &&
-                            typeof pipeline.options.maxOutputPixels ===
-                                'number' &&
-                            args[0] * args[1] > pipeline.options.maxOutputPixels
-                        ) {
-                            throw new errors.OutputDimensionsExceeded(
-                                'resize: Target dimensions of ' +
-                                    args[0] +
-                                    'x' +
-                                    args[1] +
-                                    ' exceed maxOutputPixels (' +
-                                    pipeline.options.maxOutputPixels +
-                                    ')'
-                            );
-                        }
-
                         if (typeof gmInstance[operation.name] === 'function') {
                             return gmInstance[operation.name].apply(
                                 gmInstance,

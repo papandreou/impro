@@ -994,7 +994,7 @@ describe('impro', function() {
             );
         });
 
-        it.skip('should refuse to resize an image to exceed the max number of pixels, gm', function() {
+        it('should refuse to resize an image to exceed the max number of pixels, gm', function() {
             expect(
                 function() {
                     impro
