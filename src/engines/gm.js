@@ -3,7 +3,82 @@ const Stream = require('stream');
 const gm = requireOr('gm');
 const mime = require('mime');
 const errors = require('../errors');
-const _ = require('lodash');
+
+function createGmOperations(operations) {
+    var gmOperations = [];
+    var resize;
+    var crop;
+    var withoutEnlargement;
+    var ignoreAspectRatio;
+
+    for (const requestedOperation of operations) {
+        const operation = Object.assign({}, requestedOperation);
+
+        if (operation.name === 'resize') {
+            resize = operation;
+        } else if (operation.name === 'crop') {
+            crop = operation;
+        } else if (operation.name === 'withoutEnlargement') {
+            withoutEnlargement = operation;
+        } else if (operation.name === 'ignoreAspectRatio') {
+            ignoreAspectRatio = operation;
+        }
+
+        if (operation.name === 'rotate' && operation.args.length === 1) {
+            operation.args = ['transparent', operation.args[0]];
+        }
+        if (operation.name === 'extract') {
+            operation.name = 'crop';
+            operation.args = [
+                operation.args[2],
+                operation.args[3],
+                operation.args[0],
+                operation.args[1]
+            ];
+        } else if (operation.name === 'crop') {
+            operation.name = 'gravity';
+            operation.args = [
+                {
+                    northwest: 'NorthWest',
+                    north: 'North',
+                    northeast: 'NorthEast',
+                    west: 'West',
+                    center: 'Center',
+                    east: 'East',
+                    southwest: 'SouthWest',
+                    south: 'South',
+                    southeast: 'SouthEast'
+                }[String(operation.args[0]).toLowerCase()] || 'Center'
+            ];
+        }
+        if (operation.name === 'progressive') {
+            operation.name = 'interlace';
+            operation.args = ['line'];
+        }
+        // There are many, many more that could be supported:
+        if (module.exports.outputTypes.includes(operation.name)) {
+            operation.args.unshift(operation.name);
+            operation.name = 'setFormat';
+        }
+
+        gmOperations.push(operation);
+    }
+    if (withoutEnlargement && resize) {
+        resize.args[1] += '>';
+    }
+    if (ignoreAspectRatio && resize) {
+        resize.args[1] += '!';
+    }
+    if (resize && crop) {
+        gmOperations.push({
+            name: 'extent',
+            args: [].concat(resize.args)
+        });
+        resize.args.push('^');
+    }
+
+    return gmOperations;
+}
 
 function getMockFileNameForContentType(contentType) {
     if (contentType) {
@@ -73,9 +148,10 @@ module.exports = {
         }
     },
     execute: function(pipeline, operations) {
+        var gmOperations = createGmOperations(operations);
+
         // For some reason the gm module doesn't expose itself as a readable/writable stream,
         // so we need to wrap it into one:
-
         var readStream = new Stream();
         readStream.readable = true;
 
@@ -90,43 +166,14 @@ module.exports = {
                 var gmInstance = gm(
                     readStream,
                     getMockFileNameForContentType(
-                        operations[0].sourceContentType
+                        gmOperations[0].sourceContentType
                     )
                 );
                 if (pipeline.options.maxInputPixels) {
                     gmInstance.limit('pixels', pipeline.options.maxInputPixels);
                 }
-                var resize;
-                var crop;
-                var withoutEnlargement;
-                var ignoreAspectRatio;
-                for (var i = 0; i < operations.length; i += 1) {
-                    var operation = operations[i];
-                    if (operation.name === 'resize') {
-                        resize = operation;
-                    } else if (operation.name === 'crop') {
-                        crop = operation;
-                    } else if (operation.name === 'withoutEnlargement') {
-                        withoutEnlargement = operation;
-                    } else if (operation.name === 'ignoreAspectRatio') {
-                        ignoreAspectRatio = operation;
-                    }
-                }
-                if (withoutEnlargement && resize) {
-                    resize.args[1] += '>';
-                }
-                if (ignoreAspectRatio && resize) {
-                    resize.args[1] += '!';
-                }
-                if (resize && crop) {
-                    operations.push({
-                        name: 'extent',
-                        args: [].concat(resize.args)
-                    });
-                    resize.args.push('^');
-                }
 
-                operations
+                gmOperations
                     .reduce(function(gmInstance, operation) {
                         var args = operation.args;
 
@@ -146,50 +193,7 @@ module.exports = {
                                     ')'
                             );
                         }
-                        if (
-                            operation.name === 'rotate' &&
-                            operation.args.length === 1
-                        ) {
-                            operation = _.extend({}, operation);
-                            operation.args = ['transparent', operation.args[0]];
-                        }
-                        if (operation.name === 'extract') {
-                            operation.name = 'crop';
-                            operation.args = [
-                                operation.args[2],
-                                operation.args[3],
-                                operation.args[0],
-                                operation.args[1]
-                            ];
-                        } else if (operation.name === 'crop') {
-                            operation.name = 'gravity';
-                            operation.args = [
-                                {
-                                    northwest: 'NorthWest',
-                                    north: 'North',
-                                    northeast: 'NorthEast',
-                                    west: 'West',
-                                    center: 'Center',
-                                    east: 'East',
-                                    southwest: 'SouthWest',
-                                    south: 'South',
-                                    southeast: 'SouthEast'
-                                }[String(operation.args[0]).toLowerCase()] ||
-                                    'Center'
-                            ];
-                        }
-                        if (operation.name === 'progressive') {
-                            operation.name = 'interlace';
-                            operation.args = ['line'];
-                        }
-                        // There are many, many more that could be supported:
-                        if (
-                            module.exports.outputTypes.includes(operation.name)
-                        ) {
-                            operation = _.extend({}, operation);
-                            operation.args.unshift(operation.name);
-                            operation.name = 'setFormat';
-                        }
+
                         if (typeof gmInstance[operation.name] === 'function') {
                             return gmInstance[operation.name].apply(
                                 gmInstance,
@@ -235,5 +239,7 @@ module.exports = {
             readStream.emit('end');
         };
         pipeline._attach(readWriteStream);
+
+        return gmOperations;
     }
 };
