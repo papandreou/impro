@@ -4,7 +4,7 @@ const gm = requireOr('gm');
 const mime = require('mime');
 const errors = require('../errors');
 
-function createGmOperations(operations) {
+function createGmOperations(pipeline, operations) {
     var gmOperations = [];
     var resize;
     var crop;
@@ -20,8 +20,10 @@ function createGmOperations(operations) {
             crop = operation;
         } else if (operation.name === 'withoutEnlargement') {
             withoutEnlargement = operation;
+            continue;
         } else if (operation.name === 'ignoreAspectRatio') {
             ignoreAspectRatio = operation;
+            continue;
         }
 
         if (operation.name === 'rotate' && operation.args.length === 1) {
@@ -79,17 +81,17 @@ function createGmOperations(operations) {
         gmOperations.push(operation);
     }
     if (withoutEnlargement && resize) {
-        resize.args[1] += '>';
+        resize.args[2] = '>';
     }
     if (ignoreAspectRatio && resize) {
-        resize.args[1] += '!';
+        resize.args[2] = '!';
     }
     if (resize && crop) {
         gmOperations.push({
             name: 'extent',
             args: [].concat(resize.args)
         });
-        resize.args.push('^');
+        resize.args[2] = '^';
     }
 
     return gmOperations;
@@ -110,7 +112,7 @@ const maxDimension = 16384;
 module.exports = {
     name: 'gm',
     unavailable: !gm,
-    operations: ['gif', 'png', 'jpeg', 'extract'].concat(
+    operations: ['extract', 'withoutEnlargement', 'ignoreAspectRatio'].concat(
         Object.keys(gm.prototype).filter(function(propertyName) {
             return (
                 !/^_|^(?:name|emit|.*Listeners?|on|once|size|orientation|format|depth|color|res|filesize|identity|write|stream|type|setmoc)$/.test(

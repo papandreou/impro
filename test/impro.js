@@ -695,6 +695,38 @@ describe('impro', function() {
             });
         });
 
+        it('should support withoutEnlargement', () => {
+            const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
+
+            impro
+                .gm()
+                .resize(10, 10)
+                .withoutEnlargement()
+                .flush();
+
+            return expect(executeSpy.returnValues[0], 'to equal', [
+                { name: 'resize', args: [10, 10, '>'] }
+            ]).finally(() => {
+                executeSpy.restore();
+            });
+        });
+
+        it('should support ignoreAspectRatio', () => {
+            const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
+
+            impro
+                .gm()
+                .resize(10, 10)
+                .ignoreAspectRatio()
+                .flush();
+
+            return expect(executeSpy.returnValues[0], 'to equal', [
+                { name: 'resize', args: [10, 10, '!'] }
+            ]).finally(() => {
+                executeSpy.restore();
+            });
+        });
+
         it('should emit an error on a bad conversion', function() {
             const gmEngine = impro.engineByName.gm;
             gmEngine.outputTypes.push('ico');
