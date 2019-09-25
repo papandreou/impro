@@ -641,6 +641,34 @@ describe('impro', function() {
                 executeSpy.restore();
             });
         });
+
+        it('should throw on ignoreAspectRatio without resize', () => {
+            return expect(
+                () => {
+                    impro.ignoreAspectRatio().flush();
+                },
+                'to throw',
+                'sharp: ignoreAspectRatio() operation must follow resize'
+            );
+        });
+
+        it('should support ignoreAspectRatio', () => {
+            const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
+
+            impro
+                .resize(10, 10)
+                .ignoreAspectRatio()
+                .flush();
+
+            return expect(executeSpy.returnValues[0], 'to equal', [
+                {
+                    name: 'resize',
+                    args: [10, 10, { fit: 'fill' }]
+                }
+            ]).finally(() => {
+                executeSpy.restore();
+            });
+        });
     });
 
     describe('with the gifsicle engine', function() {

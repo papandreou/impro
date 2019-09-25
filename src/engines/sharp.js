@@ -228,6 +228,26 @@ module.exports = {
                     );
                 }
             }
+            // in sharp ignoreAspectRatio is implemented as options to resize
+            if (operation.name === 'ignoreAspectRatio') {
+                const locatedIndex = locatePreviousCommand(
+                    operationsForExecution,
+                    'resize'
+                );
+                if (locatedIndex > -1) {
+                    const locatedOperation = patchPreviousCommandArgument(
+                        operationsForExecution[locatedIndex],
+                        { fit: 'fill' },
+                        2
+                    );
+                    operationsForExecution[locatedIndex] = locatedOperation;
+                    return;
+                } else {
+                    throw new Error(
+                        'sharp: ignoreAspectRatio() operation must follow resize'
+                    );
+                }
+            }
             // in sharp quality is implemented as an option to the target type
             if (operation.name === 'quality') {
                 const locatedIndex = locatePreviousCommand(
