@@ -559,7 +559,22 @@ describe('impro', function() {
             });
         });
 
-        it('should combine resize with crop', () => {
+        it('should support crop without resize', () => {
+            const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
+
+            impro.crop('center').flush();
+
+            return expect(executeSpy.returnValues[0], 'to equal', [
+                {
+                    name: 'resize',
+                    args: [null, null, { fit: 'cover', position: 'center' }]
+                }
+            ]).finally(() => {
+                executeSpy.restore();
+            });
+        });
+
+        it('should combine crop with a resize', () => {
             const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
 
             const usedEngines = impro

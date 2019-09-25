@@ -12,6 +12,16 @@ function locatePreviousCommand(operations, nameToFind) {
     });
 }
 
+function patchPreviousCommandArgument(operation, argUpdates, indexInArg) {
+    operation = { ...operation };
+    operation.args = [...operation.args];
+    operation.args[indexInArg] = {
+        ...operation.args[indexInArg],
+        ...argUpdates
+    };
+    return operation;
+}
+
 const maxDimension = 16384;
 
 module.exports = {
@@ -181,21 +191,21 @@ module.exports = {
             }
             // in sharp crop is implemented as options to resize
             if (operation.name === 'crop') {
-                name = 'resize';
-                args = [null, null, { fit: 'cover', position: args[0] }];
-
                 const locatedIndex = locatePreviousCommand(
                     operationsForExecution,
-                    name
+                    'resize'
                 );
                 if (locatedIndex > -1) {
-                    let locatedOperation = operationsForExecution[locatedIndex];
-                    locatedOperation = {
-                        ...locatedOperation,
-                        args: locatedOperation.args.concat(args[2])
-                    };
+                    const locatedOperation = patchPreviousCommandArgument(
+                        operationsForExecution[locatedIndex],
+                        { fit: 'cover', position: args[0] },
+                        2
+                    );
                     operationsForExecution[locatedIndex] = locatedOperation;
                     return;
+                } else {
+                    name = 'resize';
+                    args = [null, null, { fit: 'cover', position: args[0] }];
                 }
             }
             // in sharp quality is implemented as an option to the target type
@@ -205,13 +215,11 @@ module.exports = {
                     pipeline.targetType
                 );
                 if (locatedIndex > -1) {
-                    let locatedOperation = operationsForExecution[locatedIndex];
-                    locatedOperation = {
-                        ...locatedOperation,
-                        args: [
-                            { ...locatedOperation.args[0], quality: args[0] }
-                        ]
-                    };
+                    const locatedOperation = patchPreviousCommandArgument(
+                        operationsForExecution[locatedIndex],
+                        { quality: args[0] },
+                        0
+                    );
                     operationsForExecution[locatedIndex] = locatedOperation;
                     return;
                 } else {
