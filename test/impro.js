@@ -613,6 +613,34 @@ describe('impro', function() {
                     executeSpy.restore();
                 });
         });
+
+        it('should throw on withoutEnlargement without resize', () => {
+            return expect(
+                () => {
+                    impro.withoutEnlargement().flush();
+                },
+                'to throw',
+                'sharp: withoutEnlargement() operation must follow resize'
+            );
+        });
+
+        it('should support withoutEnlargement', () => {
+            const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
+
+            impro
+                .resize(10, 10)
+                .withoutEnlargement()
+                .flush();
+
+            return expect(executeSpy.returnValues[0], 'to equal', [
+                {
+                    name: 'resize',
+                    args: [10, 10, { fit: 'inside' }]
+                }
+            ]).finally(() => {
+                executeSpy.restore();
+            });
+        });
     });
 
     describe('with the gifsicle engine', function() {

@@ -208,6 +208,26 @@ module.exports = {
                     args = [null, null, { fit: 'cover', position: args[0] }];
                 }
             }
+            // in sharp withoutEnlargement is implemented as options to resize
+            if (operation.name === 'withoutEnlargement') {
+                const locatedIndex = locatePreviousCommand(
+                    operationsForExecution,
+                    'resize'
+                );
+                if (locatedIndex > -1) {
+                    const locatedOperation = patchPreviousCommandArgument(
+                        operationsForExecution[locatedIndex],
+                        { fit: 'inside' },
+                        2
+                    );
+                    operationsForExecution[locatedIndex] = locatedOperation;
+                    return;
+                } else {
+                    throw new Error(
+                        'sharp: withoutEnlargement() operation must follow resize'
+                    );
+                }
+            }
             // in sharp quality is implemented as an option to the target type
             if (operation.name === 'quality') {
                 const locatedIndex = locatePreviousCommand(
