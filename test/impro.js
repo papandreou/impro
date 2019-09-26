@@ -1133,6 +1133,45 @@ describe('impro', function() {
         });
     });
 
+    describe('with the pngcrush engine', function() {
+        it('should support brute', () => {
+            const executeSpy = sinon.spy(
+                impro.engineByName.pngcrush,
+                'execute'
+            );
+
+            impro
+                .pngcrush()
+                .brute()
+                .flush();
+
+            return expect(executeSpy.returnValues[0], 'to equal', [
+                '-brute'
+            ]).finally(() => {
+                executeSpy.restore();
+            });
+        });
+
+        it('should support rem', () => {
+            const executeSpy = sinon.spy(
+                impro.engineByName.pngcrush,
+                'execute'
+            );
+
+            impro
+                .pngcrush()
+                .rem('allb')
+                .flush();
+
+            return expect(executeSpy.returnValues[0], 'to equal', [
+                '-rem',
+                'allb'
+            ]).finally(() => {
+                executeSpy.restore();
+            });
+        });
+    });
+
     describe('when there are errors duing streaming', () => {
         it('should cleanup on pipeline steam error', function() {
             const pipeline = impro

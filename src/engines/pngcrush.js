@@ -9,6 +9,8 @@ module.exports = {
     operations: ['brute', 'rem'],
     validateOperation: function(name, args) {
         switch (name) {
+            case 'brute':
+                return args.length === 0;
             case 'rem':
                 return (
                     args.length >= 1 &&
@@ -86,6 +88,9 @@ module.exports = {
                 commandLineArgs.push('-' + name, ...args);
             }
         });
+
         pipeline._attach(new PngCrush(commandLineArgs));
+
+        return commandLineArgs;
     }
 };
