@@ -6,10 +6,11 @@ module.exports = {
     unavailable: !PngCrush,
     inputTypes: ['png'],
     outputTypes: ['png'],
-    operations: ['brute', 'rem'],
+    operations: ['brute', 'reduce', 'rem'],
     validateOperation: function(name, args) {
         switch (name) {
             case 'brute':
+            case 'reduce':
                 return args.length === 0;
             case 'rem':
                 return (
