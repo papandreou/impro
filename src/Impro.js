@@ -71,7 +71,20 @@ module.exports = class Impro {
 
     registerMethod(operationName) {
         if (!this._Pipeline.prototype[operationName]) {
+            const _impro = this;
             this._Pipeline.prototype[operationName] = function(...args) {
+                if (
+                    !(
+                        _impro.engineByName[operationName] ||
+                        _impro.isValidOperation(operationName, args)
+                    )
+                ) {
+                    throw new Error(
+                        `invalid operation or arguments: ${operationName}=${JSON.stringify(
+                            args
+                        )}`
+                    );
+                }
                 return this.add({ name: operationName, args });
             };
         }

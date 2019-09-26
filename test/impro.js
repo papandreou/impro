@@ -149,6 +149,16 @@ describe('impro', function() {
                 'Pipeline creation can only be supplied an operations array or string'
             );
         });
+
+        it('should throw early from the chaining interface on an unsupported operation', function() {
+            return expect(
+                () => {
+                    impro.createPipeline({}).crop();
+                },
+                'to throw',
+                'invalid operation or arguments: crop=[]'
+            );
+        });
     });
 
     describe('#getEngine', () => {
