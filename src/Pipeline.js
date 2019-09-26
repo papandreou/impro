@@ -124,7 +124,7 @@ module.exports = class Pipeline extends Stream.Duplex {
 
                 var filteredCandidateEngineNames = candidateEngineNames.filter(
                     engineName =>
-                        this.impro.isValidOperationForEngine(
+                        this._isValidOperationForEngine(
                             engineName,
                             operation.name,
                             operation.args
@@ -163,6 +163,18 @@ module.exports = class Pipeline extends Stream.Duplex {
         this.once('error', this._onError);
 
         return this;
+    }
+
+    _isValidOperationForEngine(engineName, name, args) {
+        if (this.impro.isOperationSupportedByEngine(name, engineName)) {
+            const engine = this.impro.getEngine(engineName);
+            const isValid = engine.validateOperation(name, args);
+            return (
+                isValid || (typeof isValid === 'undefined' && args.length === 0)
+            );
+        }
+
+        return false;
     }
 
     _selectEnginesForOperation(operationName, targetType) {

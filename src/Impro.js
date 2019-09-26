@@ -124,6 +124,22 @@ module.exports = class Impro {
         return this;
     }
 
+    getEngine(engineName) {
+        let engine;
+        engineName = typeof engineName === 'string' ? engineName : '';
+        if (engineName && (engine = this.engineByName[engineName])) {
+            return engine;
+        } else {
+            throw new Error(`unknown engine ${engineName || 'unknown'}`);
+        }
+    }
+
+    isOperationSupportedByEngine(name, engineName) {
+        return (this.engineNamesByOperationName[name] || []).includes(
+            engineName
+        );
+    }
+
     isValidOperation(name, args) {
         var engineNames = this.engineNamesByOperationName[name];
         return (
@@ -139,13 +155,6 @@ module.exports = class Impro {
                 );
             }, this)
         );
-    }
-
-    isValidOperationForEngine(engineName, name, args) {
-        var isValid =
-            this.engineNamesByOperationName[name].indexOf(engineName) !== -1 &&
-            this.engineByName[engineName].validateOperation(name, args);
-        return isValid || (typeof isValid === 'undefined' && args.length === 0);
     }
 
     parse(queryString) {

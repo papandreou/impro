@@ -151,6 +151,71 @@ describe('impro', function() {
         });
     });
 
+    describe('#getEngine', () => {
+        it('should allow directly setting an output type option', function() {
+            const customImpro = new impro.Impro().use(impro.engines.gifsicle);
+
+            return expect(
+                customImpro.getEngine('gifsicle'),
+                'to equal',
+                impro.engines.gifsicle
+            );
+        });
+
+        it('should throw with an unsupported engine', function() {
+            const customImpro = new impro.Impro().use(impro.engines.gifsicle);
+
+            return expect(
+                () => customImpro.getEngine('sharp'),
+                'to throw error',
+                'unknown engine sharp'
+            );
+        });
+
+        it('should throw with no engine name', function() {
+            const customImpro = new impro.Impro().use(impro.engines.gifsicle);
+
+            return expect(
+                () => customImpro.getEngine(),
+                'to throw error',
+                'unknown engine unknown'
+            );
+        });
+
+        it('should throw with bad engine name', function() {
+            const customImpro = new impro.Impro().use(impro.engines.gifsicle);
+
+            return expect(
+                () => customImpro.getEngine({}),
+                'to throw error',
+                'unknown engine unknown'
+            );
+        });
+    });
+
+    describe('#isOperationSupportedByEngine', () => {
+        it('should return true for a supported operation', function() {
+            const customImpro = new impro.Impro().use(impro.engines.gifsicle);
+
+            return expect(
+                customImpro.isOperationSupportedByEngine('crop', 'gifsicle'),
+                'to be true'
+            );
+        });
+
+        it('should return false for an unsupported operation', function() {
+            const customImpro = new impro.Impro().use(impro.engines.gifsicle);
+
+            return expect(
+                customImpro.isOperationSupportedByEngine(
+                    'randomname',
+                    'gifsicle'
+                ),
+                'to be false'
+            );
+        });
+    });
+
     describe('#parse', function() {
         it('should return an object with the operations and the leftover parameters, given a query string', function() {
             expect(impro.parse('foo=bar&resize=120,120'), 'to equal', {
