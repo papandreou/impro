@@ -14,11 +14,13 @@ Support for the following libraries is included:
 
 - Sharp
 - Gifsicle
-- GraphicsMagick
 - JpegTran
 - Inkscape
-- SvgFilter
 - OptiPNG
+- Pngquant
+- Pngcrush
+- SvgFilter
+- GraphicsMagick
 
 ## License
 
