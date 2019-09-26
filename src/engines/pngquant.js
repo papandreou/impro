@@ -29,7 +29,7 @@ module.exports = {
                 return (
                     args.length === 1 &&
                     typeof args[0] === 'string' &&
-                    /^(?:0|[1-9][0-9]|100)(?:0|[1-9][0-9]|100)-$/.test(args[0])
+                    /^(?:0|[1-9][0-9]|100)-(?:0|[1-9][0-9]|100)$/.test(args[0])
                 );
             case 'posterize':
                 return args.length === 1 && /^[0-4]$/.test(String(args[0]));
@@ -40,6 +40,9 @@ module.exports = {
         operations.forEach(operation => {
             commandLineArgs.push('--' + operation.name, ...operation.args);
         });
+
         pipeline._attach(new PngQuant(commandLineArgs));
+
+        return commandLineArgs;
     }
 };

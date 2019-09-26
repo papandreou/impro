@@ -45,6 +45,7 @@
     "nyc": "^14.1.1",
     "optipng": "2.1.0",
     "pngcrush": "^2.0.1",
+    "pngquant": "^3.0.0",
     "prettier": "^1.18.2",
     "sharp": "0.23.0",
     "sinon": "1.17.7",

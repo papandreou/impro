@@ -1133,6 +1133,84 @@ describe('impro', function() {
         });
     });
 
+    describe('with the pngquant engine', function() {
+        it('should support floyd', () => {
+            const executeSpy = sinon.spy(
+                impro.engineByName.pngquant,
+                'execute'
+            );
+
+            impro
+                .pngquant()
+                .floyd(0.3)
+                .flush();
+
+            return expect(executeSpy.returnValues[0], 'to equal', [
+                '--floyd',
+                0.3
+            ]).finally(() => {
+                executeSpy.restore();
+            });
+        });
+
+        it('should support posterize', () => {
+            const executeSpy = sinon.spy(
+                impro.engineByName.pngquant,
+                'execute'
+            );
+
+            impro
+                .pngquant()
+                .posterize(0)
+                .flush();
+
+            return expect(executeSpy.returnValues[0], 'to equal', [
+                '--posterize',
+                0
+            ]).finally(() => {
+                executeSpy.restore();
+            });
+        });
+
+        it('should support quality', () => {
+            const executeSpy = sinon.spy(
+                impro.engineByName.pngquant,
+                'execute'
+            );
+
+            impro
+                .pngquant()
+                .quality('10-90')
+                .flush();
+
+            return expect(executeSpy.returnValues[0], 'to equal', [
+                '--quality',
+                '10-90'
+            ]).finally(() => {
+                executeSpy.restore();
+            });
+        });
+
+        it('should support speed', () => {
+            const executeSpy = sinon.spy(
+                impro.engineByName.pngquant,
+                'execute'
+            );
+
+            impro
+                .pngquant()
+                .speed(1)
+                .flush();
+
+            return expect(executeSpy.returnValues[0], 'to equal', [
+                '--speed',
+                1
+            ]).finally(() => {
+                executeSpy.restore();
+            });
+        });
+    });
+
     describe('with the pngcrush engine', function() {
         it('should support brute', () => {
             const executeSpy = sinon.spy(
