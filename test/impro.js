@@ -150,6 +150,20 @@ describe('impro', function() {
             );
         });
 
+        it('should throw when flushing unsupported operations', function() {
+            return expect(
+                () => {
+                    impro
+                        .createPipeline(null, [
+                            { name: 'nonexistent', args: [] }
+                        ])
+                        .flush();
+                },
+                'to throw',
+                'No supported engine can carry out this sequence of operations'
+            );
+        });
+
         it('should throw early from the chaining interface on an unsupported operation', function() {
             return expect(
                 () => {

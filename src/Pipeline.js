@@ -144,6 +144,12 @@ module.exports = class Pipeline extends Stream.Duplex {
             }
         });
 
+        if (!Array.isArray(candidateEngineNames)) {
+            // protect against no engine selection occurring
+            // in the case that all operations were invalid
+            candidateEngineNames = [];
+        }
+
         _flush(this._queuedOperations.length);
 
         this._queuedOperations = undefined;
