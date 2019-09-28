@@ -25,8 +25,7 @@ module.exports = class Impro {
             'defaultEngineName',
             'allowOperation',
             'maxInputPixels',
-            'maxOutputPixels',
-            'root'
+            'maxOutputPixels'
         ];
 
         _.extend(
