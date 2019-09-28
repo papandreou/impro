@@ -27,6 +27,9 @@ const optionsToResize = {
     withoutEnlargement: () => ({ fit: 'inside' }),
     ignoreAspectRatio: () => ({ fit: 'fill' })
 };
+const variationsToResize = {
+    crop: args => ({ fit: 'cover', position: args[0] })
+};
 
 module.exports = {
     name: 'sharp',
@@ -193,23 +196,25 @@ module.exports = {
                         ')'
                 );
             }
-            // in sharp crop is implemented as options to resize
-            if (operation.name === 'crop') {
+
+            // handle those operations in sharp crop implemented as variations of resize
+            if (operation.name in variationsToResize) {
                 const locatedIndex = locatePreviousCommand(
                     operationsForExecution,
                     'resize'
                 );
+                const resizeOptions = variationsToResize[operation.name](args);
                 if (locatedIndex > -1) {
                     const locatedOperation = patchPreviousCommandArgument(
                         operationsForExecution[locatedIndex],
-                        { fit: 'cover', position: args[0] },
+                        resizeOptions,
                         2
                     );
                     operationsForExecution[locatedIndex] = locatedOperation;
                     return;
                 } else {
                     name = 'resize';
-                    args = [null, null, { fit: 'cover', position: args[0] }];
+                    args = [null, null, resizeOptions];
                 }
             }
 
