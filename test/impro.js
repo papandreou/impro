@@ -87,6 +87,51 @@ describe('impro', function() {
         expect(() => new impro.Impro('foo'), 'to throw', 'invalid options');
     });
 
+    it('should allow an image engine to be explicitly selected', function() {
+        return expect(
+            'turtle.jpg',
+            'when piped through',
+            impro
+                .gm()
+                .resize(40, 15)
+                .crop('center'),
+            'to yield output satisfying to resemble',
+            load('turtleCroppedCenterGm.jpg', ['darwin'])
+        );
+    });
+
+    it('should maintain an array of engines that have been applied', function() {
+        return expect(
+            impro
+                .sharp()
+                .resize(10, 10)
+                .gm()
+                .extract(10, 20, 30, 40)
+                .flush(),
+            'to satisfy',
+            {
+                usedEngines: [
+                    {
+                        name: 'sharp',
+                        operations: [{ name: 'resize', args: [10, 10] }]
+                    },
+                    {
+                        name: 'gm',
+                        operations: [
+                            { name: 'extract', args: [10, 20, 30, 40] }
+                        ]
+                    }
+                ]
+            }
+        );
+    });
+
+    it('should not provide a targetContentType when no source content type is given and no explicit conversion has been performed', function() {
+        return expect(impro.resize(40, 15).crop('center'), 'to satisfy', {
+            targetContentType: undefined
+        });
+    });
+
     describe('when passed an object', function() {
         it('should interpret unsupported properties as source metadata', function() {
             expect(impro.source({ foo: 'bar' }).sourceMetadata, 'to equal', {
@@ -294,51 +339,6 @@ describe('impro', function() {
                     targetContentType: 'image/gif'
                 }
             );
-        });
-    });
-
-    it('should allow an image engine to be explicitly selected', function() {
-        return expect(
-            'turtle.jpg',
-            'when piped through',
-            impro
-                .gm()
-                .resize(40, 15)
-                .crop('center'),
-            'to yield output satisfying to resemble',
-            load('turtleCroppedCenterGm.jpg', ['darwin'])
-        );
-    });
-
-    it('should maintain an array of engines that have been applied', function() {
-        return expect(
-            impro
-                .sharp()
-                .resize(10, 10)
-                .gm()
-                .extract(10, 20, 30, 40)
-                .flush(),
-            'to satisfy',
-            {
-                usedEngines: [
-                    {
-                        name: 'sharp',
-                        operations: [{ name: 'resize', args: [10, 10] }]
-                    },
-                    {
-                        name: 'gm',
-                        operations: [
-                            { name: 'extract', args: [10, 20, 30, 40] }
-                        ]
-                    }
-                ]
-            }
-        );
-    });
-
-    it('should not provide a targetContentType when no source content type is given and no explicit conversion has been performed', function() {
-        return expect(impro.resize(40, 15).crop('center'), 'to satisfy', {
-            targetContentType: undefined
         });
     });
 
