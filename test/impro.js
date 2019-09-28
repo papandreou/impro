@@ -703,6 +703,61 @@ describe('impro', function() {
                 });
         });
 
+        it('should support embed without resize', () => {
+            const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
+
+            impro.embed('north').flush();
+
+            return expect(executeSpy.returnValues[0], 'to equal', [
+                {
+                    name: 'resize',
+                    args: [null, null, { fit: 'contain', position: 'north' }]
+                }
+            ]).finally(() => {
+                executeSpy.restore();
+            });
+        });
+
+        it('should combine crop with a resize', () => {
+            const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
+
+            const usedEngines = impro
+                .type('jpg')
+                .resize(10, 10)
+                .embed('northwest')
+                .flush().usedEngines;
+
+            return expect(executeSpy.returnValues[0], 'to equal', [
+                {
+                    name: 'resize',
+                    args: [10, 10, { fit: 'contain', position: 'northwest' }]
+                }
+            ])
+                .then(() => {
+                    // check that the external representation is unchanged
+                    return expect(usedEngines, 'to satisfy', [
+                        {
+                            name: 'sharp',
+                            operations: expect.it('to equal', [
+                                {
+                                    name: 'resize',
+                                    args: [10, 10],
+                                    engineName: 'sharp'
+                                },
+                                {
+                                    name: 'embed',
+                                    args: ['northwest'],
+                                    engineName: 'sharp'
+                                }
+                            ])
+                        }
+                    ]);
+                })
+                .finally(() => {
+                    executeSpy.restore();
+                });
+        });
+
         it('should throw on withoutEnlargement without resize', () => {
             return expect(
                 () => {

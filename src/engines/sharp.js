@@ -28,7 +28,8 @@ const optionsToResize = {
     ignoreAspectRatio: () => ({ fit: 'fill' })
 };
 const variationsToResize = {
-    crop: args => ({ fit: 'cover', position: args[0] })
+    crop: args => ({ fit: 'cover', position: args[0] }),
+    embed: args => ({ fit: 'contain', position: args[0] })
 };
 
 module.exports = {
@@ -74,6 +75,7 @@ module.exports = {
     validateOperation: function(name, args) {
         switch (name) {
             case 'crop':
+            case 'embed':
                 return (
                     args.length === 1 &&
                     /^(?:east|west|center|north(?:|west|east)|south(?:|west|east))/.test(
