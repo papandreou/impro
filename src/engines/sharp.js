@@ -23,6 +23,10 @@ function patchPreviousCommandArgument(operation, argUpdates, indexInArg) {
 }
 
 const maxDimension = 16384;
+const optionsToResize = {
+    withoutEnlargement: () => ({ fit: 'inside' }),
+    ignoreAspectRatio: () => ({ fit: 'fill' })
+};
 
 module.exports = {
     name: 'sharp',
@@ -208,8 +212,9 @@ module.exports = {
                     args = [null, null, { fit: 'cover', position: args[0] }];
                 }
             }
-            // in sharp withoutEnlargement is implemented as options to resize
-            if (operation.name === 'withoutEnlargement') {
+
+            // handle those operations in sharp implemented as options to resize
+            if (operation.name in optionsToResize) {
                 const locatedIndex = locatePreviousCommand(
                     operationsForExecution,
                     'resize'
@@ -217,37 +222,18 @@ module.exports = {
                 if (locatedIndex > -1) {
                     const locatedOperation = patchPreviousCommandArgument(
                         operationsForExecution[locatedIndex],
-                        { fit: 'inside' },
+                        optionsToResize[operation.name](args),
                         2
                     );
                     operationsForExecution[locatedIndex] = locatedOperation;
                     return;
                 } else {
                     throw new Error(
-                        'sharp: withoutEnlargement() operation must follow resize'
+                        `sharp: ${operation.name}() operation must follow resize`
                     );
                 }
             }
-            // in sharp ignoreAspectRatio is implemented as options to resize
-            if (operation.name === 'ignoreAspectRatio') {
-                const locatedIndex = locatePreviousCommand(
-                    operationsForExecution,
-                    'resize'
-                );
-                if (locatedIndex > -1) {
-                    const locatedOperation = patchPreviousCommandArgument(
-                        operationsForExecution[locatedIndex],
-                        { fit: 'fill' },
-                        2
-                    );
-                    operationsForExecution[locatedIndex] = locatedOperation;
-                    return;
-                } else {
-                    throw new Error(
-                        'sharp: ignoreAspectRatio() operation must follow resize'
-                    );
-                }
-            }
+
             // in sharp quality is implemented as an option to the target type
             if (operation.name === 'quality') {
                 const locatedIndex = locatePreviousCommand(
