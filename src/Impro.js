@@ -26,8 +26,7 @@ module.exports = class Impro {
             'allowOperation',
             'maxInputPixels',
             'maxOutputPixels',
-            'root',
-            'engines'
+            'root'
         ];
 
         _.extend(
@@ -51,6 +50,7 @@ module.exports = class Impro {
 
         const pipeline = new this._Pipeline(this, {
             ...options,
+            engines: _.pick(options, Object.keys(this.engineByName)), // Allow disabling via createPipeline({<engineName>: false})
             supportedOptions: this.supportedOptions
         });
 
@@ -110,7 +110,6 @@ module.exports = class Impro {
 
         this.engineByName[options.name] = options;
         this.registerMethod(engineName);
-        this.supportedOptions.push(engineName); // Allow disabling via new Impro({<engineName>: false})
 
         [engineName].concat(options.operations || []).forEach(operationName => {
             (this.engineNamesByOperationName[operationName] =

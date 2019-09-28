@@ -7,20 +7,33 @@ module.exports = class Pipeline extends Stream.Duplex {
 
         this._onError = err => this._fail(err);
         this._queuedOperations = [];
+        this._streams = [];
 
         this.ended = false;
         this.impro = impro;
-        this._streams = [];
         this.isDisabledByEngineName = {};
         this.options = {};
 
-        const { type, supportedOptions, ...sourceMetadata } = options || {};
+        options = options || {};
+        const { type, engines, supportedOptions, ...sourceMetadata } = options;
         (supportedOptions || []).forEach(optionName => {
             this.options[optionName] =
                 typeof options[optionName] !== 'undefined'
                     ? options[optionName]
                     : impro.options[optionName];
         });
+
+        const engineOptions = engines || {};
+        Object.keys(this.impro.engineByName).forEach(engineName => {
+            let isDisabled;
+            if (typeof engineOptions[engineName] !== 'boolean') {
+                isDisabled = false;
+            } else {
+                isDisabled = !engineOptions[engineName];
+            }
+            this.isDisabledByEngineName[engineName] = isDisabled;
+        });
+
         this.sourceMetadata = sourceMetadata;
         if (type) {
             this.type(type);
