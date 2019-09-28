@@ -7,14 +7,14 @@ mime.define({
 });
 
 module.exports = class Impro {
-    constructor(options, operations) {
-        if (typeof options === 'string' || Array.isArray(options)) {
-            operations = options;
-            this.options = {};
+    constructor(options) {
+        if (!options || typeof options === 'object') {
+            options = Object.assign({}, options);
         } else {
-            this.options = _.extend({}, options);
+            throw new Error('invalid options');
         }
 
+        this.options = options;
         this.engineByName = {};
         this.engineNamesByOperationName = {};
         this.isSupportedByEngineNameAndInputType = {};

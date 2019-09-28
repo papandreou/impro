@@ -79,6 +79,14 @@ describe('impro', function() {
         expect(impro, 'to be an', impro.Impro);
     });
 
+    it('should allow instantiation with an object', function() {
+        expect(new impro.Impro({}), 'to be an', impro.Impro);
+    });
+
+    it('should throw on invalid options', function() {
+        expect(() => new impro.Impro('foo'), 'to throw', 'invalid options');
+    });
+
     describe('when passed an object', function() {
         it('should interpret unsupported properties as source metadata', function() {
             expect(impro.source({ foo: 'bar' }).sourceMetadata, 'to equal', {
