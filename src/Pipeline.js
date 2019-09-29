@@ -206,7 +206,6 @@ module.exports = class Pipeline extends Stream.Duplex {
                 return (
                     !this.isDisabledByEngineName[engineName] &&
                     !impro.engineByName[engineName].unavailable &&
-                    impro[engineName] !== false &&
                     (engineName === operationName ||
                         isSupportedByType['*'] ||
                         (targetType && isSupportedByType[targetType]))
