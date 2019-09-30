@@ -726,7 +726,7 @@ describe('impro', function() {
             });
         });
 
-        it('should combine crop with a resize', () => {
+        it('should combine embed with a resize', () => {
             const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
 
             const usedEngines = impro
