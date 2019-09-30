@@ -107,22 +107,18 @@ describe('impro', function() {
                 .resize(10, 10)
                 .gm()
                 .extract(10, 20, 30, 40)
-                .flush(),
+                .flush().usedEngines,
             'to satisfy',
-            {
-                usedEngines: [
-                    {
-                        name: 'sharp',
-                        operations: [{ name: 'resize', args: [10, 10] }]
-                    },
-                    {
-                        name: 'gm',
-                        operations: [
-                            { name: 'extract', args: [10, 20, 30, 40] }
-                        ]
-                    }
-                ]
-            }
+            [
+                {
+                    name: 'sharp',
+                    operations: [{ name: 'resize', args: [10, 10] }]
+                },
+                {
+                    name: 'gm',
+                    operations: [{ name: 'extract', args: [10, 20, 30, 40] }]
+                }
+            ]
         );
     });
 
@@ -847,9 +843,9 @@ describe('impro', function() {
                 impro
                     .type('gif')
                     .resize(10, 10)
-                    .flush(),
+                    .flush().usedEngines,
                 'to satisfy',
-                { usedEngines: [{ name: 'gifsicle' }] }
+                [{ name: 'gifsicle' }]
             );
         });
 
