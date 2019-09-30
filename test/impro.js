@@ -131,6 +131,31 @@ describe('impro', function() {
         ]);
     });
 
+    it('should allow multiple type conversions', function() {
+        return expect(
+            impro
+                .type('gif')
+                .resize(10, 10)
+                .png()
+                .quality(88)
+                .flush().usedEngines,
+            'to satisfy',
+            [
+                {
+                    name: 'gifsicle',
+                    operations: [{ name: 'resize', args: [10, 10] }]
+                },
+                {
+                    name: 'sharp',
+                    operations: [
+                        { name: 'png', args: [] },
+                        { name: 'quality', args: [88], engineName: 'sharp' }
+                    ]
+                }
+            ]
+        );
+    });
+
     it('should not provide a targetContentType when no source content type is given and no explicit conversion has been performed', function() {
         return expect(impro.resize(40, 15).crop('center'), 'to satisfy', {
             targetContentType: undefined
@@ -341,6 +366,7 @@ describe('impro', function() {
                     .flush(),
                 'to satisfy',
                 {
+                    targetType: 'gif',
                     targetContentType: 'image/gif'
                 }
             );

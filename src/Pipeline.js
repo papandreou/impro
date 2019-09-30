@@ -35,6 +35,10 @@ module.exports = class Pipeline extends Stream.Duplex {
         });
 
         this.sourceMetadata = sourceMetadata;
+
+        this.sourceType = undefined;
+        this.targetType = undefined;
+        this.targetContentType = undefined;
         if (type) {
             this.type(type);
         }
@@ -48,6 +52,7 @@ module.exports = class Pipeline extends Stream.Duplex {
         this._flushed = true;
         this.usedEngines = [];
         var startIndex = 0;
+        var lastSelectedEngineName;
         var candidateEngineNames;
 
         var _flush = upToIndex => {
@@ -119,13 +124,9 @@ module.exports = class Pipeline extends Stream.Duplex {
                     } else {
                         _flush(i);
                     }
+                    lastSelectedEngineName = undefined;
                     candidateEngineNames = undefined;
                     return;
-                }
-
-                if (this.impro.isTypeByName[operation.name]) {
-                    this.targetType = operation.name;
-                    this.targetContentType = mime.types[operation.name];
                 }
 
                 if (!candidateEngineNames) {
@@ -144,11 +145,36 @@ module.exports = class Pipeline extends Stream.Duplex {
                         )
                 );
 
-                if (filteredCandidateEngineNames.length > 0) {
+                if (!lastSelectedEngineName) {
+                    lastSelectedEngineName = filteredCandidateEngineNames[0];
+                }
+
+                const hasCandidates = filteredCandidateEngineNames.length > 0;
+                if (
+                    hasCandidates &&
+                    lastSelectedEngineName === filteredCandidateEngineNames[0]
+                ) {
+                    if (this.impro.isTypeByName[operation.name]) {
+                        this.targetType = operation.name;
+                        this.targetContentType = mime.types[operation.name];
+                    }
+
                     candidateEngineNames = filteredCandidateEngineNames;
                 } else {
+                    // Execute up to index i of the queued operations on
+                    // the currently selected engine.
                     _flush(i);
 
+                    // If a type conversion triggers a change in the
+                    // selected engine we ensure any prior operations
+                    // are executed with the *original* target type and
+                    // only then set the new type after the flush.
+                    if (this.impro.isTypeByName[operation.name]) {
+                        this.targetType = operation.name;
+                        this.targetContentType = mime.types[operation.name];
+                    }
+
+                    lastSelectedEngineName = undefined;
                     candidateEngineNames = this._selectEnginesForOperation(
                         operation.name,
                         this.targetType
