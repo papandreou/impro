@@ -122,6 +122,15 @@ describe('impro', function() {
         );
     });
 
+    it('should allow a type conversion', function() {
+        return expect(impro.png().flush().usedEngines, 'to satisfy', [
+            {
+                name: 'sharp',
+                operations: [{ name: 'png', args: [] }]
+            }
+        ]);
+    });
+
     it('should not provide a targetContentType when no source content type is given and no explicit conversion has been performed', function() {
         return expect(impro.resize(40, 15).crop('center'), 'to satisfy', {
             targetContentType: undefined
