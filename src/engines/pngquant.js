@@ -24,7 +24,7 @@ module.exports = {
             /^(?:0(?:\.\d+)?|1(?:\.0+)?)$/.test(String(args[0])))
         );
       case 'speed':
-        return args.length === 1 && (args[0] >= 1 && args[0] <= 11);
+        return args.length === 1 && args[0] >= 1 && args[0] <= 11;
       case 'quality':
         return (
           args.length === 1 &&

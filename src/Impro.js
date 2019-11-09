@@ -36,9 +36,12 @@ module.exports = class Impro {
 
     this._Pipeline = class extends Pipeline {};
 
-    ['type', 'source', 'maxInputPixels', 'maxOutputPixels'].forEach(
-      propertyName => this.registerMethod(propertyName)
-    );
+    [
+      'type',
+      'source',
+      'maxInputPixels',
+      'maxOutputPixels'
+    ].forEach(propertyName => this.registerMethod(propertyName));
   }
 
   createPipeline(options, operations) {
