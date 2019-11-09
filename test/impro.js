@@ -1106,6 +1106,21 @@ describe('impro', function() {
       );
     });
 
+    it('should support arithmetic', () => {
+      const executeSpy = sinon.spy(impro.engineByName.jpegtran, 'execute');
+
+      impro
+        .jpegtran()
+        .arithmetic()
+        .flush();
+
+      return expect(executeSpy.returnValues[0], 'to equal', [
+        '-arithmetic'
+      ]).finally(() => {
+        executeSpy.restore();
+      });
+    });
+
     it('should support crop', () => {
       const executeSpy = sinon.spy(impro.engineByName.jpegtran, 'execute');
 
@@ -1136,6 +1151,91 @@ describe('impro', function() {
         .finally(() => {
           executeSpy.restore();
         });
+    });
+
+    it('should support grayscale', () => {
+      const executeSpy = sinon.spy(impro.engineByName.jpegtran, 'execute');
+
+      impro
+        .jpegtran()
+        .grayscale()
+        .flush();
+
+      return expect(executeSpy.returnValues[0], 'to equal', [
+        '-grayscale'
+      ]).finally(() => {
+        executeSpy.restore();
+      });
+    });
+
+    it('should reject grayscale with invalid argument', () => {
+      return expect(
+        () => {
+          impro.jpegtran().grayscale({});
+        },
+        'to throw',
+        'invalid operation or arguments: grayscale=[{}]'
+      );
+    });
+
+    it('should support perfect', () => {
+      const executeSpy = sinon.spy(impro.engineByName.jpegtran, 'execute');
+
+      impro
+        .jpegtran()
+        .perfect()
+        .flush();
+
+      return expect(executeSpy.returnValues[0], 'to equal', [
+        '-perfect'
+      ]).finally(() => {
+        executeSpy.restore();
+      });
+    });
+
+    it('should support progressive', () => {
+      const executeSpy = sinon.spy(impro.engineByName.jpegtran, 'execute');
+
+      impro
+        .jpegtran()
+        .progressive()
+        .flush();
+
+      return expect(executeSpy.returnValues[0], 'to equal', [
+        '-progressive'
+      ]).finally(() => {
+        executeSpy.restore();
+      });
+    });
+
+    it('should support transpose', () => {
+      const executeSpy = sinon.spy(impro.engineByName.jpegtran, 'execute');
+
+      impro
+        .jpegtran()
+        .transpose()
+        .flush();
+
+      return expect(executeSpy.returnValues[0], 'to equal', [
+        '-transpose'
+      ]).finally(() => {
+        executeSpy.restore();
+      });
+    });
+
+    it('should support transverse', () => {
+      const executeSpy = sinon.spy(impro.engineByName.jpegtran, 'execute');
+
+      impro
+        .jpegtran()
+        .transverse()
+        .flush();
+
+      return expect(executeSpy.returnValues[0], 'to equal', [
+        '-transverse'
+      ]).finally(() => {
+        executeSpy.restore();
+      });
     });
   });
 

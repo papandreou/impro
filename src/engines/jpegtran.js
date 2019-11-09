@@ -31,6 +31,13 @@ module.exports = {
   ],
   validateOperation: function(name, args) {
     switch (name) {
+      case 'arithmetic':
+      case 'grayscale':
+      case 'perfect':
+      case 'progressive':
+      case 'transpose':
+      case 'transverse':
+        return args.length === 0;
       case 'copy':
         return (
           args.length === 1 &&
