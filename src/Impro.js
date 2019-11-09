@@ -29,6 +29,8 @@ module.exports = class Impro {
       'svgAssetPath'
     ];
 
+    this.restrictedOptions = ['svgAssetPath'];
+
     _.extend(
       this,
       { defaultEngineName: Impro.defaultEngineName },
@@ -189,6 +191,26 @@ module.exports = class Impro {
               }
             })
           : [];
+
+        if (operationName in this.engineByName) {
+          // engines accept only a single options object argument, so
+          // in cases where the query string contains options intended
+          // for the engine itself we must put them in an object which
+          // we can then pass as that only supported argument
+          const engineOptions = {};
+          operationArgs.forEach(arg => {
+            const [optionKey, optionValue] = arg.split('=');
+            if (this.restrictedOptions.includes(optionKey)) return;
+            engineOptions[optionKey] = optionValue;
+          });
+
+          operations.push({
+            name: operationName,
+            args: [engineOptions]
+          });
+
+          return;
+        }
 
         if (
           !this.isValidOperation(operationName, operationArgs) ||

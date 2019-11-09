@@ -318,6 +318,41 @@ describe('impro', function() {
         leftover: 'foo=bar'
       });
     });
+
+    it('should parse an engine and preserve any additional options passed to it', function() {
+      expect(
+        impro.parse(
+          `svgfilter=runScript=addBogusElement.js+bogusElementId=theBogusElementId`
+        ),
+        'to equal',
+        {
+          operations: [
+            {
+              name: 'svgfilter',
+              args: [
+                {
+                  runScript: 'addBogusElement.js',
+                  bogusElementId: 'theBogusElementId'
+                }
+              ]
+            }
+          ],
+          leftover: ''
+        }
+      );
+    });
+
+    it('should parse an engine ignoring any restricted properties', function() {
+      expect(impro.parse(`svgfilter=svgAssetPath=anything`), 'to equal', {
+        operations: [
+          {
+            name: 'svgfilter',
+            args: [{}]
+          }
+        ],
+        leftover: ''
+      });
+    });
   });
 
   describe('when adding the processing instructions via individual method calls', function() {
