@@ -11,6 +11,12 @@ module.exports = {
     return name === 'svgfilter';
   },
   execute: function(pipeline, operations, options) {
+    options = options ? { ...options } : {};
+
+    if (pipeline.options.svgAssetPath) {
+      options.url = `file://${pipeline.options.svgAssetPath}`;
+    }
+
     pipeline._attach(new SvgFilter(options));
   }
 };

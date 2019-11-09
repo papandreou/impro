@@ -25,7 +25,8 @@ module.exports = class Impro {
       'defaultEngineName',
       'allowOperation',
       'maxInputPixels',
-      'maxOutputPixels'
+      'maxOutputPixels',
+      'svgAssetPath'
     ];
 
     _.extend(

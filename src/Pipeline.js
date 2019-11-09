@@ -1,5 +1,6 @@
 const Stream = require('stream');
 const mime = require('mime');
+const Path = require('path');
 
 module.exports = class Pipeline extends Stream.Duplex {
   constructor(impro, options) {
@@ -33,6 +34,12 @@ module.exports = class Pipeline extends Stream.Duplex {
       }
       this.isDisabledByEngineName[engineName] = isDisabled;
     });
+
+    if (this.options.svgAssetPath) {
+      if (!Path.isAbsolute(this.options.svgAssetPath)) {
+        throw new Error('Pipeline: svgAssetPath must be absolute');
+      }
+    }
 
     this.sourceMetadata = sourceMetadata;
 

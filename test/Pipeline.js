@@ -23,6 +23,18 @@ describe('Pipeline', () => {
     });
   });
 
+  it('should throw on a relative svgAssetPath', () => {
+    expect(
+      () =>
+        new Pipeline(fakeImpro, {
+          supportedOptions: ['svgAssetPath'],
+          svgAssetPath: './'
+        }),
+      'to throw',
+      'Pipeline: svgAssetPath must be absolute'
+    );
+  });
+
   describe('#_attach', () => {
     it('should throw for a non-stream', () => {
       const pipeline = new Pipeline(fakeImpro);

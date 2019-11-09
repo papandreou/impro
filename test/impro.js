@@ -16,6 +16,8 @@ var memoizeSync = require('memoizesync');
 var pathModule = require('path');
 var fs = require('fs');
 
+var testDataPath = pathModule.resolve(__dirname, '..', 'testdata');
+
 var load = memoizeSync(function(fileName, platformsToOverride) {
   if (
     Array.isArray(platformsToOverride) &&
@@ -1069,6 +1071,35 @@ describe('impro', function() {
           runScript: 'addBogusElement.js',
           bogusElementId: 'theBogusElementId'
         }),
+        'to yield output satisfying when decoded as',
+        'utf-8',
+        'when parsed as XML queried for first',
+        'bogus',
+        'to satisfy',
+        { attributes: { id: 'theBogusElementId' } }
+      );
+    });
+
+    it('should pass an svg assert url set on the pipeline into the engine', () => {
+      return expect(
+        'dialog-information.svg',
+        'when piped through',
+        impro.createPipeline(
+          {
+            svgAssetPath: `${testDataPath}/`
+          },
+          [
+            {
+              name: 'svgfilter',
+              args: [
+                {
+                  runScript: 'addBogusElement.js',
+                  bogusElementId: 'theBogusElementId'
+                }
+              ]
+            }
+          ]
+        ),
         'to yield output satisfying when decoded as',
         'utf-8',
         'when parsed as XML queried for first',
