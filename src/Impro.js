@@ -199,6 +199,7 @@ module.exports = class Impro {
           // we can then pass as that only supported argument
           const engineOptions = {};
           operationArgs.forEach(arg => {
+            if (typeof arg !== 'string' || arg.indexOf('=') === -1) return;
             const [optionKey, optionValue] = arg.split('=');
             if (this.restrictedOptions.includes(optionKey)) return;
             engineOptions[optionKey] = optionValue;

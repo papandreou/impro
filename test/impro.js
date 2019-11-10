@@ -353,6 +353,18 @@ describe('impro', function() {
         leftover: ''
       });
     });
+
+    it('should parse an engine and ignore any invalid options', function() {
+      expect(impro.parse(`pngcrush=8`), 'to equal', {
+        operations: [
+          {
+            name: 'pngcrush',
+            args: [{}]
+          }
+        ],
+        leftover: ''
+      });
+    });
   });
 
   describe('when adding the processing instructions via individual method calls', function() {
