@@ -1439,6 +1439,27 @@ describe('impro', function() {
   });
 
   describe('with the pngcrush engine', function() {
+    it('process the image according to the given options', function() {
+      return expect(
+        'purplealpha24bit.png',
+        'when piped through',
+        impro.pngcrush().rem('gAMA'),
+        'to yield output satisfying',
+        expect
+          .it('when decoded as', 'ascii', 'not to match', /gAMA/)
+          .and('to satisfy', {
+            length: expect.it('to be greater than', 0)
+          })
+          .and('to have metadata satisfying', {
+            format: 'PNG',
+            size: {
+              width: 100,
+              height: 100
+            }
+          })
+      );
+    });
+
     it('should support brute', () => {
       const executeSpy = sinon.spy(impro.engineByName.pngcrush, 'execute');
 
