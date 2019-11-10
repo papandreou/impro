@@ -78,7 +78,7 @@ module.exports = {
       case 'embed':
         return (
           args.length === 1 &&
-          /^(?:east|west|center|north(?:|west|east)|south(?:|west|east))/.test(
+          /^(?:east|west|center|north(?:|west|east)|south(?:|west|east)|attention|entropy)$/.test(
             args[0]
           )
         );
@@ -257,6 +257,7 @@ module.exports = {
           );
         }
       }
+
       // Compensate for https://github.com/lovell/sharp/issues/276
       if (name === 'extract' && args.length >= 4) {
         args = [

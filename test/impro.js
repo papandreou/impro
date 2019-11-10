@@ -765,6 +765,36 @@ describe('impro', function() {
         });
     });
 
+    it('should support crop with "attention"', () => {
+      const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
+
+      impro.crop('attention').flush();
+
+      return expect(executeSpy.returnValues[0], 'to equal', [
+        {
+          name: 'resize',
+          args: [null, null, { fit: 'cover', position: 'attention' }]
+        }
+      ]).finally(() => {
+        executeSpy.restore();
+      });
+    });
+
+    it('should support crop with "entropy"', () => {
+      const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
+
+      impro.crop('entropy').flush();
+
+      return expect(executeSpy.returnValues[0], 'to equal', [
+        {
+          name: 'resize',
+          args: [null, null, { fit: 'cover', position: 'entropy' }]
+        }
+      ]).finally(() => {
+        executeSpy.restore();
+      });
+    });
+
     it('should support embed without resize', () => {
       const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
 
