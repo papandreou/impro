@@ -1373,6 +1373,22 @@ describe('impro', function() {
   });
 
   describe('with the pngquant engine', function() {
+    it('should process the image according to the given options', function() {
+      return expect(
+        'purplealpha24bit.png',
+        'when piped through',
+        impro.pngquant().speed(8),
+        'to yield output satisfying',
+        expect.it('to have metadata satisfying', {
+          format: 'PNG',
+          size: {
+            width: 100,
+            height: 100
+          }
+        })
+      );
+    });
+
     it('should support floyd', () => {
       const executeSpy = sinon.spy(impro.engineByName.pngquant, 'execute');
 
@@ -1383,7 +1399,8 @@ describe('impro', function() {
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         '--floyd',
-        0.3
+        0.3,
+        '-'
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1399,7 +1416,8 @@ describe('impro', function() {
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         '--posterize',
-        0
+        0,
+        '-'
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1415,7 +1433,8 @@ describe('impro', function() {
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         '--quality',
-        '10-90'
+        '10-90',
+        '-'
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1431,7 +1450,8 @@ describe('impro', function() {
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         '--speed',
-        1
+        1,
+        '-'
       ]).finally(() => {
         executeSpy.restore();
       });

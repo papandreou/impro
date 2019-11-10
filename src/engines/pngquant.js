@@ -40,6 +40,7 @@ module.exports = {
     operations.forEach(operation => {
       commandLineArgs.push('--' + operation.name, ...operation.args);
     });
+    commandLineArgs.push('-');
 
     pipeline._attach(new PngQuant(commandLineArgs));
 
