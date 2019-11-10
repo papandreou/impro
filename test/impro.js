@@ -942,6 +942,36 @@ describe('impro', function() {
       );
     });
 
+    it('should output an image/x-icon as a png', function() {
+      return expect(
+        'favicon.ico',
+        'when piped through',
+        impro
+          .type('image/x-icon')
+          .gm()
+          .png(),
+        'to yield output satisfying',
+        expect.it('to have metadata satisfying', {
+          format: 'PNG'
+        })
+      );
+    });
+
+    it('should output an image/vnd.microsoft.icon as a png', function() {
+      return expect(
+        'favicon.ico',
+        'when piped through',
+        impro
+          .type('image/vnd.microsoft.icon')
+          .gm()
+          .png(),
+        'to yield output satisfying',
+        expect.it('to have metadata satisfying', {
+          format: 'PNG'
+        })
+      );
+    });
+
     it('should support crop', () => {
       const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
 

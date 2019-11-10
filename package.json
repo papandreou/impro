@@ -36,7 +36,7 @@
     "eslint-plugin-standard": "^4.0.1",
     "file-type": "^12.3.0",
     "gifsicle-stream": "1.0.0",
-    "gm": "1.23.1",
+    "gm-papandreou": "1.23.0-patch1",
     "inkscape": "1.1.0",
     "jpegtran": "1.0.6",
     "jsdom": "^15.1.1",

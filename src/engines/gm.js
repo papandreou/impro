@@ -1,7 +1,6 @@
 const requireOr = require('require-or');
 const Stream = require('stream');
-const gm = requireOr('gm');
-const mime = require('mime');
+const gm = requireOr('gm-papandreou');
 const errors = require('../errors');
 
 function createGmOperations(pipeline, operations) {
@@ -97,12 +96,6 @@ function createGmOperations(pipeline, operations) {
   return gmOperations;
 }
 
-function getMockFileNameForContentType(contentType) {
-  if (contentType) {
-    return mime.extensions[contentType];
-  }
-}
-
 function isNumberWithin(num, min, max) {
   return typeof num === 'number' && num >= min && num <= max;
 }
@@ -182,7 +175,7 @@ module.exports = {
         var hasEnded = false;
         var gmInstance = gm(
           readStream,
-          getMockFileNameForContentType(gmOperations[0].sourceContentType)
+          pipeline.sourceType && `.${pipeline.sourceType}`
         );
         if (pipeline.options.maxInputPixels) {
           gmInstance.limit('pixels', pipeline.options.maxInputPixels);
