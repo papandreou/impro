@@ -1222,7 +1222,8 @@ describe('impro', function() {
                   args: [10, 10, 10, 10],
                   engineName: 'jpegtran'
                 }
-              ]
+              ],
+              commandLine: 'jpegtran -crop 10x10+10+10'
             }
           ]);
         })
@@ -1561,6 +1562,26 @@ describe('impro', function() {
 
       return expect(pipeline, 'to error with', error).then(() =>
         expect(endSpy, 'was called')
+      );
+    });
+
+    it('should error and include the command line for relevant engines', function() {
+      const pipeline = impro
+        .jpegtran()
+        .grayscale()
+        .flush(); // force construstion of the child streams
+      const jpegtranStream = pipeline._streams[0];
+      const error = new Error('Fake error');
+      setImmediate(() => {
+        jpegtranStream.emit('error', error);
+      });
+
+      return expect(
+        pipeline,
+        'to error with',
+        expect.it('to satisfy', {
+          commandLine: 'jpegtran -grayscale'
+        })
       );
     });
   });

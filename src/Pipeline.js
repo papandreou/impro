@@ -92,10 +92,24 @@ module.exports = class Pipeline extends Stream.Duplex {
           options = this._queuedOperations[startIndex].args[0];
           startIndex += 1;
         }
+
         var operations = this._queuedOperations.slice(startIndex, upToIndex);
-        this.impro.engineByName[engineName].execute(this, operations, options);
+        var commandArgs = this.impro.engineByName[engineName].execute(
+          this,
+          operations,
+          options
+        );
         operations.forEach(operation => (operation.engineName = engineName));
-        this.usedEngines.push({ name: engineName, operations });
+
+        this.usedEngines.push({
+          name: engineName,
+          operations,
+          commandLine:
+            commandArgs && !(engineName === 'sharp' || engineName === 'gm')
+              ? `${engineName} ${commandArgs.join(' ')}`
+              : null
+        });
+
         startIndex = upToIndex;
       } catch (e) {
         if (isStream) {
@@ -197,7 +211,12 @@ module.exports = class Pipeline extends Stream.Duplex {
           .on('end', () => this.push(null));
       }
       // protect against filters emitting errors more than once
-      stream.once('error', err => this._fail(err, i));
+      stream.once('error', err => {
+        if (i < this._streams.length - 1 && this.usedEngines[i].commandLine) {
+          err.commandLine = this.usedEngines[i].commandLine;
+        }
+        this._fail(err, i);
+      });
     }, this);
     this.on('finish', () => this._finish());
     this.once('error', this._onError);
