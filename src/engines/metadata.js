@@ -11,6 +11,7 @@ module.exports = {
   name: 'metadata',
   unavailable: !sharp,
   inputTypes: ['*'],
+  defaultOutputType: 'json',
   outputTypes: ['json'],
   validateOperation: function(name, args) {
     return (

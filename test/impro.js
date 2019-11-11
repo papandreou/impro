@@ -495,6 +495,18 @@ describe('impro', function() {
       );
     });
 
+    it('should allow retrieving the metadata for an image with a specified type', function() {
+      return expect(
+        'exif.jpg',
+        'when piped through',
+        impro.type('image/jpeg').metadata(),
+        'to yield JSON output satisfying',
+        {
+          contentType: 'image/jpeg'
+        }
+      );
+    });
+
     it('should allow retrieving the metadata of a non-image file with a non-image extension', function() {
       return expect(
         'something.txt',
