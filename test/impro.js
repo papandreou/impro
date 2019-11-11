@@ -347,7 +347,7 @@ describe('impro', function() {
         operations: [
           {
             name: 'svgfilter',
-            args: [{}]
+            args: []
           }
         ],
         leftover: ''
@@ -359,7 +359,19 @@ describe('impro', function() {
         operations: [
           {
             name: 'pngcrush',
-            args: [{}]
+            args: []
+          }
+        ],
+        leftover: ''
+      });
+    });
+
+    it('should parse metadata without options', function() {
+      expect(impro.parse('metadata'), 'to equal', {
+        operations: [
+          {
+            name: 'metadata',
+            args: []
           }
         ],
         leftover: ''

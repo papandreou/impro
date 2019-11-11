@@ -204,10 +204,14 @@ module.exports = class Impro {
             if (this.restrictedOptions.includes(optionKey)) return;
             engineOptions[optionKey] = optionValue;
           });
+          const engineArgs = [];
+          if (Object.keys(engineOptions).length > 0) {
+            engineArgs.push(engineOptions);
+          }
 
           operations.push({
             name: operationName,
-            args: [engineOptions]
+            args: engineArgs
           });
 
           return;
