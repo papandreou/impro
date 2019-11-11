@@ -20,6 +20,14 @@ module.exports = {
     );
   },
   execute: function(pipeline, operations, options) {
+    options = options || {};
+    var impro = pipeline.impro;
+    var cache = pipeline.options.sharpCache || options.cache;
+    // Would make sense to move the _sharpCacheSet property to the type, but that breaks some test scenarios:
+    if (cache !== 'undefined' && !impro._sharpCacheSet) {
+      sharp.cache(cache);
+      impro._sharpCacheSet = true;
+    }
     var sharpInstance = sharp();
     var duplexStream = new Stream.Duplex();
     var animatedGifDetector;

@@ -543,6 +543,52 @@ describe('impro', function() {
         }
       );
     });
+
+    it(
+      'should allow passing a cache option',
+      sinon.test(function() {
+        var cacheSpy = this.spy(require('sharp'), 'cache');
+        var improInstance = new impro.Impro().use(impro.engines.metadata);
+        return expect(
+          'turtle.jpg',
+          'when piped through',
+          improInstance.metadata({ cache: 123 }),
+          'to yield JSON output satisfying',
+          {
+            contentType: 'image/jpeg'
+          }
+        )
+          .then(function() {
+            expect(cacheSpy, 'to have calls satisfying', function() {
+              cacheSpy(123);
+            });
+          })
+          .finally(() => cacheSpy.restore());
+      })
+    );
+
+    it(
+      'should allow passing a sharpCache option to the pipeline',
+      sinon.test(function() {
+        var cacheSpy = this.spy(require('sharp'), 'cache');
+        var improInstance = new impro.Impro().use(impro.engines.metadata);
+        return expect(
+          'turtle.jpg',
+          'when piped through',
+          improInstance.createPipeline({ sharpCache: 456 }).metadata(),
+          'to yield JSON output satisfying',
+          {
+            contentType: 'image/jpeg'
+          }
+        )
+          .then(function() {
+            expect(cacheSpy, 'to have calls satisfying', function() {
+              cacheSpy(456);
+            });
+          })
+          .finally(() => cacheSpy.restore());
+      })
+    );
   });
 
   describe('with the sharp engine', function() {
@@ -563,6 +609,29 @@ describe('impro', function() {
           .then(function() {
             expect(cacheSpy, 'to have calls satisfying', function() {
               cacheSpy(123);
+            });
+          })
+          .finally(() => cacheSpy.restore());
+      })
+    );
+
+    it(
+      'should allow passing a sharpCache option to the pipeline',
+      sinon.test(function() {
+        var cacheSpy = this.spy(require('sharp'), 'cache');
+        var improInstance = new impro.Impro().use(impro.engines.sharp);
+        return expect(
+          'turtle.jpg',
+          'when piped through',
+          improInstance.createPipeline({ sharpCache: 456 }).resize(10, 10),
+          'to yield output satisfying to have metadata satisfying',
+          {
+            format: 'JPEG'
+          }
+        )
+          .then(function() {
+            expect(cacheSpy, 'to have calls satisfying', function() {
+              cacheSpy(456);
             });
           })
           .finally(() => cacheSpy.restore());
