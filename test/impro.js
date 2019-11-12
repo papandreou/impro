@@ -377,6 +377,30 @@ describe('impro', function() {
         leftover: ''
       });
     });
+
+    it('should parse a resize operation with only one of the pair (left)', function() {
+      expect(impro.parse('resize=10,'), 'to equal', {
+        operations: [
+          {
+            name: 'resize',
+            args: [10, null]
+          }
+        ],
+        leftover: ''
+      });
+    });
+
+    it('should parse a resize operation with only one of the pair (right)', function() {
+      expect(impro.parse('resize=,10'), 'to equal', {
+        operations: [
+          {
+            name: 'resize',
+            args: [null, 10]
+          }
+        ],
+        leftover: ''
+      });
+    });
   });
 
   describe('when adding the processing instructions via individual method calls', function() {
@@ -838,6 +862,36 @@ describe('impro', function() {
       });
     });
 
+    it('should support resize (only width)', () => {
+      const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
+
+      impro
+        .sharp()
+        .resize(10, null)
+        .flush();
+
+      return expect(executeSpy.returnValues[0], 'to equal', [
+        { name: 'resize', args: [10, null] }
+      ]).finally(() => {
+        executeSpy.restore();
+      });
+    });
+
+    it('should support resize (only height)', () => {
+      const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
+
+      impro
+        .sharp()
+        .resize(null, 10)
+        .flush();
+
+      return expect(executeSpy.returnValues[0], 'to equal', [
+        { name: 'resize', args: [null, 10] }
+      ]).finally(() => {
+        executeSpy.restore();
+      });
+    });
+
     it('should support crop without resize', () => {
       const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
 
@@ -1155,6 +1209,36 @@ describe('impro', function() {
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         { name: 'resize', args: [10, 10] }
+      ]).finally(() => {
+        executeSpy.restore();
+      });
+    });
+
+    it('should support resize (only width)', () => {
+      const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
+
+      impro
+        .gm()
+        .resize(10, null)
+        .flush();
+
+      return expect(executeSpy.returnValues[0], 'to equal', [
+        { name: 'resize', args: [10, ''] }
+      ]).finally(() => {
+        executeSpy.restore();
+      });
+    });
+
+    it('should support resize (only height)', () => {
+      const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
+
+      impro
+        .gm()
+        .resize(null, 10)
+        .flush();
+
+      return expect(executeSpy.returnValues[0], 'to equal', [
+        { name: 'resize', args: ['', 10] }
       ]).finally(() => {
         executeSpy.restore();
       });

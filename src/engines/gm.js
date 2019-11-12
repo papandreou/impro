@@ -43,6 +43,7 @@ function createGmOperations(pipeline, operations) {
             ')'
         );
       }
+      operation.args = args.map(arg => arg || '');
     } else if (operation.name === 'extract') {
       operation.name = 'crop';
       operation.args = [
@@ -142,8 +143,8 @@ module.exports = {
       case 'resize':
         return (
           args.length === 2 &&
-          isNumberWithin(args[0], 1, maxDimension) &&
-          isNumberWithin(args[1], 1, maxDimension)
+          (args[0] === null || isNumberWithin(args[0], 1, maxDimension)) &&
+          (args[1] === null || isNumberWithin(args[1], 1, maxDimension))
         );
       case 'extract':
         return (

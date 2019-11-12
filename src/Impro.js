@@ -218,6 +218,11 @@ module.exports = class Impro {
           return;
         }
 
+        // empty resize args must be passed to engines as null
+        if (operationName === 'resize') {
+          operationArgs = operationArgs.map(arg => arg || null);
+        }
+
         if (
           !this.isValidOperation(operationName, operationArgs) ||
           (typeof this.allowOperation === 'function' &&
