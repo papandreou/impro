@@ -457,7 +457,12 @@ describe('impro', function() {
             ModifyDate: expect.it('to be a string'),
             YCbCrPositioning: 1,
             ExifOffset: 192
-          })
+          }),
+          // included due to the source image being rotated
+          width: 4032,
+          height: 3024,
+          orientedWidth: 3024,
+          orientedHeight: 4032
         }
       );
     });

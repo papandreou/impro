@@ -95,6 +95,21 @@ module.exports = {
           }
           metadata.exif = undefined;
           if (exifData) {
+            const orientation = exifData.image && exifData.image.Orientation;
+            // Check if the image.Orientation EXIF tag specifies says that the
+            // width and height are to be flipped
+            // http://sylvana.net/jpegcrop/exif_orientation.html
+            if (
+              typeof orientation === 'number' &&
+              orientation >= 5 &&
+              orientation <= 8
+            ) {
+              metadata.orientedWidth = metadata.height;
+              metadata.orientedHeight = metadata.width;
+            } else {
+              metadata.orientedWidth = metadata.width;
+              metadata.orientedHeight = metadata.height;
+            }
             _.defaults(metadata, exifData);
           }
         }
