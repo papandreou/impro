@@ -808,6 +808,18 @@ describe('impro', function() {
       );
     });
 
+    it('should support progressive', () => {
+      return expect(
+        'turtle.jpg',
+        'when piped through',
+        impro.type('jpeg').progressive(),
+        'to yield output satisfying to have metadata satisfying',
+        {
+          Interlace: 'Line'
+        }
+      );
+    });
+
     it('should support rotate', () => {
       const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
 

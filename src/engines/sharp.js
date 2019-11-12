@@ -23,6 +23,10 @@ function patchPreviousCommandArgument(operation, argUpdates, indexInArg) {
 }
 
 const maxDimension = 16384;
+const optionsToOutputType = {
+  progressive: true,
+  quality: true
+};
 const optionsToResize = {
   withoutEnlargement: () => ({ fit: 'inside' }),
   ignoreAspectRatio: () => ({ fit: 'fill' })
@@ -150,22 +154,13 @@ module.exports = {
     }
   },
   execute: function(pipeline, operations, options) {
-    options = options || {};
+    options = options ? { ...options } : {};
     var impro = pipeline.impro;
     var cache = pipeline.options.sharpCache || options.cache;
     // Would make sense to move the _sharpCacheSet property to the type, but that breaks some test scenarios:
     if (cache !== 'undefined' && !impro._sharpCacheSet) {
       sharp.cache(cache);
       impro._sharpCacheSet = true;
-    }
-    var sharpInstance = sharp();
-    if (pipeline.options.maxInputPixels) {
-      sharpInstance = sharpInstance.limitInputPixels(
-        pipeline.options.maxInputPixels
-      );
-    }
-    if (options.sequentialRead) {
-      sharpInstance = sharpInstance.sequentialRead();
     }
 
     var operationsForExecution = [];
@@ -238,8 +233,7 @@ module.exports = {
         }
       }
 
-      // in sharp quality is implemented as an option to the target type
-      if (operation.name === 'quality') {
+      if (name in optionsToOutputType) {
         const locatedIndex = locatePreviousCommand(
           operationsForExecution,
           pipeline.targetType
@@ -247,14 +241,14 @@ module.exports = {
         if (locatedIndex > -1) {
           const locatedOperation = patchPreviousCommandArgument(
             operationsForExecution[locatedIndex],
-            { quality: args[0] },
+            { [name]: args.length === 1 ? args[0] : true },
             0
           );
           operationsForExecution[locatedIndex] = locatedOperation;
           return;
         } else {
           throw new Error(
-            'sharp: quality() operation must follow output type selection'
+            `sharp: ${name}() operation must follow output type selection`
           );
         }
       }
@@ -273,6 +267,16 @@ module.exports = {
 
       operationsForExecution.push({ name, args });
     });
+
+    let sharpInstance = sharp(undefined, options);
+    if (pipeline.options.maxInputPixels) {
+      sharpInstance = sharpInstance.limitInputPixels(
+        pipeline.options.maxInputPixels
+      );
+    }
+    if (options.sequentialRead) {
+      sharpInstance = sharpInstance.sequentialRead();
+    }
 
     operationsForExecution.map(({ name, args }) =>
       sharpInstance[name](...args)
