@@ -476,6 +476,24 @@ describe('impro', function() {
       );
     });
 
+    it('should include source metadata provided via the meta method when supplied as a pipeline option', function() {
+      return expect(
+        'turtle.jpg',
+        'when piped through',
+        impro
+          .createPipeline({
+            sourceMetadata: { filesize: 105836, etag: 'W/"foobar"' }
+          })
+          .metadata(),
+        'to yield JSON output satisfying',
+        {
+          contentType: 'image/jpeg',
+          filesize: 105836,
+          etag: 'W/"foobar"'
+        }
+      );
+    });
+
     it('should not include source metadata provided via the meta method when an operation has been performed', function() {
       return expect(
         'turtle.jpg',

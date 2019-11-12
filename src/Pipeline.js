@@ -16,7 +16,7 @@ module.exports = class Pipeline extends Stream.Duplex {
     this.options = {};
 
     options = options || {};
-    const { type, engines, supportedOptions, ...sourceMetadata } = options;
+    const { type, engines, supportedOptions, sourceMetadata } = options;
     (supportedOptions || []).forEach(optionName => {
       this.options[optionName] =
         typeof options[optionName] !== 'undefined'
@@ -41,7 +41,7 @@ module.exports = class Pipeline extends Stream.Duplex {
       }
     }
 
-    this.sourceMetadata = sourceMetadata;
+    this.sourceMetadata = sourceMetadata || {};
 
     this.sourceType = undefined;
     this.targetType = undefined;
