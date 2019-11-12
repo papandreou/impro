@@ -401,6 +401,17 @@ describe('impro', function() {
         leftover: ''
       });
     });
+
+    it('should ensure a custom allowOperation function takes effect for engines', function() {
+      impro.allowOperation = () => false;
+
+      return expect(impro.parse('metadata'), 'to equal', {
+        operations: [],
+        leftover: 'metadata'
+      }).finally(() => {
+        delete impro.allowOperation;
+      });
+    });
   });
 
   describe('when adding the processing instructions via individual method calls', function() {

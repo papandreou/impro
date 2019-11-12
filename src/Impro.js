@@ -205,17 +205,12 @@ module.exports = class Impro {
             if (this.restrictedOptions.includes(optionKey)) return;
             engineOptions[optionKey] = optionValue;
           });
-          const engineArgs = [];
+
           if (Object.keys(engineOptions).length > 0) {
-            engineArgs.push(engineOptions);
+            operationArgs = [engineOptions];
+          } else {
+            operationArgs = [];
           }
-
-          operations.push({
-            name: operationName,
-            args: engineArgs
-          });
-
-          return;
         }
 
         // empty resize args must be passed to engines as null
