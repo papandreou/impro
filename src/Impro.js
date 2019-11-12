@@ -168,7 +168,12 @@ module.exports = class Impro {
     );
   }
 
-  parse(queryString) {
+  parse(queryString, allowOperation) {
+    allowOperation =
+      typeof allowOperation === 'function'
+        ? allowOperation
+        : this.allowOperation;
+
     var keyValuePairs = queryString.split('&');
     var operations = [];
     var leftOverQueryStringFragments = [];
@@ -220,8 +225,8 @@ module.exports = class Impro {
 
         if (
           !this.isValidOperation(operationName, operationArgs) ||
-          (typeof this.allowOperation === 'function' &&
-            !this.allowOperation(operationName, operationArgs))
+          (typeof allowOperation === 'function' &&
+            !allowOperation(operationName, operationArgs))
         ) {
           leftOverQueryStringFragments.push(keyValuePair);
         } else {

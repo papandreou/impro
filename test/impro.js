@@ -412,6 +412,17 @@ describe('impro', function() {
         delete impro.allowOperation;
       });
     });
+
+    it('should support suppplying a custom allowOperation function directly', function() {
+      expect(
+        impro.parse('png', () => false),
+        'to equal',
+        {
+          operations: [],
+          leftover: 'png'
+        }
+      );
+    });
   });
 
   describe('when adding the processing instructions via individual method calls', function() {
