@@ -1221,6 +1221,21 @@ describe('impro', function() {
       });
     });
 
+    it('should support progressive', () => {
+      const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
+
+      impro
+        .gm()
+        .progressive()
+        .flush();
+
+      return expect(executeSpy.returnValues[0], 'to equal', [
+        { name: 'interlace', args: ['line'] }
+      ]).finally(() => {
+        executeSpy.restore();
+      });
+    });
+
     it('should support resize', () => {
       const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
 

@@ -106,7 +106,12 @@ const maxDimension = 16384;
 module.exports = {
   name: 'gm',
   unavailable: !gm,
-  operations: ['extract', 'withoutEnlargement', 'ignoreAspectRatio'].concat(
+  operations: [
+    'extract',
+    'progressive',
+    'withoutEnlargement',
+    'ignoreAspectRatio'
+  ].concat(
     Object.keys(gm.prototype).filter(function(propertyName) {
       return (
         !/^_|^(?:name|emit|.*Listeners?|on|once|size|orientation|format|depth|color|res|filesize|identity|write|stream|type|setmoc)$/.test(
