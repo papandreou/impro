@@ -1146,24 +1146,6 @@ describe('impro', function() {
   });
 
   describe('with the gifsicle engine', function() {
-    it('should handle resize before extract', function() {
-      return expect(
-        'cat.gif',
-        'when piped through',
-        impro
-          .gifsicle()
-          .resize(380, 486)
-          .extract(150, 150, 100, 100),
-        'to yield output satisfying',
-        expect
-          .it('to have metadata satisfying', {
-            size: { width: 100, height: 100 },
-            Scene: ['0 of 4', '1 of 4', '2 of 4', '3 of 4'] // Animated
-          })
-          .and('to resemble', load('cat-resized-then-cropped.gif'))
-      );
-    });
-
     it('should prefer gifsicle for processing gifs', function() {
       return expect(
         impro
@@ -1184,7 +1166,8 @@ describe('impro', function() {
         .flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
-        ['--resize-width', 10]
+        '--resize-width',
+        10
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1199,10 +1182,49 @@ describe('impro', function() {
         .flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
-        ['--resize-height', 10]
+        '--resize-height',
+        10
       ]).finally(() => {
         executeSpy.restore();
       });
+    });
+
+    it('should support resize followed by extract', function() {
+      const executeSpy = sinon.spy(impro.engineByName.gifsicle, 'execute');
+
+      impro
+        .gifsicle()
+        .resize(380, 486)
+        .extract(150, 150, 100, 100)
+        .flush();
+
+      return expect(executeSpy.returnValues[0], 'to equal', [
+        '--resize-fit',
+        '380x486',
+        ';',
+        '--crop',
+        '150,150+100x100'
+      ]).finally(() => {
+        executeSpy.restore();
+      });
+    });
+
+    it('should output resize followed by extract', function() {
+      return expect(
+        'cat.gif',
+        'when piped through',
+        impro
+          .gifsicle()
+          .resize(380, 486)
+          .extract(150, 150, 100, 100),
+        'to yield output satisfying',
+        expect
+          .it('to have metadata satisfying', {
+            size: { width: 100, height: 100 },
+            Scene: ['0 of 4', '1 of 4', '2 of 4', '3 of 4'] // Animated
+          })
+          .and('to resemble', load('cat-resized-then-cropped.gif'))
+      );
     });
 
     it('should use gm for gifs when gifsicle is disabled', function() {
@@ -1228,7 +1250,8 @@ describe('impro', function() {
           .flush();
 
         return expect(executeSpy.returnValues[0], 'to equal', [
-          ['--resize-fit', '2000x12']
+          '--resize-fit',
+          '2000x12'
         ]).finally(() => {
           executeSpy.restore();
         });
@@ -1244,7 +1267,8 @@ describe('impro', function() {
           .flush();
 
         return expect(executeSpy.returnValues[0], 'to equal', [
-          ['--resize-fit', '12x2000']
+          '--resize-fit',
+          '12x2000'
         ]).finally(() => {
           executeSpy.restore();
         });

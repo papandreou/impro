@@ -68,7 +68,8 @@ module.exports = {
       if (gifsicleArgs.length > 0) {
         pipeline._attach(new Gifsicle(gifsicleArgs));
         seenOperationThatMustComeBeforeExtract = false;
-        allGifsicleArgs.push(gifsicleArgs);
+        if (allGifsicleArgs.length > 0) allGifsicleArgs.push(';');
+        allGifsicleArgs.push(...gifsicleArgs);
         gifsicleArgs = [];
       }
     }
