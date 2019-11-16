@@ -1688,7 +1688,7 @@ describe('impro', function() {
                   engineName: 'jpegtran'
                 }
               ],
-              commandLine: 'jpegtran -crop 10x10+10+10'
+              commandArgs: ['-crop', '10x10+10+10']
             }
           ]);
         })
@@ -2030,7 +2030,34 @@ describe('impro', function() {
       );
     });
 
-    it('should error and include the command line for relevant engines', function() {
+    it('should error and include the command line for relevant engines (gm)', function() {
+      const gmEngine = impro.engineByName.gm;
+      gmEngine.outputTypes.push('ico');
+      const origExecute = gmEngine.execute;
+      gmEngine.execute = function(pipeline, operations) {
+        gmEngine.execute = origExecute;
+
+        // override with an unsupported output type to trigger error path
+        operations[0].name = 'ico';
+
+        origExecute.call(this, pipeline, operations);
+      };
+
+      return expect(
+        'bulb.gif',
+        'when piped through',
+        impro.gm().png(),
+        'to error with',
+        expect.it('to satisfy', {
+          commandLine: 'gm convert - ico:-'
+        })
+      ).finally(() => {
+        gmEngine.execute = origExecute;
+        gmEngine.outputTypes.splice(gmEngine.outputTypes.length - 1, 1);
+      });
+    });
+
+    it('should error and include the command line for relevant engines (jpegtran)', function() {
       const pipeline = impro
         .jpegtran()
         .grayscale()

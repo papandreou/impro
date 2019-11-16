@@ -194,6 +194,12 @@ module.exports = {
           gmInstance.limit('pixels', pipeline.options.maxInputPixels);
         }
 
+        const handleError = err => {
+          hasEnded = true;
+          err.commandArgs = gmInstance.args();
+          readWriteStream.emit('error', err);
+        };
+
         gmOperations
           .reduce(function(gmInstance, operation) {
             if (typeof gmInstance[operation.name] === 'function') {
@@ -207,9 +213,9 @@ module.exports = {
           }, gmInstance)
           .stream(function(err, stdout, stderr) {
             if (err) {
-              hasEnded = true;
-              return readWriteStream.emit('error', err);
+              return handleError(err);
             }
+
             stdout
               .on('data', function(chunk) {
                 seenData = true;
@@ -217,15 +223,14 @@ module.exports = {
               })
               .on('end', function() {
                 if (!hasEnded) {
-                  if (seenData) {
-                    readWriteStream.emit('end');
-                  } else {
-                    readWriteStream.emit(
-                      'error',
+                  if (!seenData) {
+                    return handleError(
                       new Error('gm: stream ended without emitting any data')
                     );
                   }
+
                   hasEnded = true;
+                  readWriteStream.emit('end');
                 }
               });
           });

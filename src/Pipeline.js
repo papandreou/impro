@@ -104,10 +104,8 @@ module.exports = class Pipeline extends Stream.Duplex {
         this.usedEngines.push({
           name: engineName,
           operations,
-          commandLine:
-            commandArgs && !(engineName === 'sharp' || engineName === 'gm')
-              ? `${engineName} ${commandArgs.join(' ')}`
-              : null
+          commandArgs:
+            commandArgs && engineName !== 'sharp' ? commandArgs : null
         });
 
         startIndex = upToIndex;
@@ -212,8 +210,13 @@ module.exports = class Pipeline extends Stream.Duplex {
       }
       // protect against filters emitting errors more than once
       stream.once('error', err => {
-        if (i < this._streams.length - 1 && this.usedEngines[i].commandLine) {
-          err.commandLine = this.usedEngines[i].commandLine;
+        let commandArgs;
+        if (
+          i < this._streams.length - 1 &&
+          (commandArgs = err.commandArgs || this.usedEngines[i].commandArgs)
+        ) {
+          const engineName = this.usedEngines[i].name;
+          err.commandLine = `${engineName} ${commandArgs.join(' ')}`;
         }
         this._fail(err, i);
       });
