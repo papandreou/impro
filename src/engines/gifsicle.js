@@ -1,5 +1,6 @@
 const requireOr = require('require-or');
 const Gifsicle = requireOr('gifsicle-stream');
+const errors = require('../errors');
 
 function isNumberWithin(num, min, max) {
   return typeof num === 'number' && num >= min && num <= max;
@@ -79,6 +80,30 @@ module.exports = {
     operations.forEach(function(operation) {
       if (operation.name === 'resize') {
         seenOperationThatMustComeBeforeExtract = true;
+
+        if (typeof pipeline.options.maxOutputPixels === 'number') {
+          const args = operation.args;
+          const maxOutputPixels = pipeline.options.maxOutputPixels;
+
+          if (args[0] * args[1] > maxOutputPixels) {
+            throw new errors.OutputDimensionsExceeded(
+              'resize: Target dimensions of ' +
+                args[0] +
+                'x' +
+                args[1] +
+                ' exceed maxOutputPixels (' +
+                pipeline.options.maxOutputPixels +
+                ')'
+            );
+          }
+
+          if (args[0] === null && args[1] !== null) {
+            args[0] = Math.floor(maxOutputPixels / args[1]);
+          } else if (args[1] === null && args[0] !== null) {
+            args[1] = Math.floor(maxOutputPixels / args[0]);
+          }
+        }
+
         if (operation.args[0] !== null && operation.args[1] !== null) {
           gifsicleArgs.push(
             '--resize' + (ignoreAspectRatio ? '' : '-fit'),

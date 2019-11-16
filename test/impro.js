@@ -1216,6 +1216,40 @@ describe('impro', function() {
         [{ name: 'gm' }]
       );
     });
+
+    describe('with a maxOutputPixels setting in place', () => {
+      it('should support resize (only width)', () => {
+        const executeSpy = sinon.spy(impro.engineByName.gifsicle, 'execute');
+
+        impro
+          .createPipeline({ maxOutputPixels: 25000 })
+          .gifsicle()
+          .resize(2000, null)
+          .flush();
+
+        return expect(executeSpy.returnValues[0], 'to equal', [
+          ['--resize-fit', '2000x12']
+        ]).finally(() => {
+          executeSpy.restore();
+        });
+      });
+
+      it('should support resize (only height)', () => {
+        const executeSpy = sinon.spy(impro.engineByName.gifsicle, 'execute');
+
+        impro
+          .createPipeline({ maxOutputPixels: 25000 })
+          .gifsicle()
+          .resize(null, 2000)
+          .flush();
+
+        return expect(executeSpy.returnValues[0], 'to equal', [
+          ['--resize-fit', '12x2000']
+        ]).finally(() => {
+          executeSpy.restore();
+        });
+      });
+    });
   });
 
   describe('with the gm engine', function() {
@@ -1994,7 +2028,7 @@ describe('impro', function() {
   });
 
   describe('with a maxOutputPixels setting', function() {
-    it('should refuse to resize an image to exceed the max number of pixels', function() {
+    it('should refuse to resize an image to exceed the max number of pixels (sharp)', function() {
       expect(
         function() {
           impro
@@ -2008,12 +2042,26 @@ describe('impro', function() {
       );
     });
 
-    it('should refuse to resize an image to exceed the max number of pixels, gm', function() {
+    it('should refuse to resize an image to exceed the max number of pixels (gm)', function() {
       expect(
         function() {
           impro
             .maxOutputPixels(2)
             .gm()
+            .resize(100, 100)
+            .flush();
+        },
+        'to throw',
+        'resize: Target dimensions of 100x100 exceed maxOutputPixels (2)'
+      );
+    });
+
+    it('should refuse to resize an image to exceed the max number of pixels (gifsicle)', function() {
+      expect(
+        function() {
+          impro
+            .maxOutputPixels(2)
+            .gifsicle()
             .resize(100, 100)
             .flush();
         },
