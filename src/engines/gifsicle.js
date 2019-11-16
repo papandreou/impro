@@ -43,8 +43,8 @@ module.exports = {
       case 'resize':
         return (
           args.length === 2 &&
-          isNumberWithin(args[0], 1, maxDimension) &&
-          isNumberWithin(args[1], 1, maxDimension)
+          (args[0] === null || isNumberWithin(args[0], 1, maxDimension)) &&
+          (args[1] === null || isNumberWithin(args[1], 1, maxDimension))
         );
       case 'extract':
         return (
@@ -79,10 +79,16 @@ module.exports = {
     operations.forEach(function(operation) {
       if (operation.name === 'resize') {
         seenOperationThatMustComeBeforeExtract = true;
-        gifsicleArgs.push(
-          '--resize' + (ignoreAspectRatio ? '' : '-fit'),
-          operation.args[0] + 'x' + operation.args[1]
-        );
+        if (operation.args[0] !== null && operation.args[1] !== null) {
+          gifsicleArgs.push(
+            '--resize' + (ignoreAspectRatio ? '' : '-fit'),
+            operation.args[0] + 'x' + operation.args[1]
+          );
+        } else if (operation.args[1] === null) {
+          gifsicleArgs.push('--resize-width', operation.args[0]);
+        } else if (operation.args[0] === null) {
+          gifsicleArgs.push('--resize-height', operation.args[1]);
+        }
       } else if (operation.name === 'extract') {
         if (seenOperationThatMustComeBeforeExtract) {
           flush();

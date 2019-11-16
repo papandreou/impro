@@ -1141,6 +1141,36 @@ describe('impro', function() {
       );
     });
 
+    it('should support resize (only width)', () => {
+      const executeSpy = sinon.spy(impro.engineByName.gifsicle, 'execute');
+
+      impro
+        .gifsicle()
+        .resize(10, null)
+        .flush();
+
+      return expect(executeSpy.returnValues[0], 'to equal', [
+        ['--resize-width', 10]
+      ]).finally(() => {
+        executeSpy.restore();
+      });
+    });
+
+    it('should support resize (only height)', () => {
+      const executeSpy = sinon.spy(impro.engineByName.gifsicle, 'execute');
+
+      impro
+        .gifsicle()
+        .resize(null, 10)
+        .flush();
+
+      return expect(executeSpy.returnValues[0], 'to equal', [
+        ['--resize-height', 10]
+      ]).finally(() => {
+        executeSpy.restore();
+      });
+    });
+
     it('should use gm for gifs when gifsicle is disabled', function() {
       return expect(
         impro
