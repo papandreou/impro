@@ -29,19 +29,26 @@ function createGmOperations(pipeline, operations) {
       operation.args = ['transparent', operation.args[0]];
     } else if (operation.name === 'resize') {
       const args = operation.args;
-      if (
-        typeof pipeline.options.maxOutputPixels === 'number' &&
-        args[0] * args[1] > pipeline.options.maxOutputPixels
-      ) {
-        throw new errors.OutputDimensionsExceeded(
-          'resize: Target dimensions of ' +
-            args[0] +
-            'x' +
-            args[1] +
-            ' exceed maxOutputPixels (' +
-            pipeline.options.maxOutputPixels +
-            ')'
-        );
+      if (typeof pipeline.options.maxOutputPixels === 'number') {
+        const maxOutputPixels = pipeline.options.maxOutputPixels;
+
+        if (args[0] * args[1] > maxOutputPixels) {
+          throw new errors.OutputDimensionsExceeded(
+            'resize: Target dimensions of ' +
+              args[0] +
+              'x' +
+              args[1] +
+              ' exceed maxOutputPixels (' +
+              pipeline.options.maxOutputPixels +
+              ')'
+          );
+        }
+
+        if (args[0] === null && args[1] !== null) {
+          args[0] = Math.floor(maxOutputPixels / args[1]);
+        } else if (args[1] === null && args[0] !== null) {
+          args[1] = Math.floor(maxOutputPixels / args[0]);
+        }
       }
       operation.args = args.map(arg => arg || '');
     } else if (operation.name === 'extract') {

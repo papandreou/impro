@@ -1401,6 +1401,40 @@ describe('impro', function() {
         gmEngine.outputTypes.splice(gmEngine.outputTypes.length - 1, 1);
       });
     });
+
+    describe('with a maxOutputPixels setting in place', () => {
+      it('should support resize (only width)', () => {
+        const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
+
+        impro
+          .createPipeline({ maxOutputPixels: 25000 })
+          .gm()
+          .resize(2000, null)
+          .flush();
+
+        return expect(executeSpy.returnValues[0], 'to equal', [
+          { name: 'resize', args: [2000, 12] }
+        ]).finally(() => {
+          executeSpy.restore();
+        });
+      });
+
+      it('should support resize (only height)', () => {
+        const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
+
+        impro
+          .createPipeline({ maxOutputPixels: 25000 })
+          .gm()
+          .resize(null, 2000)
+          .flush();
+
+        return expect(executeSpy.returnValues[0], 'to equal', [
+          { name: 'resize', args: [12, 2000] }
+        ]).finally(() => {
+          executeSpy.restore();
+        });
+      });
+    });
   });
 
   describe('with the inkscape engine', function() {
