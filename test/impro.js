@@ -1109,6 +1109,40 @@ describe('impro', function() {
         executeSpy.restore();
       });
     });
+
+    describe('with a maxOutputPixels setting in place', () => {
+      it('should support resize (only width)', () => {
+        const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
+
+        impro
+          .createPipeline({ maxOutputPixels: 25000 })
+          .sharp()
+          .resize(2000, null)
+          .flush();
+
+        return expect(executeSpy.returnValues[0], 'to equal', [
+          { name: 'resize', args: [2000, 12, { fit: 'inside' }] }
+        ]).finally(() => {
+          executeSpy.restore();
+        });
+      });
+
+      it('should support resize (only height)', () => {
+        const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
+
+        impro
+          .createPipeline({ maxOutputPixels: 25000 })
+          .sharp()
+          .resize(null, 2000)
+          .flush();
+
+        return expect(executeSpy.returnValues[0], 'to equal', [
+          { name: 'resize', args: [12, 2000, { fit: 'inside' }] }
+        ]).finally(() => {
+          executeSpy.restore();
+        });
+      });
+    });
   });
 
   describe('with the gifsicle engine', function() {

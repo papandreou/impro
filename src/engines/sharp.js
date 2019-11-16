@@ -175,20 +175,31 @@ module.exports = {
     operations.forEach(function(operation) {
       var name = operation.name;
       var args = operation.args;
+
       if (
         operation.name === 'resize' &&
-        typeof pipeline.options.maxOutputPixels === 'number' &&
-        args[0] * args[1] > pipeline.options.maxOutputPixels
+        typeof pipeline.options.maxOutputPixels === 'number'
       ) {
-        throw new errors.OutputDimensionsExceeded(
-          'resize: Target dimensions of ' +
-            args[0] +
-            'x' +
-            args[1] +
-            ' exceed maxOutputPixels (' +
-            pipeline.options.maxOutputPixels +
-            ')'
-        );
+        const maxOutputPixels = pipeline.options.maxOutputPixels;
+        if (args[0] * args[1] > maxOutputPixels) {
+          throw new errors.OutputDimensionsExceeded(
+            'resize: Target dimensions of ' +
+              args[0] +
+              'x' +
+              args[1] +
+              ' exceed maxOutputPixels (' +
+              pipeline.options.maxOutputPixels +
+              ')'
+          );
+        }
+
+        if (args[0] === null && args[1] !== null) {
+          args[0] = Math.floor(maxOutputPixels / args[1]);
+          args[2] = { fit: 'inside' };
+        } else if (args[1] === null && args[0] !== null) {
+          args[1] = Math.floor(maxOutputPixels / args[0]);
+          args[2] = { fit: 'inside' };
+        }
       }
 
       // handle those operations in sharp crop implemented as variations of resize
