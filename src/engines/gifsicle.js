@@ -59,12 +59,15 @@ module.exports = {
     }
   },
   execute: function(pipeline, operations) {
+    var allGifsicleArgs = [];
     var gifsicleArgs = [];
     var seenOperationThatMustComeBeforeExtract = false;
+
     function flush() {
       if (gifsicleArgs.length > 0) {
         pipeline._attach(new Gifsicle(gifsicleArgs));
         seenOperationThatMustComeBeforeExtract = false;
+        allGifsicleArgs.push(gifsicleArgs);
         gifsicleArgs = [];
       }
     }
@@ -105,7 +108,10 @@ module.exports = {
       }
     }, this);
     flush();
+
     pipeline.targetType = 'gif';
     pipeline.targetContentType = 'image/gif';
+
+    return allGifsicleArgs;
   }
 };
