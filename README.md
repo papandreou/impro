@@ -20,7 +20,109 @@ Support for the following libraries is included:
 - Pngquant
 - Pngcrush
 - SvgFilter
-- GraphicsMagick
+- GraphicsMagick (install "gm" module)
+
+## Background
+
+Image processing has typically involved command line tools which are often
+supplied a set of command line arguments that act as a series of instructions
+for the properties of the image being output and anuy transformations to apply.
+Each of these options is modelled as an "operation".
+
+### Operations
+
+An operation is a named constraint (property or transformation) that an
+_output image_ must conform to after it is applied.
+
+### Engines
+
+An engine is a representation a particular image library that supports a
+certain set of operations.
+
+### Pipeline
+
+A pipeline is a requested series operations that thar will be executed by
+one or more engines to turn an image from the input to the desired output.
+
+## Use
+
+The `impro` library can be installed simply from npm:
+
+```
+npm install impro
+```
+
+The default configuration of impro is an insance that is configured with
+support for all supported engines - but the presence of the image libraries
+is detected which means they must be installed alongside. Each library has
+a node module of the same name (with the exception of gm as noted above):
+
+```
+npm install sharp
+npm install gifsicle
+```
+
+> some of the libraries may have requirements on native packages
+> that must be installed via an operating system package manager
+
+## Constructing image processing pipelines
+
+By default an import of impro returns an object with all registered engines
+that is ready to start handling conversion operations. To do this, we create
+a pipeline which we instruct about what it will do to an image.
+
+The prepared pipeline is a Duplex stream that is ready to have the input image
+data piped to it and will stream the output image data out of itself:
+
+```js
+const impro = require('impro');
+
+const pipeline = impro.createPipeline({ type: 'png' }).jpeg();
+```
+
+For example, the pipeline above expect to recieve a PNG input image and
+will convert it to a JPEG using the _chaining API_.
+
+### Chaining API
+
+The pipeline exposes methods for each operation that can be supported on a
+method. Above, the `.jpeg()` is a conversion operation to the JPEG type.
+
+Let's look at another example:
+
+```js
+impro
+  .createPipeline({ type: 'png' })
+  .grayscale()
+  .resize(100, 100)
+  .jpeg()
+  .progressive();
+```
+
+This will accept a PNG, convert it to a grayscale image, resize it and finally
+output it as a JPEG that is interlaced. The chaining API is intended as the
+standard end-user interface that exposes the full power of the library in a
+simple and transparent fashion.
+
+### Low-level API
+
+For cases where impro is used as a library another API is exposed which is
+also used internally and underlies chaining methods: an operations list.
+
+Each named operation is itself a small object containing a name and array
+of the arguments (zero or more) that are provided to it. These operations
+are placed in an array and can be passed directly when creating a pipeline:
+
+```js
+const pipeline = impro.createPipeline({ type: 'png }, [
+  { name: 'grayscale', args: [] },
+  { name: 'resize', args: [100, 100] },
+  { name: 'jpeg', args: [] },
+  { name: 'progressive', args: [] }
+]);
+```
+
+The pipeline above is equivalent to the chaining API example.
 
 ## License
 
