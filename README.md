@@ -7,8 +7,8 @@ An image processing engine integrating multiple conversion libraries.
 [![Coverage Status](https://coveralls.io/repos/papandreou/impro/badge.svg)](https://coveralls.io/r/papandreou/impro)
 [![Dependency Status](https://david-dm.org/papandreou/impro.svg)](https://david-dm.org/papandreou/impro)
 
-Impro allows specifyng the operations to aplpy to images and will
-itself select the correct conversion library to perform the job.
+Impro allows specifying the operations to apply to images and will
+select the correct conversion library to perform the job itself.
 
 Support for the following libraries is included:
 
@@ -21,6 +21,13 @@ Support for the following libraries is included:
 - Pngcrush
 - SvgFilter
 - GraphicsMagick (install "gm" module)
+
+## Introduction
+
+Impro is desgined so that users can express what they want to do to an image
+of a given type rather than how to do it. Given a series of tranformations,
+the library will select one or more libraries to use to turn the input image
+into the desired output and processing is done while fully streaming data.
 
 ## Background
 
@@ -37,11 +44,11 @@ _output image_ must conform to after it is applied.
 ### Engines
 
 An engine is a representation a particular image library that supports a
-certain set of operations.
+certain set of operations on images of certain types.
 
-### Pipeline
+### Pipelines
 
-A pipeline is a requested series operations that thar will be executed by
+A pipeline is a programmed series operations that will be executed by
 one or more engines to turn an image from the input to the desired output.
 
 ## Use
@@ -52,7 +59,7 @@ The `impro` library can be installed simply from npm:
 npm install impro
 ```
 
-The default configuration of impro is an insance that is configured with
+The standard configuration of impro is an instance that is configured with
 support for all supported engines - but the presence of the image libraries
 is detected which means they must be installed alongside. Each library has
 a node module of the same name (with the exception of gm as noted above):
