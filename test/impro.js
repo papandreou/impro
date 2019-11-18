@@ -552,6 +552,7 @@ describe('impro', function() {
         impro
           .source({ filesize: 105836, etag: 'W/"foobar"' })
           .resize(10, 10)
+          .embed('center')
           .metadata(),
         'to yield JSON output satisfying',
         {
@@ -893,7 +894,7 @@ describe('impro', function() {
         .flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
-        { name: 'resize', args: [10, null] }
+        { name: 'resize', args: [10, null, { fit: 'inside' }] }
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -908,7 +909,7 @@ describe('impro', function() {
         .flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
-        { name: 'resize', args: [null, 10] }
+        { name: 'resize', args: [null, 10, { fit: 'inside' }] }
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1075,7 +1076,7 @@ describe('impro', function() {
       return expect(executeSpy.returnValues[0], 'to equal', [
         {
           name: 'resize',
-          args: [10, 10, { fit: 'inside' }]
+          args: [10, 10, { fit: 'inside', withoutEnlargement: true }]
         }
       ]).finally(() => {
         executeSpy.restore();
