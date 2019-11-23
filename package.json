@@ -24,7 +24,7 @@
     "travis": "npm run lint && npm run coverage"
   },
   "devDependencies": {
-    "animated-gif-detector": "1.1.7",
+    "animated-gif-detector": "1.2.0",
     "coveralls": "^3.0.6",
     "eslint": "^6.3.0",
     "eslint-config-prettier": "^6.2.0",
