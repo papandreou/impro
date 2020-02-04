@@ -14,7 +14,9 @@ module.exports = {
     options = options ? { ...options } : {};
 
     if (pipeline.options.svgAssetPath) {
-      options.url = `file://${pipeline.options.svgAssetPath}`;
+      const url = `file://${pipeline.options.svgAssetPath}`;
+      options.url = url;
+      options.root = url; // required in SvgFilter for assetgraph
     }
 
     pipeline._attach(new SvgFilter(options));
