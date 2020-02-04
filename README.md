@@ -121,7 +121,7 @@ of the arguments (zero or more) that are provided to it. These operations
 are placed in an array and can be passed directly when creating a pipeline:
 
 ```js
-const pipeline = impro.createPipeline({ type: 'png }, [
+const pipeline = impro.createPipeline({ type: 'png' }, [
   { name: 'grayscale', args: [] },
   { name: 'resize', args: [100, 100] },
   { name: 'jpeg', args: [] },
