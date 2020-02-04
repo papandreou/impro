@@ -315,7 +315,8 @@ describe('impro', function() {
     it('should return an object with the operations and the leftover parameters, given a query string', function() {
       expect(impro.parse('foo=bar&resize=120,120'), 'to equal', {
         operations: [{ name: 'resize', args: [120, 120] }],
-        leftover: 'foo=bar'
+        leftover: 'foo=bar',
+        consumed: 'resize=120,120'
       });
     });
 
@@ -337,7 +338,9 @@ describe('impro', function() {
               ]
             }
           ],
-          leftover: ''
+          leftover: '',
+          consumed:
+            'svgfilter=runScript=addBogusElement.js+bogusElementId=theBogusElementId'
         }
       );
     });
@@ -350,7 +353,8 @@ describe('impro', function() {
             args: []
           }
         ],
-        leftover: ''
+        leftover: '',
+        consumed: 'svgfilter=svgAssetPath=anything'
       });
     });
 
@@ -362,7 +366,8 @@ describe('impro', function() {
             args: []
           }
         ],
-        leftover: ''
+        leftover: '',
+        consumed: 'pngcrush=8'
       });
     });
 
@@ -374,7 +379,8 @@ describe('impro', function() {
             args: []
           }
         ],
-        leftover: ''
+        leftover: '',
+        consumed: 'metadata'
       });
     });
 
@@ -386,7 +392,8 @@ describe('impro', function() {
             args: [10, null]
           }
         ],
-        leftover: ''
+        leftover: '',
+        consumed: 'resize=10,'
       });
     });
 
@@ -398,7 +405,8 @@ describe('impro', function() {
             args: [null, 10]
           }
         ],
-        leftover: ''
+        leftover: '',
+        consumed: 'resize=,10'
       });
     });
 
@@ -407,7 +415,8 @@ describe('impro', function() {
 
       return expect(impro.parse('metadata'), 'to equal', {
         operations: [],
-        leftover: 'metadata'
+        leftover: 'metadata',
+        consumed: ''
       }).finally(() => {
         delete impro.allowOperation;
       });
@@ -419,7 +428,8 @@ describe('impro', function() {
         'to equal',
         {
           operations: [],
-          leftover: 'png'
+          leftover: 'png',
+          consumed: ''
         }
       );
     });

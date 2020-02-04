@@ -177,6 +177,7 @@ module.exports = class Impro {
     var keyValuePairs = queryString.split('&');
     var operations = [];
     var leftOverQueryStringFragments = [];
+    var consumedQueryStringFragments = [];
 
     keyValuePairs.forEach(function(keyValuePair) {
       var matchKeyValuePair = keyValuePair.match(/^([^=]+)(?:=(.*))?/);
@@ -234,13 +235,15 @@ module.exports = class Impro {
             name: operationName,
             args: operationArgs
           });
+          consumedQueryStringFragments.push(keyValuePair);
         }
       }
     }, this);
 
     return {
       operations: operations,
-      leftover: leftOverQueryStringFragments.join('&')
+      leftover: leftOverQueryStringFragments.join('&'),
+      consumed: consumedQueryStringFragments.join('&')
     };
   }
 };
