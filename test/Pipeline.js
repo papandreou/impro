@@ -84,5 +84,18 @@ describe('Pipeline', () => {
         'Cannot add more operations after the streaming has begun'
       );
     });
+
+    it('should error adding an operation after adding a stream', () => {
+      const pipeline = new Pipeline(fakeImpro);
+      pipeline._preflush = true;
+
+      expect(
+        () => {
+          pipeline.add(null);
+        },
+        'to throw',
+        'Cannot add non-streams after calling addStream()'
+      );
+    });
   });
 });

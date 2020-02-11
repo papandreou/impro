@@ -57,7 +57,7 @@ module.exports = class Pipeline extends Stream.Duplex {
     }
 
     this._flushed = true;
-    this.usedEngines = [];
+    this.usedEngines = this.usedEngines || [];
     var startIndex = 0;
     var lastSelectedEngineName;
     var candidateEngineNames;
@@ -325,6 +325,9 @@ module.exports = class Pipeline extends Stream.Duplex {
         'Cannot add more operations after the streaming has begun'
       );
     }
+    if (this._preflush) {
+      throw new Error('Cannot add non-streams after calling addStream()');
+    }
     if (operation && typeof operation.name === 'string') {
       this._queuedOperations.push(operation);
     } else {
@@ -332,6 +335,14 @@ module.exports = class Pipeline extends Stream.Duplex {
         `add: Unsupported argument: ${JSON.stringify(operation)}`
       );
     }
+    return this;
+  }
+
+  addStream(stream) {
+    this._preflush = true;
+    this._attach(stream);
+    this.usedEngines = this.usedEngines || [];
+    this.usedEngines.push({ name: '_stream' });
     return this;
   }
 

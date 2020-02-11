@@ -9,6 +9,7 @@ var childProcess = require('child_process');
 var fileType = require('file-type');
 var path = require('path');
 var sinon = require('sinon');
+var stream = require('stream');
 
 var impro = require('../');
 
@@ -2085,6 +2086,49 @@ describe('impro', function() {
         expect.it('to satisfy', {
           commandLine: 'jpegtran -grayscale'
         })
+      );
+    });
+
+    it('should not break when one arbitrary stream errors', () => {
+      const error = new Error('arranged error');
+      const erroringStream = new stream.Transform();
+      erroringStream._transform = () => {
+        setImmediate(() => {
+          erroringStream.emit('error', error);
+        });
+      };
+
+      const pipeline = impro.createPipeline().addStream(erroringStream);
+
+      expect(
+        'bulb.gif',
+        'when piped through',
+        pipeline,
+        'to error with',
+        expect.it('to equal', error).and('not to have property', 'commandLine')
+      );
+    });
+
+    it('should not break when two arbitrary stream errors', () => {
+      const error = new Error('arranged error');
+      const erroringStream = new stream.Transform();
+      erroringStream._transform = () => {
+        setImmediate(() => {
+          erroringStream.emit('error', error);
+        });
+      };
+
+      const pipeline = impro
+        .createPipeline()
+        .addStream(new stream.PassThrough())
+        .addStream(erroringStream);
+
+      expect(
+        'bulb.gif',
+        'when piped through',
+        pipeline,
+        'to error with',
+        expect.it('to equal', error).and('not to have property', 'commandLine')
       );
     });
   });
