@@ -1988,6 +1988,21 @@ describe('impro', function() {
       });
     });
 
+    it('should support noreduce', () => {
+      const executeSpy = sinon.spy(impro.engineByName.pngcrush, 'execute');
+
+      impro
+        .pngcrush()
+        .noreduce()
+        .flush();
+
+      return expect(executeSpy.returnValues[0], 'to equal', [
+        '-noreduce'
+      ]).finally(() => {
+        executeSpy.restore();
+      });
+    });
+
     it('should support rem', () => {
       const executeSpy = sinon.spy(impro.engineByName.pngcrush, 'execute');
 
