@@ -8,13 +8,24 @@ module.exports = {
   outputTypes: ['png'],
   operations: ['o'],
   validateOperation: function(name, args) {
-    return name === 'o' && args.length === 1 && args[0] >= 0 && args[0] <= 7;
+    switch (name) {
+      case 'o':
+        return (
+          args.length === 1 &&
+          typeof args[0] === 'number' &&
+          args[0] >= 0 &&
+          args[0] <= 7
+        );
+    }
   },
   execute: function(pipeline, operations, options) {
     var commandLineArgs = [];
+
     operations.forEach(({ name, args }) => {
       commandLineArgs.push('-' + name, ...args);
     });
     pipeline._attach(new OptiPng(commandLineArgs));
+
+    return commandLineArgs;
   }
 };

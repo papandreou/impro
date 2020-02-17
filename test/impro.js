@@ -1796,14 +1796,52 @@ describe('impro', function() {
   });
 
   describe('with the optipng engine', function() {
-    it('process the image according to the given options', function() {
+    it('should process the image', function() {
       return expect(
         'testImage.png',
         'when piped through',
-        impro.add({ name: 'optipng', args: ['-o7'] }),
+        impro.optipng().o(7),
         'to yield output satisfying to have length',
         149
       );
+    });
+
+    it('should build the correct operation arguments', function() {
+      return expect(
+        impro
+          .optipng()
+          .o(7)
+          .flush().usedEngines,
+        'to satisfy',
+        [
+          {
+            name: 'optipng',
+            operations: [
+              {
+                name: 'o',
+                args: [7]
+              }
+            ]
+          }
+        ]
+      );
+    });
+
+    it('should apply the correct command line arguments', function() {
+      return expect(
+        impro
+          .optipng()
+          .o(7)
+          .flush().usedEngines,
+        'to satisfy',
+        [{ name: 'optipng', commandArgs: ['-o', 7] }]
+      );
+    });
+
+    it('should apply the tool in its default mode with no arguments', function() {
+      return expect(impro.optipng().flush().usedEngines, 'to satisfy', [
+        { name: 'optipng', commandArgs: [] }
+      ]);
     });
   });
 
