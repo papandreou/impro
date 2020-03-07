@@ -63,7 +63,7 @@ module.exports = class Impro {
     if (operations) {
       if (!Array.isArray(operations)) {
         throw new Error(
-          'Pipeline creation can only be supplied an operations array or string'
+          'Pipeline creation can only be supplied an operations array'
         );
       }
 

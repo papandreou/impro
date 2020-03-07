@@ -213,7 +213,7 @@ describe('impro', function() {
           impro.createPipeline({}, {});
         },
         'to throw',
-        'Pipeline creation can only be supplied an operations array or string'
+        'Pipeline creation can only be supplied an operations array'
       );
     });
 
