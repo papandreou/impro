@@ -15,3 +15,4 @@ module.exports = new Impro()
 
 module.exports.Impro = Impro;
 module.exports.engines = engines;
+module.exports.queryString = require('./queryString');
