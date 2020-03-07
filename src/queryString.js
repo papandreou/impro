@@ -1,4 +1,4 @@
-function parseImproQueryString(improInstance, queryString, allowOperation) {
+function parseImproQueryString(queryString, improInstance, allowOperation) {
   allowOperation =
     typeof allowOperation === 'function'
       ? allowOperation
@@ -86,7 +86,7 @@ function makeEngineAndArgsRegex(engineNames) {
   return new RegExp(`^(${engineNames.join('|')})(?:=(.*))?`);
 }
 
-function prepareLegacyQueryString(improInstance, queryString) {
+function prepareLegacyQueryString(queryString, improInstance) {
   const engineNames = Object.keys(improInstance.engineByName);
   const queryStringEngineAndArgsRegex = makeEngineAndArgsRegex(engineNames);
 
@@ -172,9 +172,9 @@ function prepareLegacyQueryString(improInstance, queryString) {
   return queryStringFragments.join('&');
 }
 
-function parseLegacyQueryString(improInstance, queryString, allowOperation) {
-  const improQueryString = prepareLegacyQueryString(improInstance, queryString);
-  return parseImproQueryString(improInstance, improQueryString, allowOperation);
+function parseLegacyQueryString(queryString, improInstance, allowOperation) {
+  const improQueryString = prepareLegacyQueryString(queryString, improInstance);
+  return parseImproQueryString(improQueryString, improInstance, allowOperation);
 }
 
 exports.parseImproQueryString = parseImproQueryString;

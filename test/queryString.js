@@ -7,7 +7,7 @@ describe('queryString', function() {
   describe('parseImproQueryString()', function() {
     it('should return an object with the operations and the leftover parameters, given a query string', function() {
       expect(
-        queryString.parseImproQueryString(impro, 'foo=bar&resize=120,120'),
+        queryString.parseImproQueryString('foo=bar&resize=120,120', impro),
         'to equal',
         {
           operations: [{ name: 'resize', args: [120, 120] }],
@@ -20,8 +20,8 @@ describe('queryString', function() {
     it('should parse an engine and preserve any additional options passed to it', function() {
       expect(
         queryString.parseImproQueryString(
-          impro,
-          `svgfilter=runScript=addBogusElement.js+bogusElementId=theBogusElementId`
+          `svgfilter=runScript=addBogusElement.js+bogusElementId=theBogusElementId`,
+          impro
         ),
         'to equal',
         {
@@ -46,8 +46,8 @@ describe('queryString', function() {
     it('should parse an engine ignoring any restricted properties', function() {
       expect(
         queryString.parseImproQueryString(
-          impro,
-          `svgfilter=svgAssetPath=anything`
+          `svgfilter=svgAssetPath=anything`,
+          impro
         ),
         'to equal',
         {
@@ -65,7 +65,7 @@ describe('queryString', function() {
 
     it('should parse an engine and ignore any invalid options', function() {
       expect(
-        queryString.parseImproQueryString(impro, `pngcrush=8`),
+        queryString.parseImproQueryString(`pngcrush=8`, impro),
         'to equal',
         {
           operations: [
@@ -81,7 +81,7 @@ describe('queryString', function() {
     });
 
     it('should parse metadata without options', function() {
-      expect(queryString.parseImproQueryString(impro, 'metadata'), 'to equal', {
+      expect(queryString.parseImproQueryString('metadata', impro), 'to equal', {
         operations: [
           {
             name: 'metadata',
@@ -95,7 +95,7 @@ describe('queryString', function() {
 
     it('should parse a resize operation with only one of the pair (left)', function() {
       expect(
-        queryString.parseImproQueryString(impro, 'resize=10,'),
+        queryString.parseImproQueryString('resize=10,', impro),
         'to equal',
         {
           operations: [
@@ -112,7 +112,7 @@ describe('queryString', function() {
 
     it('should parse a resize operation with only one of the pair (right)', function() {
       expect(
-        queryString.parseImproQueryString(impro, 'resize=,10'),
+        queryString.parseImproQueryString('resize=,10', impro),
         'to equal',
         {
           operations: [
@@ -131,7 +131,7 @@ describe('queryString', function() {
       impro.allowOperation = () => false;
 
       return expect(
-        queryString.parseImproQueryString(impro, 'metadata'),
+        queryString.parseImproQueryString('metadata', impro),
         'to equal',
         {
           operations: [],
@@ -145,7 +145,7 @@ describe('queryString', function() {
 
     it('should support suppplying a custom allowOperation function directly', function() {
       expect(
-        queryString.parseImproQueryString(impro, 'png', () => false),
+        queryString.parseImproQueryString('png', impro, () => false),
         'to equal',
         {
           operations: [],
@@ -165,7 +165,7 @@ describe('queryString', function() {
         expect.errorMode = 'nested';
 
         return expect.shift(
-          queryString.prepareLegacyQueryString(impro, subject)
+          queryString.prepareLegacyQueryString(subject, impro)
         );
       }
     );
@@ -270,7 +270,7 @@ describe('queryString', function() {
   describe('parseLegacyQueryString()', () => {
     it('should parse setFormat and other arguments', () => {
       expect(
-        queryString.parseLegacyQueryString(impro, 'setFormat=png'),
+        queryString.parseLegacyQueryString('setFormat=png', impro),
         'to equal',
         {
           operations: [{ name: 'png', args: [] }],
