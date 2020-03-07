@@ -194,16 +194,6 @@ describe('impro', function() {
       });
     });
 
-    it('should process and execute instructions when passed a query string', function() {
-      return expect(
-        'turtle.jpg',
-        'when piped through',
-        impro.createPipeline('resize=40,15&crop=center'),
-        'to yield output satisfying to resemble',
-        load('turtleCroppedCenter.jpg')
-      );
-    });
-
     it('should process and execute instructions when passed an array of operation objects', function() {
       return expect(
         'turtle.jpg',

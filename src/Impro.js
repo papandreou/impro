@@ -61,9 +61,7 @@ module.exports = class Impro {
     });
 
     if (operations) {
-      if (typeof operations === 'string') {
-        operations = this.parse(operations).operations;
-      } else if (!Array.isArray(operations)) {
+      if (!Array.isArray(operations)) {
         throw new Error(
           'Pipeline creation can only be supplied an operations array or string'
         );
