@@ -1755,6 +1755,22 @@ describe('impro', function() {
   });
 
   describe('with the pngquant engine', function() {
+    it('should process the image', function() {
+      return expect(
+        'purplealpha24bit.png',
+        'when piped through',
+        impro.pngquant(),
+        'to yield output satisfying',
+        expect.it('to have metadata satisfying', {
+          format: 'PNG',
+          size: {
+            width: 100,
+            height: 100
+          }
+        })
+      );
+    });
+
     it('should process the image according to the given options', function() {
       return expect(
         'purplealpha24bit.png',
@@ -1881,6 +1897,18 @@ describe('impro', function() {
       ]).finally(() => {
         executeSpy.restore();
       });
+    });
+
+    it('should support no operations', () => {
+      const executeSpy = sinon.spy(impro.engineByName.pngquant, 'execute');
+
+      impro.pngquant().flush();
+
+      return expect(executeSpy.returnValues[0], 'to equal', ['-']).finally(
+        () => {
+          executeSpy.restore();
+        }
+      );
     });
   });
 
