@@ -1755,11 +1755,11 @@ describe('impro', function() {
   });
 
   describe('with the pngquant engine', function() {
-    it('should process the image according to the given options', function() {
+    it('should process the image', function() {
       return expect(
         'purplealpha24bit.png',
         'when piped through',
-        impro.pngquant().speed(8),
+        impro.pngquant(),
         'to yield output satisfying',
         expect.it('to have metadata satisfying', {
           format: 'PNG',
@@ -1768,6 +1768,32 @@ describe('impro', function() {
             height: 100
           }
         })
+      );
+    });
+
+    it('should process the image according to the given options', function() {
+      return expect(
+        'purplealpha24bit.png',
+        'when piped through',
+        impro.pngquant().ncolors(256),
+        'to yield output satisfying',
+        expect.it('to have metadata satisfying', {
+          format: 'PNG',
+          size: {
+            width: 100,
+            height: 100
+          }
+        })
+      );
+    });
+
+    it('should reject with invalid argument', () => {
+      return expect(
+        () => {
+          impro.jpegtran().ncolors(1);
+        },
+        'to throw',
+        'invalid operation or arguments: ncolors=[1]'
       );
     });
 
@@ -1786,6 +1812,21 @@ describe('impro', function() {
       ]).finally(() => {
         executeSpy.restore();
       });
+    });
+
+    it('should support ncolors', () => {
+      const executeSpy = sinon.spy(impro.engineByName.pngquant, 'execute');
+
+      impro
+        .pngquant()
+        .ncolors(2)
+        .flush();
+
+      return expect(executeSpy.returnValues[0], 'to equal', [2, '-']).finally(
+        () => {
+          executeSpy.restore();
+        }
+      );
     });
 
     it('should support posterize', () => {
@@ -1837,6 +1878,37 @@ describe('impro', function() {
       ]).finally(() => {
         executeSpy.restore();
       });
+    });
+
+    it('should support multiple operations', () => {
+      const executeSpy = sinon.spy(impro.engineByName.pngquant, 'execute');
+
+      impro
+        .pngquant()
+        .speed(1)
+        .ncolors(256)
+        .flush();
+
+      return expect(executeSpy.returnValues[0], 'to equal', [
+        '--speed',
+        1,
+        256,
+        '-'
+      ]).finally(() => {
+        executeSpy.restore();
+      });
+    });
+
+    it('should support no operations', () => {
+      const executeSpy = sinon.spy(impro.engineByName.pngquant, 'execute');
+
+      impro.pngquant().flush();
+
+      return expect(executeSpy.returnValues[0], 'to equal', ['-']).finally(
+        () => {
+          executeSpy.restore();
+        }
+      );
     });
   });
 
