@@ -120,7 +120,7 @@ function prepareLegacyQueryString(queryString, improInstance) {
           result.push(bit.slice(1));
           lastSeenOptionIndex = index + 1; // account for the engine entry
         } else if (engineName === 'pngquant') {
-          result.push(`speed=${bit}`);
+          result.push(`ncolors=${bit}`);
         } else if (lastSeenOptionIndex > -1) {
           result[lastSeenOptionIndex] += `=${bit}`;
         }

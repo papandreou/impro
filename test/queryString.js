@@ -232,9 +232,9 @@ describe('queryString', function() {
 
     it('should parse pngquant with integer argument correctly', () => {
       localExpect(
-        'resize=800,800&pngquant=8',
+        'resize=800,800&pngquant=256',
         'when prepared to equal',
-        'resize=800,800&pngquant&speed=8'
+        'resize=800,800&pngquant&ncolors=256'
       );
     });
 

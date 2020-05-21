@@ -8,6 +8,7 @@ module.exports = {
   outputTypes: ['png'],
   operations: [
     'floyd',
+    'ncolors',
     'nofs',
     'ordered',
     'speed',
@@ -23,6 +24,8 @@ module.exports = {
           (args.length === 1 &&
             /^(?:0(?:\.\d+)?|1(?:\.0+)?)$/.test(String(args[0])))
         );
+      case 'ncolors':
+        return args.length === 1 && args[0] >= 2 && args[0] <= 256;
       case 'speed':
         return args.length === 1 && args[0] >= 1 && args[0] <= 11;
       case 'quality':
@@ -37,9 +40,17 @@ module.exports = {
   },
   execute: function(pipeline, operations, options) {
     var commandLineArgs = [];
+    var nColors;
     operations.forEach(operation => {
+      if (operation.name === 'ncolors') {
+        nColors = operation.args[0];
+        return;
+      }
       commandLineArgs.push('--' + operation.name, ...operation.args);
     });
+    if (nColors) {
+      commandLineArgs.push(nColors);
+    }
     commandLineArgs.push('-');
 
     pipeline._attach(new PngQuant(commandLineArgs));
