@@ -1429,7 +1429,7 @@ describe('impro', function() {
         'when decoded as',
         'utf-8',
         'to match',
-        /^%PDF-1\.4/
+        /^%PDF-1\.5/
       );
     });
 

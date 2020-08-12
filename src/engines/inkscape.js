@@ -15,15 +15,11 @@ module.exports = {
       operations.length > 0 ? operations[operations.length - 1].name : 'png';
     var commandLineArgs =
       (operations[0] && operations[0].commandLineArgs) || [];
-    if (outputFormat === 'pdf') {
-      commandLineArgs.push('--export-pdf');
-    } else if (outputFormat === 'eps') {
-      commandLineArgs.push('--export-eps');
-    } else if (!outputFormat || outputFormat === 'png') {
+    if (!outputFormat || outputFormat === 'png') {
       pipeline.targetType = 'png';
       pipeline.targetContentType = 'image/png';
-      commandLineArgs.push('--export-png');
     }
+    commandLineArgs.push(`--export-type=${outputFormat}`);
     pipeline._attach(new Inkscape(commandLineArgs));
   }
 };
