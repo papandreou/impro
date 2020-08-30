@@ -57,6 +57,7 @@ module.exports = {
     'blur',
     'sharpen',
     'threshold',
+    'trim',
     'interpolateWith',
     'gamma',
     'grayscale',
