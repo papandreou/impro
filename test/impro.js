@@ -588,29 +588,54 @@ describe('impro', function() {
     it(
       'should allow passing a sequentialRead option',
       sinon.test(function() {
-        var sequentialReadSpy = this.spy(
-          require('sharp').prototype,
-          'sequentialRead'
-        );
         var improInstance = new impro.Impro().use(impro.engines.sharp);
+        const sharpSpy = this.spy(improInstance.getEngine('sharp'), 'library');
+        const pipeline = improInstance
+          .sharp({ sequentialRead: true })
+          .type('jpeg')
+          .resize(10, 10);
+
         return expect(
           'turtle.jpg',
           'when piped through',
-          improInstance
-            .sharp({ sequentialRead: true })
-            .type('jpeg')
-            .resize(10, 10),
+          pipeline,
           'to yield output satisfying to have metadata satisfying',
           {
             format: 'JPEG'
           }
         )
           .then(function() {
-            expect(sequentialReadSpy, 'to have calls satisfying', function() {
-              sequentialReadSpy();
-            });
+            expect(sharpSpy, 'to have calls satisfying', [
+              [{ sequentialRead: true }]
+            ]);
           })
-          .finally(() => sequentialReadSpy.restore());
+          .finally(() => sharpSpy.restore());
+      })
+    );
+
+    it(
+      'should allow setting a input pixel limit',
+      sinon.test(function() {
+        var improInstance = new impro.Impro().use(impro.engines.sharp);
+        const sharpSpy = this.spy(improInstance.getEngine('sharp'), 'library');
+        const pipeline = improInstance
+          .createPipeline({ maxInputPixels: 1000 })
+          .type('jpeg')
+          .resize(10, 10);
+
+        return expect(
+          'turtle.jpg',
+          'when piped through',
+          pipeline,
+          'to error with',
+          'Input image exceeds pixel limit'
+        )
+          .then(function() {
+            expect(sharpSpy, 'to have calls satisfying', [
+              [{ limitInputPixels: 1000 }]
+            ]);
+          })
+          .finally(() => sharpSpy.restore());
       })
     );
 

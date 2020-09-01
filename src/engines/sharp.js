@@ -38,6 +38,7 @@ const variationsToResize = {
 
 module.exports = {
   name: 'sharp',
+  library: sharp,
   unavailable: !sharp,
   operations: [
     'resize',
@@ -279,15 +280,14 @@ module.exports = {
       operationsForExecution.push({ name, args });
     });
 
-    let sharpInstance = sharp(undefined, options);
+    // ensure at least one option is present
+    options = { failOnError: true, ...options };
+
     if (pipeline.options.maxInputPixels) {
-      sharpInstance = sharpInstance.limitInputPixels(
-        pipeline.options.maxInputPixels
-      );
+      options.limitInputPixels = pipeline.options.maxInputPixels;
     }
-    if (options.sequentialRead) {
-      sharpInstance = sharpInstance.sequentialRead();
-    }
+
+    const sharpInstance = module.exports.library(options);
 
     operationsForExecution.map(({ name, args }) =>
       sharpInstance[name](...args)
