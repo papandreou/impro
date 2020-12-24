@@ -74,8 +74,8 @@ module.exports = {
     'optimizeScans',
     'optimiseScans',
   ],
-  inputTypes: ['jpeg', 'png', 'webp', 'svg', 'tiff', '*'],
-  outputTypes: ['jpeg', 'png', 'webp', 'tiff', 'dzi'],
+  inputTypes: ['jpeg', 'png', 'webp', 'svg', 'tiff', 'avif', '*'],
+  outputTypes: ['jpeg', 'png', 'webp', 'tiff', 'dzi', 'avif'],
   validateOperation: function (name, args) {
     switch (name) {
       case 'crop':

@@ -962,6 +962,33 @@ describe('impro', () => {
         });
       });
     });
+
+    it('should support avif as a source format', async () => {
+      await expect(
+        'cosmos_frame12924_yuv420_10bpc_bt2020_pq_q50.avif',
+        'when piped through',
+        impro.sharp().resize(10, 10).jpeg().flush(),
+        'to yield output satisfying to have metadata satisfying',
+        {
+          format: 'JPEG',
+          size: { width: 10 },
+        }
+      );
+    });
+
+    it('should support avif as a target format', async () => {
+      await expect(
+        'turtle.jpg',
+        'when piped through',
+        impro.sharp().resize(10, 10).avif().flush(),
+        'to yield output satisfying',
+        'when decoded as',
+        'ascii',
+        'to match',
+        // eslint-disable-next-line no-control-regex
+        /^\x00{3}\x18ftypavif/
+      );
+    });
   });
 
   describe('with the gifsicle engine', () => {
