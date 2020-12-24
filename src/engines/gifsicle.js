@@ -18,11 +18,11 @@ module.exports = {
     'extract',
     'resize',
     'ignoreAspectRatio',
-    'withoutEnlargement'
+    'withoutEnlargement',
   ],
   inputTypes: ['gif'],
   outputTypes: ['gif'],
-  validateOperation: function(name, args) {
+  validateOperation: function (name, args) {
     switch (name) {
       case 'crop':
         // FIXME: .crop(gravity) is presently ignored, seems like there's no mapping to gifsicle switches
@@ -59,7 +59,7 @@ module.exports = {
         return args.length === 1 && isNumberWithin(args[0], 1, 100);
     }
   },
-  execute: function(pipeline, operations) {
+  execute: function (pipeline, operations) {
     const allGifsicleArgs = [];
     let gifsicleArgs = [];
     let seenOperationThatMustComeBeforeExtract = false;
@@ -74,9 +74,11 @@ module.exports = {
       }
     }
 
-    const ignoreAspectRatio = operations.some(operation => operation.name === 'ignoreAspectRatio');
+    const ignoreAspectRatio = operations.some(
+      (operation) => operation.name === 'ignoreAspectRatio'
+    );
 
-    operations.forEach(operation => {
+    operations.forEach((operation) => {
       if (operation.name === 'resize') {
         seenOperationThatMustComeBeforeExtract = true;
 
@@ -143,5 +145,5 @@ module.exports = {
     pipeline.targetContentType = 'image/gif';
 
     return allGifsicleArgs;
-  }
+  },
 };

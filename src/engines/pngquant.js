@@ -14,9 +14,9 @@ module.exports = {
     'speed',
     'quality',
     'posterize',
-    'iebug'
+    'iebug',
   ],
-  validateOperation: function(name, args) {
+  validateOperation: function (name, args) {
     switch (name) {
       case 'floyd':
         return (
@@ -38,10 +38,10 @@ module.exports = {
         return args.length === 1 && /^[0-4]$/.test(String(args[0]));
     }
   },
-  execute: function(pipeline, operations, options) {
+  execute: function (pipeline, operations, options) {
     const commandLineArgs = [];
     let nColors;
-    operations.forEach(operation => {
+    operations.forEach((operation) => {
       if (operation.name === 'ncolors') {
         nColors = operation.args[0];
         return;
@@ -56,5 +56,5 @@ module.exports = {
     pipeline._attach(new PngQuant(commandLineArgs));
 
     return commandLineArgs;
-  }
+  },
 };

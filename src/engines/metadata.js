@@ -13,13 +13,13 @@ module.exports = {
   inputTypes: ['*'],
   defaultOutputType: 'json',
   outputTypes: ['json'],
-  validateOperation: function(name, args) {
+  validateOperation: function (name, args) {
     return (
       (name === 'metadata' && args.length === 0) ||
       (args.length === 1 && args[0] === true)
     );
   },
-  execute: function(pipeline, operations, options) {
+  execute: function (pipeline, operations, options) {
     options = options || {};
     const impro = pipeline.impro;
     const cache = pipeline.options.sharpCache || options.cache;
@@ -37,7 +37,7 @@ module.exports = {
       createAnimatedGifDetector
     ) {
       animatedGifDetector = createAnimatedGifDetector();
-      animatedGifDetector.on('animated', function() {
+      animatedGifDetector.on('animated', function () {
         isAnimated = true;
         this.emit('decided');
         animatedGifDetector = null;
@@ -68,12 +68,13 @@ module.exports = {
     };
     const alreadyKnownMetadata = {
       format: pipeline.targetType,
-      contentType: pipeline.targetContentType || mime.types[pipeline.targetType]
+      contentType:
+        pipeline.targetContentType || mime.types[pipeline.targetType],
     };
     if (pipeline._streams.length === 0) {
       _.extend(alreadyKnownMetadata, pipeline.sourceMetadata);
     }
-    duplexStream._read = size => {
+    duplexStream._read = (size) => {
       sharpInstance.metadata((err, metadata) => {
         if (err) {
           metadata = _.defaults({ error: err.message }, alreadyKnownMetadata);
@@ -129,7 +130,7 @@ module.exports = {
           metadata.animated = isAnimated;
           proceed();
         } else if (animatedGifDetector) {
-          animatedGifDetector.on('decided', isAnimated => {
+          animatedGifDetector.on('decided', (isAnimated) => {
             metadata.animated = isAnimated;
             proceed();
           });
@@ -144,5 +145,5 @@ module.exports = {
     pipeline._attach(duplexStream);
     pipeline.targetType = 'json';
     pipeline.targetContentType = 'application/json; charset=utf-8';
-  }
+  },
 };

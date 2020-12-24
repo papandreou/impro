@@ -7,15 +7,14 @@ module.exports = {
   inputTypes: ['png'],
   outputTypes: ['png'],
   operations: ['brute', 'noreduce', 'reduce', 'rem'],
-  validateOperation: function(name, args) {
+  validateOperation: function (name, args) {
     switch (name) {
       case 'brute':
       case 'noreduce':
       case 'reduce':
         return args.length === 0;
       case 'rem':
-        return args.length >= 1 &&
-        args.every(arg => /^[a-z]{4}$/i.test(arg));
+        return args.length >= 1 && args.every((arg) => /^[a-z]{4}$/i.test(arg));
     }
     // usage: pngcrush [options] infile.png outfile.png
     //        pngcrush -e ext [other options] file.png ...
@@ -75,11 +74,11 @@ module.exports = {
     //             -h (help and legal notices)
     //             -p (pause)
   },
-  execute: function(pipeline, operations, options) {
+  execute: function (pipeline, operations, options) {
     const commandLineArgs = [];
     operations.forEach(({ name, args }) => {
       if (name === 'rem') {
-        args.forEach(arg => {
+        args.forEach((arg) => {
           commandLineArgs.push('-rem', arg);
         });
       } else {
@@ -90,5 +89,5 @@ module.exports = {
     pipeline._attach(new PngCrush(commandLineArgs));
 
     return commandLineArgs;
-  }
+  },
 };

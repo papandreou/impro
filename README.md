@@ -125,7 +125,7 @@ const pipeline = impro.createPipeline({ type: 'png' }, [
   { name: 'grayscale', args: [] },
   { name: 'resize', args: [100, 100] },
   { name: 'jpeg', args: [] },
-  { name: 'progressive', args: [] }
+  { name: 'progressive', args: [] },
 ]);
 ```
 

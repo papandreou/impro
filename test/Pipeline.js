@@ -7,7 +7,7 @@ describe('Pipeline', () => {
 
   beforeEach(() => {
     fakeImpro = {
-      engineByName: {}
+      engineByName: {},
     };
   });
 
@@ -19,7 +19,7 @@ describe('Pipeline', () => {
 
     expect(pipeline.isDisabledByEngineName, 'to equal', {
       foo: true,
-      bar: false
+      bar: false,
     });
   });
 
@@ -28,7 +28,7 @@ describe('Pipeline', () => {
       () =>
         new Pipeline(fakeImpro, {
           supportedOptions: ['svgAssetPath'],
-          svgAssetPath: './'
+          svgAssetPath: './',
         }),
       'to throw',
       'Pipeline: svgAssetPath must be absolute'

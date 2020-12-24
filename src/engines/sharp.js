@@ -7,7 +7,7 @@ function isNumberWithin(num, min, max) {
 }
 
 function locatePreviousCommand(operations, nameToFind) {
-  return operations.findIndex(operation => operation.name === nameToFind);
+  return operations.findIndex((operation) => operation.name === nameToFind);
 }
 
 function patchPreviousCommandArgument(operation, argUpdates, indexInArg) {
@@ -15,7 +15,7 @@ function patchPreviousCommandArgument(operation, argUpdates, indexInArg) {
   operation.args = [...operation.args];
   operation.args[indexInArg] = {
     ...operation.args[indexInArg],
-    ...argUpdates
+    ...argUpdates,
   };
   return operation;
 }
@@ -23,15 +23,15 @@ function patchPreviousCommandArgument(operation, argUpdates, indexInArg) {
 const maxDimension = 16384;
 const optionsToOutputType = {
   progressive: true,
-  quality: true
+  quality: true,
 };
 const optionsToResize = {
   withoutEnlargement: () => ({ withoutEnlargement: true }),
-  ignoreAspectRatio: () => ({ fit: 'fill' })
+  ignoreAspectRatio: () => ({ fit: 'fill' }),
 };
 const variationsToResize = {
-  crop: args => ({ fit: 'cover', position: args[0] }),
-  embed: args => ({ fit: 'contain', position: args[0] })
+  crop: (args) => ({ fit: 'cover', position: args[0] }),
+  embed: (args) => ({ fit: 'contain', position: args[0] }),
 };
 
 module.exports = {
@@ -72,11 +72,11 @@ module.exports = {
     'trellisQuantization',
     'overshootDeringing',
     'optimizeScans',
-    'optimiseScans'
+    'optimiseScans',
   ],
   inputTypes: ['jpeg', 'png', 'webp', 'svg', 'tiff', '*'],
   outputTypes: ['jpeg', 'png', 'webp', 'tiff', 'dzi'],
-  validateOperation: function(name, args) {
+  validateOperation: function (name, args) {
     switch (name) {
       case 'crop':
       case 'embed':
@@ -153,7 +153,7 @@ module.exports = {
         return args.length === 1 && isNumberWithin(args[0], 0, 9);
     }
   },
-  execute: function(pipeline, operations, options) {
+  execute: function (pipeline, operations, options) {
     options = options ? { ...options } : {};
     const impro = pipeline.impro;
     const cache = pipeline.options.sharpCache || options.cache;
@@ -168,11 +168,11 @@ module.exports = {
     if (pipeline.targetType) {
       operationsForExecution.push({
         name: pipeline.targetType,
-        args: []
+        args: [],
       });
     }
 
-    operations.forEach(operation => {
+    operations.forEach((operation) => {
       let name = operation.name;
       let args = operation.args.slice(0);
 
@@ -270,8 +270,8 @@ module.exports = {
             left: args[0],
             top: args[1],
             width: args[2],
-            height: args[3]
-          }
+            height: args[3],
+          },
         ];
       }
 
@@ -294,5 +294,5 @@ module.exports = {
     pipeline._attach(sharpInstance);
 
     return operationsForExecution;
-  }
+  },
 };

@@ -6,7 +6,7 @@ module.exports = class Pipeline extends Stream.Duplex {
   constructor(impro, options) {
     super();
 
-    this._onError = err => this._fail(err);
+    this._onError = (err) => this._fail(err);
     this._queuedOperations = [];
     this._streams = [];
 
@@ -17,7 +17,7 @@ module.exports = class Pipeline extends Stream.Duplex {
 
     options = options || {};
     const { type, engines, supportedOptions, sourceMetadata } = options;
-    (supportedOptions || []).forEach(optionName => {
+    (supportedOptions || []).forEach((optionName) => {
       this.options[optionName] =
         typeof options[optionName] !== 'undefined'
           ? options[optionName]
@@ -25,7 +25,7 @@ module.exports = class Pipeline extends Stream.Duplex {
     });
 
     const engineOptions = engines || {};
-    Object.keys(this.impro.engineByName).forEach(engineName => {
+    Object.keys(this.impro.engineByName).forEach((engineName) => {
       let isDisabled;
       if (typeof engineOptions[engineName] !== 'boolean') {
         isDisabled = false;
@@ -62,17 +62,20 @@ module.exports = class Pipeline extends Stream.Duplex {
     let lastSelectedEngineName;
     let candidateEngineNames;
 
-    const _flush = upToIndex => {
+    const _flush = (upToIndex) => {
       if (startIndex >= upToIndex) {
         return;
       }
 
       try {
         if (this.targetType) {
-          candidateEngineNames = candidateEngineNames.filter(engineName => this.impro.engineByName[engineName].defaultOutputType ||
-          this.impro.isSupportedByEngineNameAndOutputType[engineName][
-            this.targetType
-          ]);
+          candidateEngineNames = candidateEngineNames.filter(
+            (engineName) =>
+              this.impro.engineByName[engineName].defaultOutputType ||
+              this.impro.isSupportedByEngineNameAndOutputType[engineName][
+                this.targetType
+              ]
+          );
         }
         if (candidateEngineNames.length === 0) {
           throw new Error(
@@ -95,13 +98,13 @@ module.exports = class Pipeline extends Stream.Duplex {
           operations,
           options
         );
-        operations.forEach(operation => (operation.engineName = engineName));
+        operations.forEach((operation) => (operation.engineName = engineName));
 
         this.usedEngines.push({
           name: engineName,
           operations,
           commandArgs:
-            commandArgs && engineName !== 'sharp' ? commandArgs : null
+            commandArgs && engineName !== 'sharp' ? commandArgs : null,
         });
 
         startIndex = upToIndex;
@@ -140,7 +143,7 @@ module.exports = class Pipeline extends Stream.Duplex {
         }
 
         const filteredCandidateEngineNames = candidateEngineNames.filter(
-          engineName =>
+          (engineName) =>
             this._isValidOperationForEngine(
               engineName,
               operation.name,
@@ -196,7 +199,7 @@ module.exports = class Pipeline extends Stream.Duplex {
 
     this._queuedOperations = undefined;
     this._streams.push(new Stream.PassThrough());
-    this._streams.forEach(function(stream, i) {
+    this._streams.forEach(function (stream, i) {
       if (i < this._streams.length - 1) {
         stream.pipe(this._streams[i + 1]);
       } else {
@@ -205,7 +208,7 @@ module.exports = class Pipeline extends Stream.Duplex {
           .on('end', () => this.push(null));
       }
       // protect against filters emitting errors more than once
-      stream.once('error', err => {
+      stream.once('error', (err) => {
         let commandArgs;
         if (
           i < this._streams.length - 1 &&
@@ -237,7 +240,7 @@ module.exports = class Pipeline extends Stream.Duplex {
     const impro = this.impro;
 
     return impro.engineNamesByOperationName[operationName].filter(
-      engineName => {
+      (engineName) => {
         const isSupportedByType =
           impro.isSupportedByEngineNameAndInputType[engineName];
         return (
@@ -269,7 +272,7 @@ module.exports = class Pipeline extends Stream.Duplex {
 
     this.ended = true;
 
-    this._streams.forEach(filter => {
+    this._streams.forEach((filter) => {
       if (filter.unpipe) {
         filter.unpipe();
       }

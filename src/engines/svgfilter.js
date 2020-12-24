@@ -6,11 +6,11 @@ module.exports = {
   unavailable: !SvgFilter,
   inputTypes: ['svg'],
   outputTypes: ['svg'],
-  validateOperation: function(name, args) {
+  validateOperation: function (name, args) {
     // FIXME: This allows arbitrary arguments. Tighten up and expose a finite set of operations.
     return name === 'svgfilter';
   },
-  execute: function(pipeline, operations, options) {
+  execute: function (pipeline, operations, options) {
     options = options ? { ...options } : {};
 
     if (pipeline.options.svgAssetPath) {
@@ -20,5 +20,5 @@ module.exports = {
     }
 
     pipeline._attach(new SvgFilter(options));
-  }
+  },
 };

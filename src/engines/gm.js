@@ -50,14 +50,14 @@ function createGmOperations(pipeline, operations) {
           args[1] = Math.floor(maxOutputPixels / args[0]);
         }
       }
-      operation.args = args.map(arg => arg || '');
+      operation.args = args.map((arg) => arg || '');
     } else if (operation.name === 'extract') {
       operation.name = 'crop';
       operation.args = [
         operation.args[2],
         operation.args[3],
         operation.args[0],
-        operation.args[1]
+        operation.args[1],
       ];
     } else if (operation.name === 'crop') {
       operation.name = 'gravity';
@@ -71,8 +71,8 @@ function createGmOperations(pipeline, operations) {
           east: 'East',
           southwest: 'SouthWest',
           south: 'South',
-          southeast: 'SouthEast'
-        }[String(operation.args[0]).toLowerCase()] || 'Center'
+          southeast: 'SouthEast',
+        }[String(operation.args[0]).toLowerCase()] || 'Center',
       ];
     }
     if (operation.name === 'progressive') {
@@ -96,7 +96,7 @@ function createGmOperations(pipeline, operations) {
   if (resize && crop) {
     gmOperations.push({
       name: 'extent',
-      args: [].concat(resize.args)
+      args: [].concat(resize.args),
     });
     resize.args[2] = '^';
   }
@@ -119,15 +119,18 @@ module.exports = {
         'extract',
         'progressive',
         'withoutEnlargement',
-        'ignoreAspectRatio'
+        'ignoreAspectRatio',
       ].concat(
-        Object.keys(gm.prototype).filter(propertyName => !/^_|^(?:name|emit|.*Listeners?|on|once|size|orientation|format|depth|color|res|filesize|identity|write|stream|type|setmoc)$/.test(
-          propertyName
-        ) && typeof gm.prototype[propertyName] === 'function')
+        Object.keys(gm.prototype).filter(
+          (propertyName) =>
+            !/^_|^(?:name|emit|.*Listeners?|on|once|size|orientation|format|depth|color|res|filesize|identity|write|stream|type|setmoc)$/.test(
+              propertyName
+            ) && typeof gm.prototype[propertyName] === 'function'
+        )
       ),
   inputTypes: ['gif', 'jpeg', 'png', 'ico', 'tga', 'tiff', '*'],
   outputTypes: ['gif', 'jpeg', 'png', 'tga', 'tiff', 'webp'],
-  validateOperation: function(name, args) {
+  validateOperation: function (name, args) {
     switch (name) {
       // Operations that emulate sharp's API:
       case 'withoutEnlargement':
@@ -168,7 +171,7 @@ module.exports = {
         return args.length === 1 && isNumberWithin(args[0], 1, 100);
     }
   },
-  execute: function(pipeline, operations) {
+  execute: function (pipeline, operations) {
     const gmOperations = createGmOperations(pipeline, operations);
 
     // For some reason the gm module doesn't expose itself as a readable/writable stream,
@@ -179,7 +182,7 @@ module.exports = {
     const readWriteStream = new Stream();
     readWriteStream.readable = readWriteStream.writable = true;
     let spawned = false;
-    readWriteStream.write = chunk => {
+    readWriteStream.write = (chunk) => {
       if (!spawned) {
         spawned = true;
         let seenData = false;
@@ -192,7 +195,7 @@ module.exports = {
           gmInstance.limit('pixels', pipeline.options.maxInputPixels);
         }
 
-        const handleError = err => {
+        const handleError = (err) => {
           hasEnded = true;
           err.commandArgs = gmInstance.args();
           readWriteStream.emit('error', err);
@@ -212,7 +215,7 @@ module.exports = {
             }
 
             stdout
-              .on('data', chunk => {
+              .on('data', (chunk) => {
                 seenData = true;
                 readWriteStream.emit('data', chunk);
               })
@@ -232,7 +235,7 @@ module.exports = {
       }
       readStream.emit('data', chunk);
     };
-    readWriteStream.end = chunk => {
+    readWriteStream.end = (chunk) => {
       if (chunk) {
         readWriteStream.write(chunk);
       }
@@ -241,5 +244,5 @@ module.exports = {
     pipeline._attach(readWriteStream);
 
     return gmOperations;
-  }
+  },
 };

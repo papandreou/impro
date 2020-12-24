@@ -23,7 +23,7 @@ const load = memoizeSync((fileName, platformsToOverride) => {
       pathModule.basename(fileName, ext),
       '-',
       process.platform,
-      ext
+      ext,
     ].join('');
   }
 
@@ -32,9 +32,10 @@ const load = memoizeSync((fileName, platformsToOverride) => {
   );
 });
 
-const loadAsStream = fileName => fs.createReadStream(
-  pathModule.resolve(__dirname, '..', 'testdata', fileName)
-);
+const loadAsStream = (fileName) =>
+  fs.createReadStream(
+    pathModule.resolve(__dirname, '..', 'testdata', fileName)
+  );
 
 expect.addAssertion(
   '<string> when piped through <Stream> <assertion?>',
@@ -44,20 +45,27 @@ expect.addAssertion(
   }
 );
 
-expect.addAssertion('<Buffer> to have mime type <string>', (expect, subject, value) => {
-  expect.errorMode = 'nested';
-  return expect(fileType(subject).mime, 'to equal', value);
-});
+expect.addAssertion(
+  '<Buffer> to have mime type <string>',
+  (expect, subject, value) => {
+    expect.errorMode = 'nested';
+    return expect(fileType(subject).mime, 'to equal', value);
+  }
+);
 
-expect.addAssertion('<Stream> to yield JSON output satisfying <any>', (expect, subject, value) => expect(
-  subject,
-  'to yield output satisfying when decoded as',
-  'utf-8',
-  'when passed as parameter to',
-  JSON.parse,
-  'to satisfy',
-  value
-));
+expect.addAssertion(
+  '<Stream> to yield JSON output satisfying <any>',
+  (expect, subject, value) =>
+    expect(
+      subject,
+      'to yield output satisfying when decoded as',
+      'utf-8',
+      'when passed as parameter to',
+      JSON.parse,
+      'to satisfy',
+      value
+    )
+);
 
 describe('impro', () => {
   it('should be an instance of impro.Impro', () => {
@@ -72,75 +80,68 @@ describe('impro', () => {
     expect(() => new impro.Impro('foo'), 'to throw', 'invalid options');
   });
 
-  it('should allow an image engine to be explicitly selected', () => expect(
-    'turtle.jpg',
-    'when piped through',
-    impro
-      .gm()
-      .resize(40, 15)
-      .crop('center'),
-    'to yield output satisfying to resemble',
-    load('turtleCroppedCenterGm.jpg', ['darwin'])
-  ));
+  it('should allow an image engine to be explicitly selected', () =>
+    expect(
+      'turtle.jpg',
+      'when piped through',
+      impro.gm().resize(40, 15).crop('center'),
+      'to yield output satisfying to resemble',
+      load('turtleCroppedCenterGm.jpg', ['darwin'])
+    ));
 
-  it('should maintain an array of engines that have been applied', () => expect(
-    impro
-      .sharp()
-      .resize(10, 10)
-      .gm()
-      .extract(10, 20, 30, 40)
-      .flush().usedEngines,
-    'to satisfy',
-    [
+  it('should maintain an array of engines that have been applied', () =>
+    expect(
+      impro.sharp().resize(10, 10).gm().extract(10, 20, 30, 40).flush()
+        .usedEngines,
+      'to satisfy',
+      [
+        {
+          name: 'sharp',
+          operations: [{ name: 'resize', args: [10, 10] }],
+        },
+        {
+          name: 'gm',
+          operations: [{ name: 'extract', args: [10, 20, 30, 40] }],
+        },
+      ]
+    ));
+
+  it('should allow a type conversion', () =>
+    expect(impro.png().flush().usedEngines, 'to satisfy', [
       {
         name: 'sharp',
-        operations: [{ name: 'resize', args: [10, 10] }]
+        operations: [{ name: 'png', args: [] }],
       },
-      {
-        name: 'gm',
-        operations: [{ name: 'extract', args: [10, 20, 30, 40] }]
-      }
-    ]
-  ));
+    ]));
 
-  it('should allow a type conversion', () => expect(impro.png().flush().usedEngines, 'to satisfy', [
-    {
-      name: 'sharp',
-      operations: [{ name: 'png', args: [] }]
-    }
-  ]));
+  it('should allow multiple type conversions', () =>
+    expect(
+      impro.type('gif').resize(10, 10).png().quality(88).flush().usedEngines,
+      'to satisfy',
+      [
+        {
+          name: 'gifsicle',
+          operations: [{ name: 'resize', args: [10, 10] }],
+        },
+        {
+          name: 'sharp',
+          operations: [
+            { name: 'png', args: [] },
+            { name: 'quality', args: [88], engineName: 'sharp' },
+          ],
+        },
+      ]
+    ));
 
-  it('should allow multiple type conversions', () => expect(
-    impro
-      .type('gif')
-      .resize(10, 10)
-      .png()
-      .quality(88)
-      .flush().usedEngines,
-    'to satisfy',
-    [
-      {
-        name: 'gifsicle',
-        operations: [{ name: 'resize', args: [10, 10] }]
-      },
-      {
-        name: 'sharp',
-        operations: [
-          { name: 'png', args: [] },
-          { name: 'quality', args: [88], engineName: 'sharp' }
-        ]
-      }
-    ]
-  ));
-
-  it('should not provide a targetContentType when no source content type is given and no explicit conversion has been performed', () => expect(impro.resize(40, 15).crop('center'), 'to satisfy', {
-    targetContentType: undefined
-  }));
+  it('should not provide a targetContentType when no source content type is given and no explicit conversion has been performed', () =>
+    expect(impro.resize(40, 15).crop('center'), 'to satisfy', {
+      targetContentType: undefined,
+    }));
 
   describe('when passed an object', () => {
     it('should interpret unsupported properties as source metadata', () => {
       expect(impro.source({ foo: 'bar' }).sourceMetadata, 'to equal', {
-        foo: 'bar'
+        foo: 'bar',
       });
     });
 
@@ -165,46 +166,50 @@ describe('impro', () => {
       expect(pipeline, 'to satisfy', {
         sourceType: 'gif',
         targetType: 'gif',
-        targetContentType: 'image/gif'
+        targetContentType: 'image/gif',
       });
     });
 
-    it('should process and execute instructions when passed an array of operation objects', () => expect(
-      'turtle.jpg',
-      'when piped through',
-      impro.createPipeline([
-        { name: 'resize', args: [40, 15] },
-        { name: 'crop', args: ['center'] }
-      ]),
-      'to yield output satisfying to resemble',
-      load('turtleCroppedCenter.jpg')
-    ));
+    it('should process and execute instructions when passed an array of operation objects', () =>
+      expect(
+        'turtle.jpg',
+        'when piped through',
+        impro.createPipeline([
+          { name: 'resize', args: [40, 15] },
+          { name: 'crop', args: ['center'] },
+        ]),
+        'to yield output satisfying to resemble',
+        load('turtleCroppedCenter.jpg')
+      ));
 
-    it('should throw if the operations definition is not supported', () => expect(
-      () => {
-        impro.createPipeline({}, {});
-      },
-      'to throw',
-      'Pipeline creation can only be supplied an operations array'
-    ));
+    it('should throw if the operations definition is not supported', () =>
+      expect(
+        () => {
+          impro.createPipeline({}, {});
+        },
+        'to throw',
+        'Pipeline creation can only be supplied an operations array'
+      ));
 
-    it('should throw when flushing unsupported operations', () => expect(
-      () => {
-        impro
-          .createPipeline(null, [{ name: 'nonexistent', args: [] }])
-          .flush();
-      },
-      'to throw',
-      'No supported engine can carry out this sequence of operations'
-    ));
+    it('should throw when flushing unsupported operations', () =>
+      expect(
+        () => {
+          impro
+            .createPipeline(null, [{ name: 'nonexistent', args: [] }])
+            .flush();
+        },
+        'to throw',
+        'No supported engine can carry out this sequence of operations'
+      ));
 
-    it('should throw early from the chaining interface on an unsupported operation', () => expect(
-      () => {
-        impro.createPipeline({}).crop();
-      },
-      'to throw',
-      'invalid operation or arguments: crop=[]'
-    ));
+    it('should throw early from the chaining interface on an unsupported operation', () =>
+      expect(
+        () => {
+          impro.createPipeline({}).crop();
+        },
+        'to throw',
+        'invalid operation or arguments: crop=[]'
+      ));
   });
 
   describe('#getEngine', () => {
@@ -270,173 +275,175 @@ describe('impro', () => {
   });
 
   describe('when adding the processing instructions via individual method calls', () => {
-    it('should return a duplex stream that executes the processing instructions', () => expect(
-      'turtle.jpg',
-      'when piped through',
-      impro.resize(40, 15).crop('center'),
-      'to yield output satisfying to resemble',
-      load('turtleCroppedCenter.jpg')
-    ));
+    it('should return a duplex stream that executes the processing instructions', () =>
+      expect(
+        'turtle.jpg',
+        'when piped through',
+        impro.resize(40, 15).crop('center'),
+        'to yield output satisfying to resemble',
+        load('turtleCroppedCenter.jpg')
+      ));
   });
 
   describe('when given a source content type', () => {
-    it('should default to output an image of the same type', () => expect(
-      impro
-        .type('image/jpeg')
-        .resize(40, 15)
-        .crop('center'),
-      'to satisfy',
-      {
-        targetContentType: 'image/jpeg'
-      }
-    ));
+    it('should default to output an image of the same type', () =>
+      expect(
+        impro.type('image/jpeg').resize(40, 15).crop('center'),
+        'to satisfy',
+        {
+          targetContentType: 'image/jpeg',
+        }
+      ));
 
-    it('should honor an explicit type conversion', () => expect(
-      impro
-        .type('image/jpeg')
-        .gif()
-        .flush(),
-      'to satisfy',
-      {
+    it('should honor an explicit type conversion', () =>
+      expect(impro.type('image/jpeg').gif().flush(), 'to satisfy', {
         targetType: 'gif',
-        targetContentType: 'image/gif'
-      }
-    ));
+        targetContentType: 'image/gif',
+      }));
   });
 
   describe('#metadata', () => {
-    it('should produce the metadata of an image as JSON', () => expect(
-      'turtle.jpg',
-      'when piped through',
-      impro.metadata(),
-      'to yield JSON output satisfying',
-      {
-        contentType: 'image/jpeg',
-        width: 481,
-        height: 424,
-        space: 'srgb',
-        channels: 3,
-        hasProfile: false,
-        hasAlpha: false
-      }
-    ));
+    it('should produce the metadata of an image as JSON', () =>
+      expect(
+        'turtle.jpg',
+        'when piped through',
+        impro.metadata(),
+        'to yield JSON output satisfying',
+        {
+          contentType: 'image/jpeg',
+          width: 481,
+          height: 424,
+          space: 'srgb',
+          channels: 3,
+          hasProfile: false,
+          hasAlpha: false,
+        }
+      ));
 
-    it('should include EXIF metadata in the output JSON', () => expect(
-      'exif.jpg',
-      'when piped through',
-      impro.metadata(),
-      'to yield JSON output satisfying',
-      {
-        image: expect.it('to exhaustively satisfy', {
-          Make: 'Apple',
-          Model: 'iPhone 6s',
-          Orientation: 6,
-          XResolution: 72,
-          YResolution: 72,
-          ResolutionUnit: 2,
-          Software: '11.2',
-          ModifyDate: expect.it('to be a string'),
-          YCbCrPositioning: 1,
-          ExifOffset: 192
-        }),
-        // included due to the source image being rotated
-        width: 4032,
-        height: 3024,
-        orientedWidth: 3024,
-        orientedHeight: 4032
-      }
-    ));
+    it('should include EXIF metadata in the output JSON', () =>
+      expect(
+        'exif.jpg',
+        'when piped through',
+        impro.metadata(),
+        'to yield JSON output satisfying',
+        {
+          image: expect.it('to exhaustively satisfy', {
+            Make: 'Apple',
+            Model: 'iPhone 6s',
+            Orientation: 6,
+            XResolution: 72,
+            YResolution: 72,
+            ResolutionUnit: 2,
+            Software: '11.2',
+            ModifyDate: expect.it('to be a string'),
+            YCbCrPositioning: 1,
+            ExifOffset: 192,
+          }),
+          // included due to the source image being rotated
+          width: 4032,
+          height: 3024,
+          orientedWidth: 3024,
+          orientedHeight: 4032,
+        }
+      ));
 
-    it('should include source metadata provided via the meta method', () => expect(
-      'turtle.jpg',
-      'when piped through',
-      impro.source({ filesize: 105836, etag: 'W/"foobar"' }).metadata(),
-      'to yield JSON output satisfying',
-      {
-        contentType: 'image/jpeg',
-        filesize: 105836,
-        etag: /^W\//
-      }
-    ));
+    it('should include source metadata provided via the meta method', () =>
+      expect(
+        'turtle.jpg',
+        'when piped through',
+        impro.source({ filesize: 105836, etag: 'W/"foobar"' }).metadata(),
+        'to yield JSON output satisfying',
+        {
+          contentType: 'image/jpeg',
+          filesize: 105836,
+          etag: /^W\//,
+        }
+      ));
 
-    it('should include source metadata provided via the meta method when supplied as a pipeline option', () => expect(
-      'turtle.jpg',
-      'when piped through',
-      impro
-        .createPipeline({
-          sourceMetadata: { filesize: 105836, etag: 'W/"foobar"' }
-        })
-        .metadata(),
-      'to yield JSON output satisfying',
-      {
-        contentType: 'image/jpeg',
-        filesize: 105836,
-        etag: 'W/"foobar"'
-      }
-    ));
+    it('should include source metadata provided via the meta method when supplied as a pipeline option', () =>
+      expect(
+        'turtle.jpg',
+        'when piped through',
+        impro
+          .createPipeline({
+            sourceMetadata: { filesize: 105836, etag: 'W/"foobar"' },
+          })
+          .metadata(),
+        'to yield JSON output satisfying',
+        {
+          contentType: 'image/jpeg',
+          filesize: 105836,
+          etag: 'W/"foobar"',
+        }
+      ));
 
-    it('should not include source metadata provided via the meta method when an operation has been performed', () => expect(
-      'turtle.jpg',
-      'when piped through',
-      impro
-        .source({ filesize: 105836, etag: 'W/"foobar"' })
-        .resize(10, 10)
-        .embed('center')
-        .metadata(),
-      'to yield JSON output satisfying',
-      {
-        contentType: 'image/jpeg',
-        filesize: undefined,
-        etag: undefined,
-        width: 10,
-        height: 10
-      }
-    ));
+    it('should not include source metadata provided via the meta method when an operation has been performed', () =>
+      expect(
+        'turtle.jpg',
+        'when piped through',
+        impro
+          .source({ filesize: 105836, etag: 'W/"foobar"' })
+          .resize(10, 10)
+          .embed('center')
+          .metadata(),
+        'to yield JSON output satisfying',
+        {
+          contentType: 'image/jpeg',
+          filesize: undefined,
+          etag: undefined,
+          width: 10,
+          height: 10,
+        }
+      ));
 
-    it('should allow retrieving the metadata for an image with a specified type', () => expect(
-      'exif.jpg',
-      'when piped through',
-      impro.type('image/jpeg').metadata(),
-      'to yield JSON output satisfying',
-      {
-        contentType: 'image/jpeg'
-      }
-    ));
+    it('should allow retrieving the metadata for an image with a specified type', () =>
+      expect(
+        'exif.jpg',
+        'when piped through',
+        impro.type('image/jpeg').metadata(),
+        'to yield JSON output satisfying',
+        {
+          contentType: 'image/jpeg',
+        }
+      ));
 
-    it('should allow retrieving the metadata of a non-image file with a non-image extension', () => expect(
-      'something.txt',
-      'when piped through',
-      impro.type('text/plain; charset=UTF-8').metadata(),
-      'to yield JSON output satisfying',
-      {
-        error: 'Input buffer contains unsupported image format',
-        contentType: 'text/plain; charset=UTF-8'
-      }
-    ));
+    it('should allow retrieving the metadata of a non-image file with a non-image extension', () =>
+      expect(
+        'something.txt',
+        'when piped through',
+        impro.type('text/plain; charset=UTF-8').metadata(),
+        'to yield JSON output satisfying',
+        {
+          error: 'Input buffer contains unsupported image format',
+          contentType: 'text/plain; charset=UTF-8',
+        }
+      ));
 
-    it('should set animated:true for an animated gif', () => expect(
-      'animated.gif',
-      'when piped through',
-      impro.metadata(),
-      'to yield JSON output satisfying',
-      {
-        animated: true
-      }
-    ));
+    it('should set animated:true for an animated gif', () =>
+      expect(
+        'animated.gif',
+        'when piped through',
+        impro.metadata(),
+        'to yield JSON output satisfying',
+        {
+          animated: true,
+        }
+      ));
 
-    it('should set animated:false for a non-animated gif', () => expect(
-      'bulb.gif',
-      'when piped through',
-      impro.metadata(),
-      'to yield JSON output satisfying',
-      {
-        animated: false
-      }
-    ));
+    it('should set animated:false for a non-animated gif', () =>
+      expect(
+        'bulb.gif',
+        'when piped through',
+        impro.metadata(),
+        'to yield JSON output satisfying',
+        {
+          animated: false,
+        }
+      ));
 
     it(
       'should allow passing a cache option',
-      sinon.test(function() {
+      sinon.test(function () {
         const cacheSpy = this.spy(require('sharp'), 'cache');
         const improInstance = new impro.Impro().use(impro.engines.metadata);
         return expect(
@@ -445,7 +452,7 @@ describe('impro', () => {
           improInstance.metadata({ cache: 123 }),
           'to yield JSON output satisfying',
           {
-            contentType: 'image/jpeg'
+            contentType: 'image/jpeg',
           }
         )
           .then(() => {
@@ -459,7 +466,7 @@ describe('impro', () => {
 
     it(
       'should allow passing a sharpCache option to the pipeline',
-      sinon.test(function() {
+      sinon.test(function () {
         const cacheSpy = this.spy(require('sharp'), 'cache');
         const improInstance = new impro.Impro().use(impro.engines.metadata);
         return expect(
@@ -468,7 +475,7 @@ describe('impro', () => {
           improInstance.createPipeline({ sharpCache: 456 }).metadata(),
           'to yield JSON output satisfying',
           {
-            contentType: 'image/jpeg'
+            contentType: 'image/jpeg',
           }
         )
           .then(() => {
@@ -484,7 +491,7 @@ describe('impro', () => {
   describe('with the sharp engine', () => {
     it(
       'should allow passing a cache option',
-      sinon.test(function() {
+      sinon.test(function () {
         const cacheSpy = this.spy(require('sharp'), 'cache');
         const improInstance = new impro.Impro().use(impro.engines.sharp);
         return expect(
@@ -493,7 +500,7 @@ describe('impro', () => {
           improInstance.sharp({ cache: 123 }).resize(10, 10),
           'to yield output satisfying to have metadata satisfying',
           {
-            format: 'JPEG'
+            format: 'JPEG',
           }
         )
           .then(() => {
@@ -507,7 +514,7 @@ describe('impro', () => {
 
     it(
       'should allow passing a sharpCache option to the pipeline',
-      sinon.test(function() {
+      sinon.test(function () {
         const cacheSpy = this.spy(require('sharp'), 'cache');
         const improInstance = new impro.Impro().use(impro.engines.sharp);
         return expect(
@@ -516,7 +523,7 @@ describe('impro', () => {
           improInstance.createPipeline({ sharpCache: 456 }).resize(10, 10),
           'to yield output satisfying to have metadata satisfying',
           {
-            format: 'JPEG'
+            format: 'JPEG',
           }
         )
           .then(() => {
@@ -530,7 +537,7 @@ describe('impro', () => {
 
     it(
       'should allow passing a sequentialRead option',
-      sinon.test(function() {
+      sinon.test(function () {
         const improInstance = new impro.Impro().use(impro.engines.sharp);
         const sharpSpy = this.spy(improInstance.getEngine('sharp'), 'library');
         const pipeline = improInstance
@@ -544,12 +551,12 @@ describe('impro', () => {
           pipeline,
           'to yield output satisfying to have metadata satisfying',
           {
-            format: 'JPEG'
+            format: 'JPEG',
           }
         )
           .then(() => {
             expect(sharpSpy, 'to have calls satisfying', [
-              [{ sequentialRead: true }]
+              [{ sequentialRead: true }],
             ]);
           })
           .finally(() => sharpSpy.restore());
@@ -558,7 +565,7 @@ describe('impro', () => {
 
     it(
       'should allow setting a input pixel limit',
-      sinon.test(function() {
+      sinon.test(function () {
         const improInstance = new impro.Impro().use(impro.engines.sharp);
         const sharpSpy = this.spy(improInstance.getEngine('sharp'), 'library');
         const pipeline = improInstance
@@ -575,7 +582,7 @@ describe('impro', () => {
         )
           .then(() => {
             expect(sharpSpy, 'to have calls satisfying', [
-              [{ limitInputPixels: 1000 }]
+              [{ limitInputPixels: 1000 }],
             ]);
           })
           .finally(() => sharpSpy.restore());
@@ -584,32 +591,26 @@ describe('impro', () => {
 
     it(
       'should only call sharp.cache once, even after processing multiple images',
-      sinon.test(function() {
+      sinon.test(function () {
         const cacheSpy = this.spy(require('sharp'), 'cache');
         const improInstance = new impro.Impro().use(impro.engines.sharp);
         return expect(
           'turtle.jpg',
           'when piped through',
-          improInstance
-            .sharp({ cache: 123 })
-            .type('jpeg')
-            .resize(10, 10),
+          improInstance.sharp({ cache: 123 }).type('jpeg').resize(10, 10),
           'to yield output satisfying to have metadata satisfying',
           {
-            format: 'JPEG'
+            format: 'JPEG',
           }
         )
           .then(() =>
             expect(
               'turtle.jpg',
               'when piped through',
-              impro
-                .sharp({ cache: 123 })
-                .type('jpeg')
-                .resize(10, 10),
+              impro.sharp({ cache: 123 }).type('jpeg').resize(10, 10),
               'to yield output satisfying to have metadata satisfying',
               {
-                format: 'JPEG'
+                format: 'JPEG',
               }
             )
           )
@@ -623,16 +624,13 @@ describe('impro', () => {
     it('should support blur with no argument', () => {
       const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
 
-      impro
-        .type('jpg')
-        .blur()
-        .flush();
+      impro.type('jpg').blur().flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         {
           name: 'blur',
-          args: []
-        }
+          args: [],
+        },
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -641,16 +639,13 @@ describe('impro', () => {
     it('should support blur with an argument', () => {
       const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
 
-      impro
-        .type('jpg')
-        .blur(0.5)
-        .flush();
+      impro.type('jpg').blur(0.5).flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         {
           name: 'blur',
-          args: [0.5]
-        }
+          args: [0.5],
+        },
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -659,66 +654,64 @@ describe('impro', () => {
     it('should support quality', () => {
       const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
 
-      const usedEngines = impro
-        .type('jpeg')
-        .quality(88)
-        .flush().usedEngines;
+      const usedEngines = impro.type('jpeg').quality(88).flush().usedEngines;
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         {
           name: 'jpeg',
-          args: [{ quality: 88 }]
-        }
+          args: [{ quality: 88 }],
+        },
       ])
-        .then(() => // check that the external representation is unchanged
-      expect(usedEngines, 'to satisfy', [
-        {
-          name: 'sharp',
-          operations: expect.it('to equal', [
+        .then(() =>
+          // check that the external representation is unchanged
+          expect(usedEngines, 'to satisfy', [
             {
-              name: 'quality',
-              args: [88],
-              engineName: 'sharp'
-            }
+              name: 'sharp',
+              operations: expect.it('to equal', [
+                {
+                  name: 'quality',
+                  args: [88],
+                  engineName: 'sharp',
+                },
+              ]),
+            },
           ])
-        }
-      ]))
+        )
         .finally(() => {
           executeSpy.restore();
         });
     });
 
-    it('should throw on quality without a target type', () => expect(
-      () => {
-        impro.quality(88).flush();
-      },
-      'to throw',
-      'sharp: quality() operation must follow output type selection'
-    ));
+    it('should throw on quality without a target type', () =>
+      expect(
+        () => {
+          impro.quality(88).flush();
+        },
+        'to throw',
+        'sharp: quality() operation must follow output type selection'
+      ));
 
-    it('should support progressive', () => expect(
-      'turtle.jpg',
-      'when piped through',
-      impro.type('jpeg').progressive(),
-      'to yield output satisfying to have metadata satisfying',
-      {
-        Interlace: 'Line'
-      }
-    ));
+    it('should support progressive', () =>
+      expect(
+        'turtle.jpg',
+        'when piped through',
+        impro.type('jpeg').progressive(),
+        'to yield output satisfying to have metadata satisfying',
+        {
+          Interlace: 'Line',
+        }
+      ));
 
     it('should support rotate', () => {
       const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
 
-      impro
-        .type('jpg')
-        .rotate(90)
-        .flush();
+      impro.type('jpg').rotate(90).flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         {
           name: 'rotate',
-          args: [90]
-        }
+          args: [90],
+        },
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -727,13 +720,10 @@ describe('impro', () => {
     it('should support resize (only width)', () => {
       const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
 
-      impro
-        .sharp()
-        .resize(10, null)
-        .flush();
+      impro.sharp().resize(10, null).flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
-        { name: 'resize', args: [10, null, { fit: 'inside' }] }
+        { name: 'resize', args: [10, null, { fit: 'inside' }] },
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -742,13 +732,10 @@ describe('impro', () => {
     it('should support resize (only height)', () => {
       const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
 
-      impro
-        .sharp()
-        .resize(null, 10)
-        .flush();
+      impro.sharp().resize(null, 10).flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
-        { name: 'resize', args: [null, 10, { fit: 'inside' }] }
+        { name: 'resize', args: [null, 10, { fit: 'inside' }] },
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -762,8 +749,8 @@ describe('impro', () => {
       return expect(executeSpy.returnValues[0], 'to equal', [
         {
           name: 'resize',
-          args: [null, null, { fit: 'cover', position: 'center' }]
-        }
+          args: [null, null, { fit: 'cover', position: 'center' }],
+        },
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -781,27 +768,29 @@ describe('impro', () => {
       return expect(executeSpy.returnValues[0], 'to equal', [
         {
           name: 'resize',
-          args: [10, 10, { fit: 'cover', position: 'northwest' }]
-        }
+          args: [10, 10, { fit: 'cover', position: 'northwest' }],
+        },
       ])
-        .then(() => // check that the external representation is unchanged
-      expect(usedEngines, 'to satisfy', [
-        {
-          name: 'sharp',
-          operations: expect.it('to equal', [
+        .then(() =>
+          // check that the external representation is unchanged
+          expect(usedEngines, 'to satisfy', [
             {
-              name: 'resize',
-              args: [10, 10],
-              engineName: 'sharp'
+              name: 'sharp',
+              operations: expect.it('to equal', [
+                {
+                  name: 'resize',
+                  args: [10, 10],
+                  engineName: 'sharp',
+                },
+                {
+                  name: 'crop',
+                  args: ['northwest'],
+                  engineName: 'sharp',
+                },
+              ]),
             },
-            {
-              name: 'crop',
-              args: ['northwest'],
-              engineName: 'sharp'
-            }
           ])
-        }
-      ]))
+        )
         .finally(() => {
           executeSpy.restore();
         });
@@ -815,8 +804,8 @@ describe('impro', () => {
       return expect(executeSpy.returnValues[0], 'to equal', [
         {
           name: 'resize',
-          args: [null, null, { fit: 'cover', position: 'attention' }]
-        }
+          args: [null, null, { fit: 'cover', position: 'attention' }],
+        },
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -830,8 +819,8 @@ describe('impro', () => {
       return expect(executeSpy.returnValues[0], 'to equal', [
         {
           name: 'resize',
-          args: [null, null, { fit: 'cover', position: 'entropy' }]
-        }
+          args: [null, null, { fit: 'cover', position: 'entropy' }],
+        },
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -845,8 +834,8 @@ describe('impro', () => {
       return expect(executeSpy.returnValues[0], 'to equal', [
         {
           name: 'resize',
-          args: [null, null, { fit: 'contain', position: 'north' }]
-        }
+          args: [null, null, { fit: 'contain', position: 'north' }],
+        },
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -864,79 +853,77 @@ describe('impro', () => {
       return expect(executeSpy.returnValues[0], 'to equal', [
         {
           name: 'resize',
-          args: [10, 10, { fit: 'contain', position: 'northwest' }]
-        }
+          args: [10, 10, { fit: 'contain', position: 'northwest' }],
+        },
       ])
-        .then(() => // check that the external representation is unchanged
-      expect(usedEngines, 'to satisfy', [
-        {
-          name: 'sharp',
-          operations: expect.it('to equal', [
+        .then(() =>
+          // check that the external representation is unchanged
+          expect(usedEngines, 'to satisfy', [
             {
-              name: 'resize',
-              args: [10, 10],
-              engineName: 'sharp'
+              name: 'sharp',
+              operations: expect.it('to equal', [
+                {
+                  name: 'resize',
+                  args: [10, 10],
+                  engineName: 'sharp',
+                },
+                {
+                  name: 'embed',
+                  args: ['northwest'],
+                  engineName: 'sharp',
+                },
+              ]),
             },
-            {
-              name: 'embed',
-              args: ['northwest'],
-              engineName: 'sharp'
-            }
           ])
-        }
-      ]))
+        )
         .finally(() => {
           executeSpy.restore();
         });
     });
 
-    it('should throw on withoutEnlargement without resize', () => expect(
-      () => {
-        impro.withoutEnlargement().flush();
-      },
-      'to throw',
-      'sharp: withoutEnlargement() operation must follow resize'
-    ));
+    it('should throw on withoutEnlargement without resize', () =>
+      expect(
+        () => {
+          impro.withoutEnlargement().flush();
+        },
+        'to throw',
+        'sharp: withoutEnlargement() operation must follow resize'
+      ));
 
     it('should support withoutEnlargement', () => {
       const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
 
-      impro
-        .resize(10, 10)
-        .withoutEnlargement()
-        .flush();
+      impro.resize(10, 10).withoutEnlargement().flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         {
           name: 'resize',
-          args: [10, 10, { fit: 'inside', withoutEnlargement: true }]
-        }
+          args: [10, 10, { fit: 'inside', withoutEnlargement: true }],
+        },
       ]).finally(() => {
         executeSpy.restore();
       });
     });
 
-    it('should throw on ignoreAspectRatio without resize', () => expect(
-      () => {
-        impro.ignoreAspectRatio().flush();
-      },
-      'to throw',
-      'sharp: ignoreAspectRatio() operation must follow resize'
-    ));
+    it('should throw on ignoreAspectRatio without resize', () =>
+      expect(
+        () => {
+          impro.ignoreAspectRatio().flush();
+        },
+        'to throw',
+        'sharp: ignoreAspectRatio() operation must follow resize'
+      ));
 
     it('should support ignoreAspectRatio', () => {
       const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
 
-      impro
-        .resize(10, 10)
-        .ignoreAspectRatio()
-        .flush();
+      impro.resize(10, 10).ignoreAspectRatio().flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         {
           name: 'resize',
-          args: [10, 10, { fit: 'fill' }]
-        }
+          args: [10, 10, { fit: 'fill' }],
+        },
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -953,7 +940,7 @@ describe('impro', () => {
           .flush();
 
         return expect(executeSpy.returnValues[0], 'to equal', [
-          { name: 'resize', args: [2000, 12, { fit: 'inside' }] }
+          { name: 'resize', args: [2000, 12, { fit: 'inside' }] },
         ]).finally(() => {
           executeSpy.restore();
         });
@@ -969,7 +956,7 @@ describe('impro', () => {
           .flush();
 
         return expect(executeSpy.returnValues[0], 'to equal', [
-          { name: 'resize', args: [12, 2000, { fit: 'inside' }] }
+          { name: 'resize', args: [12, 2000, { fit: 'inside' }] },
         ]).finally(() => {
           executeSpy.restore();
         });
@@ -978,26 +965,21 @@ describe('impro', () => {
   });
 
   describe('with the gifsicle engine', () => {
-    it('should prefer gifsicle for processing gifs', () => expect(
-      impro
-        .type('gif')
-        .resize(10, 10)
-        .flush().usedEngines,
-      'to satisfy',
-      [{ name: 'gifsicle' }]
-    ));
+    it('should prefer gifsicle for processing gifs', () =>
+      expect(
+        impro.type('gif').resize(10, 10).flush().usedEngines,
+        'to satisfy',
+        [{ name: 'gifsicle' }]
+      ));
 
     it('should support resize (only width)', () => {
       const executeSpy = sinon.spy(impro.engineByName.gifsicle, 'execute');
 
-      impro
-        .gifsicle()
-        .resize(10, null)
-        .flush();
+      impro.gifsicle().resize(10, null).flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         '--resize-width',
-        10
+        10,
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1006,14 +988,11 @@ describe('impro', () => {
     it('should support resize (only height)', () => {
       const executeSpy = sinon.spy(impro.engineByName.gifsicle, 'execute');
 
-      impro
-        .gifsicle()
-        .resize(null, 10)
-        .flush();
+      impro.gifsicle().resize(null, 10).flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         '--resize-height',
-        10
+        10,
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1022,48 +1001,39 @@ describe('impro', () => {
     it('should support resize followed by extract', () => {
       const executeSpy = sinon.spy(impro.engineByName.gifsicle, 'execute');
 
-      impro
-        .gifsicle()
-        .resize(380, 486)
-        .extract(150, 150, 100, 100)
-        .flush();
+      impro.gifsicle().resize(380, 486).extract(150, 150, 100, 100).flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         '--resize-fit',
         '380x486',
         ';',
         '--crop',
-        '150,150+100x100'
+        '150,150+100x100',
       ]).finally(() => {
         executeSpy.restore();
       });
     });
 
-    it('should output resize followed by extract', () => expect(
-      'cat.gif',
-      'when piped through',
-      impro
-        .gifsicle()
-        .resize(380, 486)
-        .extract(150, 150, 100, 100),
-      'to yield output satisfying',
-      expect
-        .it('to have metadata satisfying', {
-          size: { width: 100, height: 100 },
-          Scene: ['0 of 4', '1 of 4', '2 of 4', '3 of 4'] // Animated
-        })
-        .and('to resemble', load('cat-resized-then-cropped.gif'))
-    ));
+    it('should output resize followed by extract', () =>
+      expect(
+        'cat.gif',
+        'when piped through',
+        impro.gifsicle().resize(380, 486).extract(150, 150, 100, 100),
+        'to yield output satisfying',
+        expect
+          .it('to have metadata satisfying', {
+            size: { width: 100, height: 100 },
+            Scene: ['0 of 4', '1 of 4', '2 of 4', '3 of 4'], // Animated
+          })
+          .and('to resemble', load('cat-resized-then-cropped.gif'))
+      ));
 
-    it('should use gm for gifs when gifsicle is disabled', () => expect(
-      impro
-        .gifsicle(false)
-        .type('gif')
-        .resize(10, 10)
-        .flush().usedEngines,
-      'to satisfy',
-      [{ name: 'gm' }]
-    ));
+    it('should use gm for gifs when gifsicle is disabled', () =>
+      expect(
+        impro.gifsicle(false).type('gif').resize(10, 10).flush().usedEngines,
+        'to satisfy',
+        [{ name: 'gm' }]
+      ));
 
     describe('with a maxOutputPixels setting in place', () => {
       it('should support resize (only width)', () => {
@@ -1077,7 +1047,7 @@ describe('impro', () => {
 
         return expect(executeSpy.returnValues[0], 'to equal', [
           '--resize-fit',
-          '2000x12'
+          '2000x12',
         ]).finally(() => {
           executeSpy.restore();
         });
@@ -1094,7 +1064,7 @@ describe('impro', () => {
 
         return expect(executeSpy.returnValues[0], 'to equal', [
           '--resize-fit',
-          '12x2000'
+          '12x2000',
         ]).finally(() => {
           executeSpy.restore();
         });
@@ -1103,59 +1073,54 @@ describe('impro', () => {
   });
 
   describe('with the gm engine', () => {
-    it('should output as a tiff', () => expect(
-      'bulb.gif',
-      'when piped through',
-      impro.gm().tiff(),
-      'to yield output satisfying',
-      'to have mime type',
-      'image/tiff'
-    ));
+    it('should output as a tiff', () =>
+      expect(
+        'bulb.gif',
+        'when piped through',
+        impro.gm().tiff(),
+        'to yield output satisfying',
+        'to have mime type',
+        'image/tiff'
+      ));
 
-    it('should output as a tga', () => expect(
-      'turtle.jpg',
-      'when piped through',
-      impro.gm().tga(),
-      'to yield output satisfying',
-      expect.it('not to be empty')
-    ));
+    it('should output as a tga', () =>
+      expect(
+        'turtle.jpg',
+        'when piped through',
+        impro.gm().tga(),
+        'to yield output satisfying',
+        expect.it('not to be empty')
+      ));
 
-    it('should output an image/x-icon as a png', () => expect(
-      'favicon.ico',
-      'when piped through',
-      impro
-        .type('image/x-icon')
-        .gm()
-        .png(),
-      'to yield output satisfying',
-      expect.it('to have metadata satisfying', {
-        format: 'PNG'
-      })
-    ));
+    it('should output an image/x-icon as a png', () =>
+      expect(
+        'favicon.ico',
+        'when piped through',
+        impro.type('image/x-icon').gm().png(),
+        'to yield output satisfying',
+        expect.it('to have metadata satisfying', {
+          format: 'PNG',
+        })
+      ));
 
-    it('should output an image/vnd.microsoft.icon as a png', () => expect(
-      'favicon.ico',
-      'when piped through',
-      impro
-        .type('image/vnd.microsoft.icon')
-        .gm()
-        .png(),
-      'to yield output satisfying',
-      expect.it('to have metadata satisfying', {
-        format: 'PNG'
-      })
-    ));
+    it('should output an image/vnd.microsoft.icon as a png', () =>
+      expect(
+        'favicon.ico',
+        'when piped through',
+        impro.type('image/vnd.microsoft.icon').gm().png(),
+        'to yield output satisfying',
+        expect.it('to have metadata satisfying', {
+          format: 'PNG',
+        })
+      ));
 
     it('should support crop', () => {
       const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
 
-      impro
-        .gm()
-        .crop('center')
-        .flush();
+      impro.gm().crop('center').flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
-        { name: 'gravity', args: ['Center'] }
+        { name: 'gravity', args: ['Center'] },
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1164,13 +1129,10 @@ describe('impro', () => {
     it('should support progressive', () => {
       const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
 
-      impro
-        .gm()
-        .progressive()
-        .flush();
+      impro.gm().progressive().flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
-        { name: 'interlace', args: ['line'] }
+        { name: 'interlace', args: ['line'] },
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1179,13 +1141,10 @@ describe('impro', () => {
     it('should support resize', () => {
       const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
 
-      impro
-        .gm()
-        .resize(10, 10)
-        .flush();
+      impro.gm().resize(10, 10).flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
-        { name: 'resize', args: [10, 10] }
+        { name: 'resize', args: [10, 10] },
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1194,13 +1153,10 @@ describe('impro', () => {
     it('should support resize (only width)', () => {
       const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
 
-      impro
-        .gm()
-        .resize(10, null)
-        .flush();
+      impro.gm().resize(10, null).flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
-        { name: 'resize', args: [10, ''] }
+        { name: 'resize', args: [10, ''] },
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1209,13 +1165,10 @@ describe('impro', () => {
     it('should support resize (only height)', () => {
       const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
 
-      impro
-        .gm()
-        .resize(null, 10)
-        .flush();
+      impro.gm().resize(null, 10).flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
-        { name: 'resize', args: ['', 10] }
+        { name: 'resize', args: ['', 10] },
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1224,14 +1177,10 @@ describe('impro', () => {
     it('should support withoutEnlargement', () => {
       const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
 
-      impro
-        .gm()
-        .resize(10, 10)
-        .withoutEnlargement()
-        .flush();
+      impro.gm().resize(10, 10).withoutEnlargement().flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
-        { name: 'resize', args: [10, 10, '>'] }
+        { name: 'resize', args: [10, 10, '>'] },
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1240,14 +1189,10 @@ describe('impro', () => {
     it('should support ignoreAspectRatio', () => {
       const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
 
-      impro
-        .gm()
-        .resize(10, 10)
-        .ignoreAspectRatio()
-        .flush();
+      impro.gm().resize(10, 10).ignoreAspectRatio().flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
-        { name: 'resize', args: [10, 10, '!'] }
+        { name: 'resize', args: [10, 10, '!'] },
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1257,7 +1202,7 @@ describe('impro', () => {
       const gmEngine = impro.engineByName.gm;
       gmEngine.outputTypes.push('ico');
       const origExecute = gmEngine.execute;
-      gmEngine.execute = function(pipeline, operations) {
+      gmEngine.execute = function (pipeline, operations) {
         gmEngine.execute = origExecute;
 
         // override with an unsupported output type to trigger error path
@@ -1289,7 +1234,7 @@ describe('impro', () => {
           .flush();
 
         return expect(executeSpy.returnValues[0], 'to equal', [
-          { name: 'resize', args: [2000, 12] }
+          { name: 'resize', args: [2000, 12] },
         ]).finally(() => {
           executeSpy.restore();
         });
@@ -1305,7 +1250,7 @@ describe('impro', () => {
           .flush();
 
         return expect(executeSpy.returnValues[0], 'to equal', [
-          { name: 'resize', args: [12, 2000] }
+          { name: 'resize', args: [12, 2000] },
         ]).finally(() => {
           executeSpy.restore();
         });
@@ -1314,7 +1259,7 @@ describe('impro', () => {
   });
 
   describe('with the inkscape engine', () => {
-    before(function() {
+    before(function () {
       if (process.platform === 'darwin') {
         // On OS X the most commonly available Inkscape
         // is built against X11. In practice this means
@@ -1326,7 +1271,7 @@ describe('impro', () => {
 
         this.timeout(40000);
 
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
           childProcess
             .spawn('inkscape', ['--without-gui'])
             .on('exit', () => resolve());
@@ -1334,135 +1279,127 @@ describe('impro', () => {
       }
     });
 
-    it('should convert to png by default', () => expect(
-      'dialog-information.svg',
-      'when piped through',
-      impro.type('svg').inkscape(),
-      'to yield output satisfying to resemble',
-      load('dialog-information.png')
-    ));
+    it('should convert to png by default', () =>
+      expect(
+        'dialog-information.svg',
+        'when piped through',
+        impro.type('svg').inkscape(),
+        'to yield output satisfying to resemble',
+        load('dialog-information.png')
+      ));
 
-    it('should convert to png explicitly', () => expect(
-      'dialog-information.svg',
-      'when piped through',
-      impro
-        .type('svg')
-        .inkscape()
-        .png(),
-      'to yield output satisfying to resemble',
-      load('dialog-information.png')
-    ));
+    it('should convert to png explicitly', () =>
+      expect(
+        'dialog-information.svg',
+        'when piped through',
+        impro.type('svg').inkscape().png(),
+        'to yield output satisfying to resemble',
+        load('dialog-information.png')
+      ));
 
-    it('should convert to pdf', () => expect(
-      'dialog-information.svg',
-      'when piped through',
-      impro
-        .type('svg')
-        .inkscape()
-        .pdf(),
-      'to yield output satisfying',
-      'when decoded as',
-      'utf-8',
-      'to match',
-      /^%PDF-1\.5/
-    ));
+    it('should convert to pdf', () =>
+      expect(
+        'dialog-information.svg',
+        'when piped through',
+        impro.type('svg').inkscape().pdf(),
+        'to yield output satisfying',
+        'when decoded as',
+        'utf-8',
+        'to match',
+        /^%PDF-1\.5/
+      ));
 
-    it('should convert to eps', () => expect(
-      'dialog-information.svg',
-      'when piped through',
-      impro
-        .type('svg')
-        .inkscape()
-        .eps(),
-      'to yield output satisfying',
-      'when decoded as',
-      'utf-8',
-      'to match',
-      /^%!PS-Adobe-3.0/
-    ));
+    it('should convert to eps', () =>
+      expect(
+        'dialog-information.svg',
+        'when piped through',
+        impro.type('svg').inkscape().eps(),
+        'to yield output satisfying',
+        'when decoded as',
+        'utf-8',
+        'to match',
+        /^%!PS-Adobe-3.0/
+      ));
   });
 
   describe('with the svgfilter engine', () => {
-    it('should run the image through an SVG filter based on a script in an external file', () => expect(
-      'dialog-information.svg',
-      'when piped through',
-      impro.svgfilter({
-        url:
-          'file://' + pathModule.resolve(__dirname, '..', 'testdata') + '/',
-        runScript: 'addBogusElement.js',
-        bogusElementId: 'theBogusElementId'
-      }),
-      'to yield output satisfying when decoded as',
-      'utf-8',
-      'when parsed as XML queried for first',
-      'bogus',
-      'to satisfy',
-      { attributes: { id: 'theBogusElementId' } }
-    ));
+    it('should run the image through an SVG filter based on a script in an external file', () =>
+      expect(
+        'dialog-information.svg',
+        'when piped through',
+        impro.svgfilter({
+          url:
+            'file://' + pathModule.resolve(__dirname, '..', 'testdata') + '/',
+          runScript: 'addBogusElement.js',
+          bogusElementId: 'theBogusElementId',
+        }),
+        'to yield output satisfying when decoded as',
+        'utf-8',
+        'when parsed as XML queried for first',
+        'bogus',
+        'to satisfy',
+        { attributes: { id: 'theBogusElementId' } }
+      ));
 
-    it('should pass an svg assert url set on the pipeline into the engine', () => expect(
-      'dialog-information.svg',
-      'when piped through',
-      impro.createPipeline(
-        {
-          svgAssetPath: `${testDataPath}/`
-        },
-        [
+    it('should pass an svg assert url set on the pipeline into the engine', () =>
+      expect(
+        'dialog-information.svg',
+        'when piped through',
+        impro.createPipeline(
           {
-            name: 'svgfilter',
-            args: [
-              {
-                runScript: 'addBogusElement.js',
-                bogusElementId: 'theBogusElementId'
-              }
-            ]
-          }
-        ]
-      ),
-      'to yield output satisfying when decoded as',
-      'utf-8',
-      'when parsed as XML queried for first',
-      'bogus',
-      'to satisfy',
-      { attributes: { id: 'theBogusElementId' } }
-    ));
+            svgAssetPath: `${testDataPath}/`,
+          },
+          [
+            {
+              name: 'svgfilter',
+              args: [
+                {
+                  runScript: 'addBogusElement.js',
+                  bogusElementId: 'theBogusElementId',
+                },
+              ],
+            },
+          ]
+        ),
+        'to yield output satisfying when decoded as',
+        'utf-8',
+        'when parsed as XML queried for first',
+        'bogus',
+        'to satisfy',
+        { attributes: { id: 'theBogusElementId' } }
+      ));
   });
 
   describe('with the jpegtran engine', () => {
-    it('process the image according to the given options', () => expect(
-      'turtle.jpg',
-      'when piped through',
-      impro
-        .jpegtran()
-        .grayscale()
-        .flip('horizontal'),
-      'to yield output satisfying',
-      expect
-        .it('to have metadata satisfying', {
-          format: 'JPEG',
-          'Channel Depths': {
-            Gray: '8 bits'
-          },
-          size: {
-            width: 481,
-            height: 424
-          }
-        })
-        .and('to satisfy', buffer => {
-          expect(buffer.length, 'to be within', 1, 105836);
-        })
-    ));
+    it('process the image according to the given options', () =>
+      expect(
+        'turtle.jpg',
+        'when piped through',
+        impro.jpegtran().grayscale().flip('horizontal'),
+        'to yield output satisfying',
+        expect
+          .it('to have metadata satisfying', {
+            format: 'JPEG',
+            'Channel Depths': {
+              Gray: '8 bits',
+            },
+            size: {
+              width: 481,
+              height: 424,
+            },
+          })
+          .and('to satisfy', (buffer) => {
+            expect(buffer.length, 'to be within', 1, 105836);
+          })
+      ));
 
     it('should support arithmetic', () => {
       const executeSpy = sinon.spy(impro.engineByName.jpegtran, 'execute');
 
-      impro
-        .jpegtran()
-        .arithmetic()
-        .flush();
+      impro.jpegtran().arithmetic().flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
-        '-arithmetic'
+        '-arithmetic',
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1471,14 +1408,11 @@ describe('impro', () => {
     it('should support crop', () => {
       const executeSpy = sinon.spy(impro.engineByName.jpegtran, 'execute');
 
-      const pipeline = impro
-        .jpegtran()
-        .crop(10, 10, 10, 10)
-        .flush();
+      const pipeline = impro.jpegtran().crop(10, 10, 10, 10).flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         '-crop',
-        '10x10+10+10'
+        '10x10+10+10',
       ])
         .then(() => {
           // check that the external representation is unchanged
@@ -1489,11 +1423,11 @@ describe('impro', () => {
                 {
                   name: 'crop',
                   args: [10, 10, 10, 10],
-                  engineName: 'jpegtran'
-                }
+                  engineName: 'jpegtran',
+                },
               ],
-              commandArgs: ['-crop', '10x10+10+10']
-            }
+              commandArgs: ['-crop', '10x10+10+10'],
+            },
           ]);
         })
         .finally(() => {
@@ -1504,36 +1438,31 @@ describe('impro', () => {
     it('should support grayscale', () => {
       const executeSpy = sinon.spy(impro.engineByName.jpegtran, 'execute');
 
-      impro
-        .jpegtran()
-        .grayscale()
-        .flush();
+      impro.jpegtran().grayscale().flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
-        '-grayscale'
+        '-grayscale',
       ]).finally(() => {
         executeSpy.restore();
       });
     });
 
-    it('should reject grayscale with invalid argument', () => expect(
-      () => {
-        impro.jpegtran().grayscale({});
-      },
-      'to throw',
-      'invalid operation or arguments: grayscale=[{}]'
-    ));
+    it('should reject grayscale with invalid argument', () =>
+      expect(
+        () => {
+          impro.jpegtran().grayscale({});
+        },
+        'to throw',
+        'invalid operation or arguments: grayscale=[{}]'
+      ));
 
     it('should support perfect', () => {
       const executeSpy = sinon.spy(impro.engineByName.jpegtran, 'execute');
 
-      impro
-        .jpegtran()
-        .perfect()
-        .flush();
+      impro.jpegtran().perfect().flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
-        '-perfect'
+        '-perfect',
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1542,13 +1471,10 @@ describe('impro', () => {
     it('should support progressive', () => {
       const executeSpy = sinon.spy(impro.engineByName.jpegtran, 'execute');
 
-      impro
-        .jpegtran()
-        .progressive()
-        .flush();
+      impro.jpegtran().progressive().flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
-        '-progressive'
+        '-progressive',
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1557,13 +1483,10 @@ describe('impro', () => {
     it('should support transpose', () => {
       const executeSpy = sinon.spy(impro.engineByName.jpegtran, 'execute');
 
-      impro
-        .jpegtran()
-        .transpose()
-        .flush();
+      impro.jpegtran().transpose().flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
-        '-transpose'
+        '-transpose',
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1572,13 +1495,10 @@ describe('impro', () => {
     it('should support transverse', () => {
       const executeSpy = sinon.spy(impro.engineByName.jpegtran, 'execute');
 
-      impro
-        .jpegtran()
-        .transverse()
-        .flush();
+      impro.jpegtran().transverse().flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
-        '-transverse'
+        '-transverse',
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1586,135 +1506,125 @@ describe('impro', () => {
   });
 
   describe('with the optipng engine', () => {
-    it('should process the image', () => expect(
-      'testImage.png',
-      'when piped through',
-      impro.optipng().o(7),
-      'to yield output satisfying to have length',
-      149
-    ));
+    it('should process the image', () =>
+      expect(
+        'testImage.png',
+        'when piped through',
+        impro.optipng().o(7),
+        'to yield output satisfying to have length',
+        149
+      ));
 
-    it('should build the correct operation arguments', () => expect(
-      impro
-        .optipng()
-        .o(7)
-        .flush().usedEngines,
-      'to satisfy',
-      [
+    it('should build the correct operation arguments', () =>
+      expect(impro.optipng().o(7).flush().usedEngines, 'to satisfy', [
         {
           name: 'optipng',
           operations: [
             {
               name: 'o',
-              args: [7]
-            }
-          ]
-        }
-      ]
-    ));
+              args: [7],
+            },
+          ],
+        },
+      ]));
 
-    it('should apply the correct command line arguments', () => expect(
-      impro
-        .optipng()
-        .o(7)
-        .flush().usedEngines,
-      'to satisfy',
-      [{ name: 'optipng', commandArgs: ['-o', 7] }]
-    ));
+    it('should apply the correct command line arguments', () =>
+      expect(impro.optipng().o(7).flush().usedEngines, 'to satisfy', [
+        { name: 'optipng', commandArgs: ['-o', 7] },
+      ]));
 
-    it('should apply the tool in its default mode with no arguments', () => expect(impro.optipng().flush().usedEngines, 'to satisfy', [
-      { name: 'optipng', commandArgs: [] }
-    ]));
+    it('should apply the tool in its default mode with no arguments', () =>
+      expect(impro.optipng().flush().usedEngines, 'to satisfy', [
+        { name: 'optipng', commandArgs: [] },
+      ]));
   });
 
   describe('when manually managing the whether engines are enabled', () => {
-    it('should use gm for gifs when gifsicle is disabled', () => expect(
-      impro
-        .gifsicle(false)
-        .type('gif')
-        .resize(10, 10)
-        .flush().usedEngines,
-      'to satisfy',
-      [{ name: 'gm' }]
-    ));
+    it('should use gm for gifs when gifsicle is disabled', () =>
+      expect(
+        impro.gifsicle(false).type('gif').resize(10, 10).flush().usedEngines,
+        'to satisfy',
+        [{ name: 'gm' }]
+      ));
 
-    it('should allow only temporarily disabling gifsicle', () => expect(
-      impro
-        .gifsicle(false)
-        .type('gif')
-        .resize(10, 10)
-        .gifsicle(true)
-        .resize(20, 20)
-        .flush().usedEngines,
-      'to satisfy',
-      [
-        {
-          name: 'gm',
-          operations: [{ name: 'resize', args: [10, 10], engineName: 'gm' }]
-        },
-        {
-          name: 'gifsicle',
-          operations: [
-            {
-              name: 'resize',
-              args: [20, 20],
-              engineName: 'gifsicle'
-            }
-          ]
-        }
-      ]
-    ));
+    it('should allow only temporarily disabling gifsicle', () =>
+      expect(
+        impro
+          .gifsicle(false)
+          .type('gif')
+          .resize(10, 10)
+          .gifsicle(true)
+          .resize(20, 20)
+          .flush().usedEngines,
+        'to satisfy',
+        [
+          {
+            name: 'gm',
+            operations: [{ name: 'resize', args: [10, 10], engineName: 'gm' }],
+          },
+          {
+            name: 'gifsicle',
+            operations: [
+              {
+                name: 'resize',
+                args: [20, 20],
+                engineName: 'gifsicle',
+              },
+            ],
+          },
+        ]
+      ));
   });
 
   describe('with the pngquant engine', () => {
-    it('should process the image', () => expect(
-      'purplealpha24bit.png',
-      'when piped through',
-      impro.pngquant(),
-      'to yield output satisfying',
-      expect.it('to have metadata satisfying', {
-        format: 'PNG',
-        size: {
-          width: 100,
-          height: 100
-        }
-      })
-    ));
+    it('should process the image', () =>
+      expect(
+        'purplealpha24bit.png',
+        'when piped through',
+        impro.pngquant(),
+        'to yield output satisfying',
+        expect.it('to have metadata satisfying', {
+          format: 'PNG',
+          size: {
+            width: 100,
+            height: 100,
+          },
+        })
+      ));
 
-    it('should process the image according to the given options', () => expect(
-      'purplealpha24bit.png',
-      'when piped through',
-      impro.pngquant().ncolors(256),
-      'to yield output satisfying',
-      expect.it('to have metadata satisfying', {
-        format: 'PNG',
-        size: {
-          width: 100,
-          height: 100
-        }
-      })
-    ));
+    it('should process the image according to the given options', () =>
+      expect(
+        'purplealpha24bit.png',
+        'when piped through',
+        impro.pngquant().ncolors(256),
+        'to yield output satisfying',
+        expect.it('to have metadata satisfying', {
+          format: 'PNG',
+          size: {
+            width: 100,
+            height: 100,
+          },
+        })
+      ));
 
-    it('should reject with invalid argument', () => expect(
-      () => {
-        impro.jpegtran().ncolors(1);
-      },
-      'to throw',
-      'invalid operation or arguments: ncolors=[1]'
-    ));
+    it('should reject with invalid argument', () =>
+      expect(
+        () => {
+          impro.jpegtran().ncolors(1);
+        },
+        'to throw',
+        'invalid operation or arguments: ncolors=[1]'
+      ));
 
     it('should support floyd', () => {
       const executeSpy = sinon.spy(impro.engineByName.pngquant, 'execute');
 
-      impro
-        .pngquant()
-        .floyd(0.3)
-        .flush();
+      impro.pngquant().floyd(0.3).flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         '--floyd',
         0.3,
-        '-'
+        '-',
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1723,10 +1633,7 @@ describe('impro', () => {
     it('should support ncolors', () => {
       const executeSpy = sinon.spy(impro.engineByName.pngquant, 'execute');
 
-      impro
-        .pngquant()
-        .ncolors(2)
-        .flush();
+      impro.pngquant().ncolors(2).flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [2, '-']).finally(
         () => {
@@ -1738,15 +1645,12 @@ describe('impro', () => {
     it('should support posterize', () => {
       const executeSpy = sinon.spy(impro.engineByName.pngquant, 'execute');
 
-      impro
-        .pngquant()
-        .posterize(0)
-        .flush();
+      impro.pngquant().posterize(0).flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         '--posterize',
         0,
-        '-'
+        '-',
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1755,15 +1659,12 @@ describe('impro', () => {
     it('should support quality', () => {
       const executeSpy = sinon.spy(impro.engineByName.pngquant, 'execute');
 
-      impro
-        .pngquant()
-        .quality('10-90')
-        .flush();
+      impro.pngquant().quality('10-90').flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         '--quality',
         '10-90',
-        '-'
+        '-',
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1772,15 +1673,12 @@ describe('impro', () => {
     it('should support speed', () => {
       const executeSpy = sinon.spy(impro.engineByName.pngquant, 'execute');
 
-      impro
-        .pngquant()
-        .speed(1)
-        .flush();
+      impro.pngquant().speed(1).flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         '--speed',
         1,
-        '-'
+        '-',
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1789,17 +1687,13 @@ describe('impro', () => {
     it('should support multiple operations', () => {
       const executeSpy = sinon.spy(impro.engineByName.pngquant, 'execute');
 
-      impro
-        .pngquant()
-        .speed(1)
-        .ncolors(256)
-        .flush();
+      impro.pngquant().speed(1).ncolors(256).flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         '--speed',
         1,
         256,
-        '-'
+        '-',
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1819,32 +1713,30 @@ describe('impro', () => {
   });
 
   describe('with the pngcrush engine', () => {
-    it('process the image according to the given options', () => expect(
-      'purplealpha24bit.png',
-      'when piped through',
-      impro.pngcrush().rem('gAMA'),
-      'to yield output satisfying',
-      expect
-        .it('when decoded as', 'ascii', 'not to match', /gAMA/)
-        .and('to satisfy', {
-          length: expect.it('to be greater than', 0)
-        })
-        .and('to have metadata satisfying', {
-          format: 'PNG',
-          size: {
-            width: 100,
-            height: 100
-          }
-        })
-    ));
+    it('process the image according to the given options', () =>
+      expect(
+        'purplealpha24bit.png',
+        'when piped through',
+        impro.pngcrush().rem('gAMA'),
+        'to yield output satisfying',
+        expect
+          .it('when decoded as', 'ascii', 'not to match', /gAMA/)
+          .and('to satisfy', {
+            length: expect.it('to be greater than', 0),
+          })
+          .and('to have metadata satisfying', {
+            format: 'PNG',
+            size: {
+              width: 100,
+              height: 100,
+            },
+          })
+      ));
 
     it('should support brute', () => {
       const executeSpy = sinon.spy(impro.engineByName.pngcrush, 'execute');
 
-      impro
-        .pngcrush()
-        .brute()
-        .flush();
+      impro.pngcrush().brute().flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', ['-brute']).finally(
         () => {
@@ -1856,13 +1748,10 @@ describe('impro', () => {
     it('should support reduce', () => {
       const executeSpy = sinon.spy(impro.engineByName.pngcrush, 'execute');
 
-      impro
-        .pngcrush()
-        .reduce()
-        .flush();
+      impro.pngcrush().reduce().flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
-        '-reduce'
+        '-reduce',
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1871,13 +1760,10 @@ describe('impro', () => {
     it('should support noreduce', () => {
       const executeSpy = sinon.spy(impro.engineByName.pngcrush, 'execute');
 
-      impro
-        .pngcrush()
-        .noreduce()
-        .flush();
+      impro.pngcrush().noreduce().flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
-        '-noreduce'
+        '-noreduce',
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1886,14 +1772,11 @@ describe('impro', () => {
     it('should support rem', () => {
       const executeSpy = sinon.spy(impro.engineByName.pngcrush, 'execute');
 
-      impro
-        .pngcrush()
-        .rem('allb')
-        .flush();
+      impro.pngcrush().rem('allb').flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         '-rem',
-        'allb'
+        'allb',
       ]).finally(() => {
         executeSpy.restore();
       });
@@ -1941,7 +1824,7 @@ describe('impro', () => {
       const gmEngine = impro.engineByName.gm;
       gmEngine.outputTypes.push('ico');
       const origExecute = gmEngine.execute;
-      gmEngine.execute = function(pipeline, operations) {
+      gmEngine.execute = function (pipeline, operations) {
         gmEngine.execute = origExecute;
 
         // override with an unsupported output type to trigger error path
@@ -1956,7 +1839,7 @@ describe('impro', () => {
         impro.gm().png(),
         'to error with',
         expect.it('to satisfy', {
-          commandLine: 'gm convert - ico:-'
+          commandLine: 'gm convert - ico:-',
         })
       ).finally(() => {
         gmEngine.execute = origExecute;
@@ -1965,10 +1848,7 @@ describe('impro', () => {
     });
 
     it('should error and include the command line for relevant engines (jpegtran)', () => {
-      const pipeline = impro
-        .jpegtran()
-        .grayscale()
-        .flush(); // force construstion of the child streams
+      const pipeline = impro.jpegtran().grayscale().flush(); // force construstion of the child streams
       const jpegtranStream = pipeline._streams[0];
       const error = new Error('Fake error');
       setImmediate(() => {
@@ -1979,7 +1859,7 @@ describe('impro', () => {
         pipeline,
         'to error with',
         expect.it('to satisfy', {
-          commandLine: 'jpegtran -grayscale'
+          commandLine: 'jpegtran -grayscale',
         })
       );
     });
@@ -2032,11 +1912,7 @@ describe('impro', () => {
     it('should refuse to resize an image to exceed the max number of pixels (sharp)', () => {
       expect(
         () => {
-          impro
-            .maxOutputPixels(2)
-            .type('jpeg')
-            .resize(100, 100)
-            .flush();
+          impro.maxOutputPixels(2).type('jpeg').resize(100, 100).flush();
         },
         'to throw',
         'resize: Target dimensions of 100x100 exceed maxOutputPixels (2)'
@@ -2046,11 +1922,7 @@ describe('impro', () => {
     it('should refuse to resize an image to exceed the max number of pixels (gm)', () => {
       expect(
         () => {
-          impro
-            .maxOutputPixels(2)
-            .gm()
-            .resize(100, 100)
-            .flush();
+          impro.maxOutputPixels(2).gm().resize(100, 100).flush();
         },
         'to throw',
         'resize: Target dimensions of 100x100 exceed maxOutputPixels (2)'
@@ -2060,11 +1932,7 @@ describe('impro', () => {
     it('should refuse to resize an image to exceed the max number of pixels (gifsicle)', () => {
       expect(
         () => {
-          impro
-            .maxOutputPixels(2)
-            .gifsicle()
-            .resize(100, 100)
-            .flush();
+          impro.maxOutputPixels(2).gifsicle().resize(100, 100).flush();
         },
         'to throw',
         'resize: Target dimensions of 100x100 exceed maxOutputPixels (2)'

@@ -27,9 +27,9 @@ module.exports = {
     'trim',
     'arithmetic',
     'restart',
-    'maxmemory'
+    'maxmemory',
   ],
-  validateOperation: function(name, args) {
+  validateOperation: function (name, args) {
     switch (name) {
       case 'arithmetic':
       case 'grayscale':
@@ -73,7 +73,7 @@ module.exports = {
         );
     }
   },
-  execute: function(pipeline, operations, options) {
+  execute: function (pipeline, operations, options) {
     const commandLineArgs = [];
     operations.forEach(({ name, args }) => {
       if (name === 'extract') {
@@ -94,5 +94,5 @@ module.exports = {
     pipeline._attach(new JpegTran(commandLineArgs));
 
     return commandLineArgs;
-  }
+  },
 };

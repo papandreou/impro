@@ -15,7 +15,7 @@ function parseImproQueryString(queryString, improInstance, allowOperation) {
       const operationName = decodeURIComponent(matchKeyValuePair[1]);
       // Split by non-URL encoded comma or plus:
       let operationArgs = matchKeyValuePair[2]
-        ? matchKeyValuePair[2].split(/[+,]/).map(arg => {
+        ? matchKeyValuePair[2].split(/[+,]/).map((arg) => {
             arg = decodeURIComponent(arg);
             if (/^\d+$/.test(arg)) {
               return parseInt(arg, 10);
@@ -35,7 +35,7 @@ function parseImproQueryString(queryString, improInstance, allowOperation) {
         // for the engine itself we must put them in an object which
         // we can then pass as that only supported argument
         const engineOptions = {};
-        operationArgs.forEach(arg => {
+        operationArgs.forEach((arg) => {
           if (typeof arg !== 'string' || arg.indexOf('=') === -1) return;
           const [optionKey, optionValue] = arg.split('=');
           if (improInstance.restrictedOptions.includes(optionKey)) return;
@@ -51,7 +51,7 @@ function parseImproQueryString(queryString, improInstance, allowOperation) {
 
       // empty resize args must be passed to engines as null
       if (operationName === 'resize') {
-        operationArgs = operationArgs.map(arg => arg || null);
+        operationArgs = operationArgs.map((arg) => arg || null);
       }
 
       if (
@@ -63,7 +63,7 @@ function parseImproQueryString(queryString, improInstance, allowOperation) {
       } else {
         operations.push({
           name: operationName,
-          args: operationArgs
+          args: operationArgs,
         });
         consumedQueryStringFragments.push(keyValuePair);
       }
@@ -73,13 +73,13 @@ function parseImproQueryString(queryString, improInstance, allowOperation) {
   return {
     operations: operations,
     leftover: leftOverQueryStringFragments.join('&'),
-    consumed: consumedQueryStringFragments.join('&')
+    consumed: consumedQueryStringFragments.join('&'),
   };
 }
 
 const resizeOptions = {
   ignoreAspectRatio: true,
-  withoutEnlargement: true
+  withoutEnlargement: true,
 };
 
 function makeEngineAndArgsRegex(engineNames) {

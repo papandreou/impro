@@ -7,7 +7,7 @@ module.exports = {
   inputTypes: ['png'],
   outputTypes: ['png'],
   operations: ['o'],
-  validateOperation: function(name, args) {
+  validateOperation: function (name, args) {
     switch (name) {
       case 'o':
         return (
@@ -18,7 +18,7 @@ module.exports = {
         );
     }
   },
-  execute: function(pipeline, operations, options) {
+  execute: function (pipeline, operations, options) {
     const commandLineArgs = [];
 
     operations.forEach(({ name, args }) => {
@@ -27,5 +27,5 @@ module.exports = {
     pipeline._attach(new OptiPng(commandLineArgs));
 
     return commandLineArgs;
-  }
+  },
 };

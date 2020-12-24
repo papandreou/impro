@@ -3,7 +3,7 @@ const mime = require('mime');
 const Pipeline = require('./Pipeline');
 
 mime.define({
-  'image/vnd.microsoft.icon': ['ico']
+  'image/vnd.microsoft.icon': ['ico'],
 });
 
 module.exports = class Impro {
@@ -27,7 +27,7 @@ module.exports = class Impro {
       'maxInputPixels',
       'maxOutputPixels',
       'sharpCache',
-      'svgAssetPath'
+      'svgAssetPath',
     ];
 
     this.restrictedOptions = ['svgAssetPath'];
@@ -44,8 +44,8 @@ module.exports = class Impro {
       'type',
       'source',
       'maxInputPixels',
-      'maxOutputPixels'
-    ].forEach(propertyName => this.registerMethod(propertyName));
+      'maxOutputPixels',
+    ].forEach((propertyName) => this.registerMethod(propertyName));
   }
 
   createPipeline(options, operations) {
@@ -57,7 +57,7 @@ module.exports = class Impro {
     const pipeline = new this._Pipeline(this, {
       ...options,
       engines: _.pick(options, Object.keys(this.engineByName)), // Allow disabling via createPipeline({<engineName>: false})
-      supportedOptions: this.supportedOptions
+      supportedOptions: this.supportedOptions,
     });
 
     if (operations) {
@@ -67,7 +67,7 @@ module.exports = class Impro {
         );
       }
 
-      operations.forEach(operation => pipeline.add(operation));
+      operations.forEach((operation) => pipeline.add(operation));
     }
 
     return pipeline;
@@ -76,7 +76,7 @@ module.exports = class Impro {
   registerMethod(operationName) {
     if (!this._Pipeline.prototype[operationName]) {
       const _impro = this;
-      this._Pipeline.prototype[operationName] = function(...args) {
+      this._Pipeline.prototype[operationName] = function (...args) {
         if (
           !(
             _impro.engineByName[operationName] ||
@@ -115,20 +115,20 @@ module.exports = class Impro {
     this.engineByName[options.name] = options;
     this.registerMethod(engineName);
 
-    [engineName].concat(options.operations || []).forEach(operationName => {
+    [engineName].concat(options.operations || []).forEach((operationName) => {
       (this.engineNamesByOperationName[operationName] =
         this.engineNamesByOperationName[operationName] || []).push(engineName);
       this.registerMethod(operationName);
     });
 
     this.isSupportedByEngineNameAndInputType[engineName] = {};
-    (options.inputTypes || []).forEach(type => {
+    (options.inputTypes || []).forEach((type) => {
       this.isTypeByName[type] = true;
       this.isSupportedByEngineNameAndInputType[engineName][type] = true;
     });
 
     this.isSupportedByEngineNameAndOutputType[engineName] = {};
-    (options.outputTypes || []).forEach(type => {
+    (options.outputTypes || []).forEach((type) => {
       this.registerMethod(type);
       this.isTypeByName[type] = true;
       (this.engineNamesByOperationName[type] =
@@ -154,13 +154,15 @@ module.exports = class Impro {
 
   isValidOperation(name, args) {
     const engineNames = this.engineNamesByOperationName[name];
-    return engineNames &&
-    engineNames.some(function(engineName) {
-      const isValid = this.engineByName[engineName].validateOperation(
-        name,
-        args
-      );
-      return isValid || (typeof isValid === 'undefined' && args.length === 0);
-    }, this);
+    return (
+      engineNames &&
+      engineNames.some(function (engineName) {
+        const isValid = this.engineByName[engineName].validateOperation(
+          name,
+          args
+        );
+        return isValid || (typeof isValid === 'undefined' && args.length === 0);
+      }, this)
+    );
   }
 };

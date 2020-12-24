@@ -7,10 +7,10 @@ module.exports = {
   inputTypes: ['svg'],
   defaultOutputType: 'png',
   outputTypes: ['pdf', 'eps', 'png'],
-  validateOperation: function(name, args) {
+  validateOperation: function (name, args) {
     return args.length === 0;
   },
-  execute: function(pipeline, operations, options) {
+  execute: function (pipeline, operations, options) {
     const outputFormat =
       operations.length > 0 ? operations[operations.length - 1].name : 'png';
     const commandLineArgs =
@@ -21,5 +21,5 @@ module.exports = {
     }
     commandLineArgs.push(`--export-type=${outputFormat}`);
     pipeline._attach(new Inkscape(commandLineArgs));
-  }
+  },
 };

@@ -12,7 +12,7 @@ describe('queryString', () => {
         {
           operations: [{ name: 'resize', args: [120, 120] }],
           leftover: 'foo=bar',
-          consumed: 'resize=120,120'
+          consumed: 'resize=120,120',
         }
       );
     });
@@ -31,14 +31,14 @@ describe('queryString', () => {
               args: [
                 {
                   runScript: 'addBogusElement.js',
-                  bogusElementId: 'theBogusElementId'
-                }
-              ]
-            }
+                  bogusElementId: 'theBogusElementId',
+                },
+              ],
+            },
           ],
           leftover: '',
           consumed:
-            'svgfilter=runScript=addBogusElement.js+bogusElementId=theBogusElementId'
+            'svgfilter=runScript=addBogusElement.js+bogusElementId=theBogusElementId',
         }
       );
     });
@@ -54,11 +54,11 @@ describe('queryString', () => {
           operations: [
             {
               name: 'svgfilter',
-              args: []
-            }
+              args: [],
+            },
           ],
           leftover: '',
-          consumed: 'svgfilter=svgAssetPath=anything'
+          consumed: 'svgfilter=svgAssetPath=anything',
         }
       );
     });
@@ -71,11 +71,11 @@ describe('queryString', () => {
           operations: [
             {
               name: 'pngcrush',
-              args: []
-            }
+              args: [],
+            },
           ],
           leftover: '',
-          consumed: 'pngcrush=8'
+          consumed: 'pngcrush=8',
         }
       );
     });
@@ -85,11 +85,11 @@ describe('queryString', () => {
         operations: [
           {
             name: 'metadata',
-            args: []
-          }
+            args: [],
+          },
         ],
         leftover: '',
-        consumed: 'metadata'
+        consumed: 'metadata',
       });
     });
 
@@ -101,11 +101,11 @@ describe('queryString', () => {
           operations: [
             {
               name: 'resize',
-              args: [10, null]
-            }
+              args: [10, null],
+            },
           ],
           leftover: '',
-          consumed: 'resize=10,'
+          consumed: 'resize=10,',
         }
       );
     });
@@ -118,11 +118,11 @@ describe('queryString', () => {
           operations: [
             {
               name: 'resize',
-              args: [null, 10]
-            }
+              args: [null, 10],
+            },
           ],
           leftover: '',
-          consumed: 'resize=,10'
+          consumed: 'resize=,10',
         }
       );
     });
@@ -136,7 +136,7 @@ describe('queryString', () => {
         {
           operations: [],
           leftover: 'metadata',
-          consumed: ''
+          consumed: '',
         }
       ).finally(() => {
         delete impro.allowOperation;
@@ -150,7 +150,7 @@ describe('queryString', () => {
         {
           operations: [],
           leftover: 'png',
-          consumed: ''
+          consumed: '',
         }
       );
     });
@@ -275,7 +275,7 @@ describe('queryString', () => {
         {
           operations: [{ name: 'png', args: [] }],
           leftover: '',
-          consumed: 'png'
+          consumed: 'png',
         }
       );
     });
