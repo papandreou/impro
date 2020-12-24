@@ -49,7 +49,7 @@
     "optipng": "2.1.0",
     "pngcrush": "2.0.1",
     "pngquant": "3.0.0",
-    "prettier": "~1.19.0",
+    "prettier": "~2.2.1",
     "sharp": "~0.27.0",
     "sinon": "1.17.7",
     "svgfilter": "3.0.0",
