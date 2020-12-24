@@ -58,33 +58,29 @@ module.exports = class Pipeline extends Stream.Duplex {
 
     this._flushed = true;
     this.usedEngines = this.usedEngines || [];
-    var startIndex = 0;
-    var lastSelectedEngineName;
-    var candidateEngineNames;
+    let startIndex = 0;
+    let lastSelectedEngineName;
+    let candidateEngineNames;
 
-    var _flush = upToIndex => {
+    const _flush = upToIndex => {
       if (startIndex >= upToIndex) {
         return;
       }
 
       try {
         if (this.targetType) {
-          candidateEngineNames = candidateEngineNames.filter(engineName => {
-            return (
-              this.impro.engineByName[engineName].defaultOutputType ||
-              this.impro.isSupportedByEngineNameAndOutputType[engineName][
-                this.targetType
-              ]
-            );
-          });
+          candidateEngineNames = candidateEngineNames.filter(engineName => this.impro.engineByName[engineName].defaultOutputType ||
+          this.impro.isSupportedByEngineNameAndOutputType[engineName][
+            this.targetType
+          ]);
         }
         if (candidateEngineNames.length === 0) {
           throw new Error(
             'No supported engine can carry out this sequence of operations'
           );
         }
-        var engineName = candidateEngineNames[0];
-        var options;
+        const engineName = candidateEngineNames[0];
+        let options;
         if (this._queuedOperations[startIndex].name === engineName) {
           if (this._queuedOperations[startIndex].args.length > 1) {
             throw new Error('Engines take a max of one argument');
@@ -93,8 +89,8 @@ module.exports = class Pipeline extends Stream.Duplex {
           startIndex += 1;
         }
 
-        var operations = this._queuedOperations.slice(startIndex, upToIndex);
-        var commandArgs = this.impro.engineByName[engineName].execute(
+        const operations = this._queuedOperations.slice(startIndex, upToIndex);
+        const commandArgs = this.impro.engineByName[engineName].execute(
           this,
           operations,
           options
@@ -143,7 +139,7 @@ module.exports = class Pipeline extends Stream.Duplex {
           );
         }
 
-        var filteredCandidateEngineNames = candidateEngineNames.filter(
+        const filteredCandidateEngineNames = candidateEngineNames.filter(
           engineName =>
             this._isValidOperationForEngine(
               engineName,
@@ -242,7 +238,7 @@ module.exports = class Pipeline extends Stream.Duplex {
 
     return impro.engineNamesByOperationName[operationName].filter(
       engineName => {
-        var isSupportedByType =
+        const isSupportedByType =
           impro.isSupportedByEngineNameAndInputType[engineName];
         return (
           !this.isDisabledByEngineName[engineName] &&
@@ -354,7 +350,7 @@ module.exports = class Pipeline extends Stream.Duplex {
         this.sourceType = this.targetType = type;
         this.targetContentType = mime.types[type];
       } else {
-        var extension = mime.extensions[type.replace(/\s*;.*$/, '')];
+        const extension = mime.extensions[type.replace(/\s*;.*$/, '')];
         if (extension) {
           if (this.impro.isTypeByName[extension]) {
             this.sourceType = this.targetType = extension;

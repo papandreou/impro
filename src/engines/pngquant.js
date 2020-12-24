@@ -39,8 +39,8 @@ module.exports = {
     }
   },
   execute: function(pipeline, operations, options) {
-    var commandLineArgs = [];
-    var nColors;
+    const commandLineArgs = [];
+    let nColors;
     operations.forEach(operation => {
       if (operation.name === 'ncolors') {
         nColors = operation.args[0];

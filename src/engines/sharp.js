@@ -7,9 +7,7 @@ function isNumberWithin(num, min, max) {
 }
 
 function locatePreviousCommand(operations, nameToFind) {
-  return operations.findIndex(operation => {
-    return operation.name === nameToFind;
-  });
+  return operations.findIndex(operation => operation.name === nameToFind);
 }
 
 function patchPreviousCommandArgument(operation, argUpdates, indexInArg) {
@@ -157,15 +155,15 @@ module.exports = {
   },
   execute: function(pipeline, operations, options) {
     options = options ? { ...options } : {};
-    var impro = pipeline.impro;
-    var cache = pipeline.options.sharpCache || options.cache;
+    const impro = pipeline.impro;
+    const cache = pipeline.options.sharpCache || options.cache;
     // Would make sense to move the _sharpCacheSet property to the type, but that breaks some test scenarios:
     if (cache !== 'undefined' && !impro._sharpCacheSet) {
       sharp.cache(cache);
       impro._sharpCacheSet = true;
     }
 
-    var operationsForExecution = [];
+    const operationsForExecution = [];
 
     if (pipeline.targetType) {
       operationsForExecution.push({
@@ -174,9 +172,9 @@ module.exports = {
       });
     }
 
-    operations.forEach(function(operation) {
-      var name = operation.name;
-      var args = operation.args.slice(0);
+    operations.forEach(operation => {
+      let name = operation.name;
+      let args = operation.args.slice(0);
 
       if (operation.name === 'resize') {
         args[2] = { fit: 'inside' };

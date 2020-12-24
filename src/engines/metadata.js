@@ -21,17 +21,17 @@ module.exports = {
   },
   execute: function(pipeline, operations, options) {
     options = options || {};
-    var impro = pipeline.impro;
-    var cache = pipeline.options.sharpCache || options.cache;
+    const impro = pipeline.impro;
+    const cache = pipeline.options.sharpCache || options.cache;
     // Would make sense to move the _sharpCacheSet property to the type, but that breaks some test scenarios:
     if (cache !== 'undefined' && !impro._sharpCacheSet) {
       sharp.cache(cache);
       impro._sharpCacheSet = true;
     }
-    var sharpInstance = sharp();
-    var duplexStream = new Stream.Duplex();
-    var animatedGifDetector;
-    var isAnimated;
+    const sharpInstance = sharp();
+    const duplexStream = new Stream.Duplex();
+    let animatedGifDetector;
+    let isAnimated;
     if (
       (pipeline.targetType === 'gif' || !pipeline.targetType) &&
       createAnimatedGifDetector
@@ -43,7 +43,7 @@ module.exports = {
         animatedGifDetector = null;
       });
 
-      duplexStream.on('finish', function() {
+      duplexStream.on('finish', () => {
         if (typeof isAnimated === 'undefined') {
           isAnimated = false;
           if (animatedGifDetector) {
@@ -53,7 +53,7 @@ module.exports = {
         }
       });
     }
-    duplexStream._write = function(chunk, encoding, cb) {
+    duplexStream._write = (chunk, encoding, cb) => {
       if (animatedGifDetector) {
         animatedGifDetector.write(chunk);
       }
@@ -66,15 +66,15 @@ module.exports = {
         cb();
       }
     };
-    var alreadyKnownMetadata = {
+    const alreadyKnownMetadata = {
       format: pipeline.targetType,
       contentType: pipeline.targetContentType || mime.types[pipeline.targetType]
     };
     if (pipeline._streams.length === 0) {
       _.extend(alreadyKnownMetadata, pipeline.sourceMetadata);
     }
-    duplexStream._read = function(size) {
-      sharpInstance.metadata(function(err, metadata) {
+    duplexStream._read = size => {
+      sharpInstance.metadata((err, metadata) => {
         if (err) {
           metadata = _.defaults({ error: err.message }, alreadyKnownMetadata);
         }
@@ -87,7 +87,7 @@ module.exports = {
         }
         _.defaults(metadata, alreadyKnownMetadata);
         if (metadata.exif) {
-          var exifData;
+          let exifData;
           try {
             exifData = exifReader(metadata.exif);
           } catch (e) {
@@ -129,7 +129,7 @@ module.exports = {
           metadata.animated = isAnimated;
           proceed();
         } else if (animatedGifDetector) {
-          animatedGifDetector.on('decided', function(isAnimated) {
+          animatedGifDetector.on('decided', isAnimated => {
             metadata.animated = isAnimated;
             proceed();
           });
@@ -138,7 +138,7 @@ module.exports = {
         }
       });
     };
-    duplexStream.on('finish', function() {
+    duplexStream.on('finish', () => {
       sharpInstance.end();
     });
     pipeline._attach(duplexStream);

@@ -11,9 +11,9 @@ module.exports = {
     return args.length === 0;
   },
   execute: function(pipeline, operations, options) {
-    var outputFormat =
+    const outputFormat =
       operations.length > 0 ? operations[operations.length - 1].name : 'png';
-    var commandLineArgs =
+    const commandLineArgs =
       (operations[0] && operations[0].commandLineArgs) || [];
     if (!outputFormat || outputFormat === 'png') {
       pipeline.targetType = 'png';

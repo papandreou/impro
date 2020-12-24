@@ -3,9 +3,9 @@ const expect = require('unexpected');
 const impro = require('../src/index');
 const queryString = require('../src/queryString');
 
-describe('queryString', function() {
-  describe('parseImproQueryString()', function() {
-    it('should return an object with the operations and the leftover parameters, given a query string', function() {
+describe('queryString', () => {
+  describe('parseImproQueryString()', () => {
+    it('should return an object with the operations and the leftover parameters, given a query string', () => {
       expect(
         queryString.parseImproQueryString('foo=bar&resize=120,120', impro),
         'to equal',
@@ -17,7 +17,7 @@ describe('queryString', function() {
       );
     });
 
-    it('should parse an engine and preserve any additional options passed to it', function() {
+    it('should parse an engine and preserve any additional options passed to it', () => {
       expect(
         queryString.parseImproQueryString(
           `svgfilter=runScript=addBogusElement.js+bogusElementId=theBogusElementId`,
@@ -43,7 +43,7 @@ describe('queryString', function() {
       );
     });
 
-    it('should parse an engine ignoring any restricted properties', function() {
+    it('should parse an engine ignoring any restricted properties', () => {
       expect(
         queryString.parseImproQueryString(
           `svgfilter=svgAssetPath=anything`,
@@ -63,7 +63,7 @@ describe('queryString', function() {
       );
     });
 
-    it('should parse an engine and ignore any invalid options', function() {
+    it('should parse an engine and ignore any invalid options', () => {
       expect(
         queryString.parseImproQueryString(`pngcrush=8`, impro),
         'to equal',
@@ -80,7 +80,7 @@ describe('queryString', function() {
       );
     });
 
-    it('should parse metadata without options', function() {
+    it('should parse metadata without options', () => {
       expect(queryString.parseImproQueryString('metadata', impro), 'to equal', {
         operations: [
           {
@@ -93,7 +93,7 @@ describe('queryString', function() {
       });
     });
 
-    it('should parse a resize operation with only one of the pair (left)', function() {
+    it('should parse a resize operation with only one of the pair (left)', () => {
       expect(
         queryString.parseImproQueryString('resize=10,', impro),
         'to equal',
@@ -110,7 +110,7 @@ describe('queryString', function() {
       );
     });
 
-    it('should parse a resize operation with only one of the pair (right)', function() {
+    it('should parse a resize operation with only one of the pair (right)', () => {
       expect(
         queryString.parseImproQueryString('resize=,10', impro),
         'to equal',
@@ -127,7 +127,7 @@ describe('queryString', function() {
       );
     });
 
-    it('should ensure a custom allowOperation function takes effect for engines', function() {
+    it('should ensure a custom allowOperation function takes effect for engines', () => {
       impro.allowOperation = () => false;
 
       return expect(
@@ -143,7 +143,7 @@ describe('queryString', function() {
       });
     });
 
-    it('should support suppplying a custom allowOperation function directly', function() {
+    it('should support suppplying a custom allowOperation function directly', () => {
       expect(
         queryString.parseImproQueryString('png', impro, () => false),
         'to equal',

@@ -4,11 +4,11 @@ const gm = requireOr('gm-papandreou');
 const errors = require('../errors');
 
 function createGmOperations(pipeline, operations) {
-  var gmOperations = [];
-  var resize;
-  var crop;
-  var withoutEnlargement;
-  var ignoreAspectRatio;
+  const gmOperations = [];
+  let resize;
+  let crop;
+  let withoutEnlargement;
+  let ignoreAspectRatio;
 
   for (const requestedOperation of operations) {
     const operation = Object.assign({}, requestedOperation);
@@ -121,13 +121,9 @@ module.exports = {
         'withoutEnlargement',
         'ignoreAspectRatio'
       ].concat(
-        Object.keys(gm.prototype).filter(function(propertyName) {
-          return (
-            !/^_|^(?:name|emit|.*Listeners?|on|once|size|orientation|format|depth|color|res|filesize|identity|write|stream|type|setmoc)$/.test(
-              propertyName
-            ) && typeof gm.prototype[propertyName] === 'function'
-          );
-        })
+        Object.keys(gm.prototype).filter(propertyName => !/^_|^(?:name|emit|.*Listeners?|on|once|size|orientation|format|depth|color|res|filesize|identity|write|stream|type|setmoc)$/.test(
+          propertyName
+        ) && typeof gm.prototype[propertyName] === 'function')
       ),
   inputTypes: ['gif', 'jpeg', 'png', 'ico', 'tga', 'tiff', '*'],
   outputTypes: ['gif', 'jpeg', 'png', 'tga', 'tiff', 'webp'],
@@ -173,22 +169,22 @@ module.exports = {
     }
   },
   execute: function(pipeline, operations) {
-    var gmOperations = createGmOperations(pipeline, operations);
+    const gmOperations = createGmOperations(pipeline, operations);
 
     // For some reason the gm module doesn't expose itself as a readable/writable stream,
     // so we need to wrap it into one:
-    var readStream = new Stream();
+    const readStream = new Stream();
     readStream.readable = true;
 
-    var readWriteStream = new Stream();
+    const readWriteStream = new Stream();
     readWriteStream.readable = readWriteStream.writable = true;
-    var spawned = false;
-    readWriteStream.write = function(chunk) {
+    let spawned = false;
+    readWriteStream.write = chunk => {
       if (!spawned) {
         spawned = true;
-        var seenData = false;
-        var hasEnded = false;
-        var gmInstance = gm(
+        let seenData = false;
+        let hasEnded = false;
+        const gmInstance = gm(
           readStream,
           pipeline.sourceType && `.${pipeline.sourceType}`
         );
@@ -203,27 +199,24 @@ module.exports = {
         };
 
         gmOperations
-          .reduce(function(gmInstance, operation) {
+          .reduce((gmInstance, operation) => {
             if (typeof gmInstance[operation.name] === 'function') {
-              return gmInstance[operation.name].apply(
-                gmInstance,
-                operation.args
-              );
+              return gmInstance[operation.name](...operation.args);
             } else {
               return gmInstance;
             }
           }, gmInstance)
-          .stream(function(err, stdout, stderr) {
+          .stream((err, stdout, stderr) => {
             if (err) {
               return handleError(err);
             }
 
             stdout
-              .on('data', function(chunk) {
+              .on('data', chunk => {
                 seenData = true;
                 readWriteStream.emit('data', chunk);
               })
-              .on('end', function() {
+              .on('end', () => {
                 if (!hasEnded) {
                   if (!seenData) {
                     return handleError(
@@ -239,7 +232,7 @@ module.exports = {
       }
       readStream.emit('data', chunk);
     };
-    readWriteStream.end = function(chunk) {
+    readWriteStream.end = chunk => {
       if (chunk) {
         readWriteStream.write(chunk);
       }

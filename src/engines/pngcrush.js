@@ -14,12 +14,8 @@ module.exports = {
       case 'reduce':
         return args.length === 0;
       case 'rem':
-        return (
-          args.length >= 1 &&
-          args.every(function(arg) {
-            return /^[a-z]{4}$/i.test(arg);
-          })
-        );
+        return args.length >= 1 &&
+        args.every(arg => /^[a-z]{4}$/i.test(arg));
     }
     // usage: pngcrush [options] infile.png outfile.png
     //        pngcrush -e ext [other options] file.png ...
@@ -80,7 +76,7 @@ module.exports = {
     //             -p (pause)
   },
   execute: function(pipeline, operations, options) {
-    var commandLineArgs = [];
+    const commandLineArgs = [];
     operations.forEach(({ name, args }) => {
       if (name === 'rem') {
         args.forEach(arg => {

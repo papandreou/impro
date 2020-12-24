@@ -60,9 +60,9 @@ module.exports = {
     }
   },
   execute: function(pipeline, operations) {
-    var allGifsicleArgs = [];
-    var gifsicleArgs = [];
-    var seenOperationThatMustComeBeforeExtract = false;
+    const allGifsicleArgs = [];
+    let gifsicleArgs = [];
+    let seenOperationThatMustComeBeforeExtract = false;
 
     function flush() {
       if (gifsicleArgs.length > 0) {
@@ -74,11 +74,9 @@ module.exports = {
       }
     }
 
-    var ignoreAspectRatio = operations.some(function(operation) {
-      return operation.name === 'ignoreAspectRatio';
-    });
+    const ignoreAspectRatio = operations.some(operation => operation.name === 'ignoreAspectRatio');
 
-    operations.forEach(function(operation) {
+    operations.forEach(operation => {
       if (operation.name === 'resize') {
         seenOperationThatMustComeBeforeExtract = true;
 

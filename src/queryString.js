@@ -4,18 +4,18 @@ function parseImproQueryString(queryString, improInstance, allowOperation) {
       ? allowOperation
       : improInstance.allowOperation;
 
-  var keyValuePairs = queryString.split('&');
-  var operations = [];
-  var leftOverQueryStringFragments = [];
-  var consumedQueryStringFragments = [];
+  const keyValuePairs = queryString.split('&');
+  const operations = [];
+  const leftOverQueryStringFragments = [];
+  const consumedQueryStringFragments = [];
 
   for (const keyValuePair of keyValuePairs) {
-    var matchKeyValuePair = keyValuePair.match(/^([^=]+)(?:=(.*))?/);
+    const matchKeyValuePair = keyValuePair.match(/^([^=]+)(?:=(.*))?/);
     if (matchKeyValuePair) {
-      var operationName = decodeURIComponent(matchKeyValuePair[1]);
+      const operationName = decodeURIComponent(matchKeyValuePair[1]);
       // Split by non-URL encoded comma or plus:
-      var operationArgs = matchKeyValuePair[2]
-        ? matchKeyValuePair[2].split(/[+,]/).map(function(arg) {
+      let operationArgs = matchKeyValuePair[2]
+        ? matchKeyValuePair[2].split(/[+,]/).map(arg => {
             arg = decodeURIComponent(arg);
             if (/^\d+$/.test(arg)) {
               return parseInt(arg, 10);

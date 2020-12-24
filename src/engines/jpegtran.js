@@ -74,7 +74,7 @@ module.exports = {
     }
   },
   execute: function(pipeline, operations, options) {
-    var commandLineArgs = [];
+    const commandLineArgs = [];
     operations.forEach(({ name, args }) => {
       if (name === 'extract') {
         commandLineArgs.push(

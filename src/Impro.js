@@ -102,13 +102,13 @@ module.exports = class Impro {
   }
 
   use(options) {
-    var engineName = options.name;
+    const engineName = options.name;
     if (typeof options.unavailable === 'undefined') {
       options.unavailable = true;
     }
     if (typeof options.validateOperation === 'undefined') {
       // Will allow all options.operations that don't take any arguments:
-      options.validateOperation = function() {};
+      options.validateOperation = () => {};
     }
     this.defaultEngineName = this.defaultEngineName || engineName;
 
@@ -153,16 +153,14 @@ module.exports = class Impro {
   }
 
   isValidOperation(name, args) {
-    var engineNames = this.engineNamesByOperationName[name];
-    return (
-      engineNames &&
-      engineNames.some(function(engineName) {
-        var isValid = this.engineByName[engineName].validateOperation(
-          name,
-          args
-        );
-        return isValid || (typeof isValid === 'undefined' && args.length === 0);
-      }, this)
-    );
+    const engineNames = this.engineNamesByOperationName[name];
+    return engineNames &&
+    engineNames.some(function(engineName) {
+      const isValid = this.engineByName[engineName].validateOperation(
+        name,
+        args
+      );
+      return isValid || (typeof isValid === 'undefined' && args.length === 0);
+    }, this);
   }
 };
