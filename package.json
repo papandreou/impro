@@ -19,7 +19,7 @@
   "scripts": {
     "coverage": "nyc --reporter=lcov --reporter=text -- npm test && echo Coverage Report written to coverage/lcov-report/index.html",
     "test": "mocha",
-    "lint": "eslint . && prettier --check '**/*.js'",
+    "lint": "eslint . && prettier --check '**/*.{js,json,md}'",
     "clean": "rm -rf lib coverage .nyc_output",
     "travis": "npm run lint && npm run coverage",
     "version": "offline-github-changelog --next=${npm_package_version} > CHANGELOG.md && git add CHANGELOG.md"
