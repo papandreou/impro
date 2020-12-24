@@ -2192,7 +2192,7 @@ describe('impro', function() {
       );
     });
 
-    it('should correctly due to max number of pixels after streaming starts', function() {
+    it('should correctly refuse due to max number of pixels after streaming starts', function() {
       const turtleJpg = loadAsStream('turtle.jpg');
       const pipeline = impro.maxOutputPixels(2).resize(100, 100);
       // close the file stream if the pipeline errors
