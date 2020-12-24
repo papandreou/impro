@@ -1,10 +1,5 @@
-var expect = require('unexpected')
-  .clone()
-  .use(require('unexpected-dom'))
-  .use(require('unexpected-stream'))
-  .use(require('unexpected-image'))
-  .use(require('unexpected-sinon'))
-  .use(require('unexpected-resemble'));
+var expect = require('./expect');
+
 var childProcess = require('child_process');
 var fileType = require('file-type');
 var path = require('path');
