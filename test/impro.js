@@ -2,7 +2,6 @@ var expect = require('./expect');
 
 var childProcess = require('child_process');
 var fileType = require('file-type');
-var path = require('path');
 var sinon = require('sinon');
 var stream = require('stream');
 
@@ -19,10 +18,13 @@ var load = memoizeSync(function(fileName, platformsToOverride) {
     Array.isArray(platformsToOverride) &&
     platformsToOverride.includes(process.platform)
   ) {
-    const ext = path.extname(fileName);
-    fileName = [path.basename(fileName, ext), '-', process.platform, ext].join(
-      ''
-    );
+    const ext = pathModule.extname(fileName);
+    fileName = [
+      pathModule.basename(fileName, ext),
+      '-',
+      process.platform,
+      ext
+    ].join('');
   }
 
   return fs.readFileSync(
