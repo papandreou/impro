@@ -1303,6 +1303,8 @@ describe('impro', () => {
             .spawn('inkscape', ['--version'])
             .on('exit', () => resolve());
         });
+      } else {
+        this.timeout(8000);
       }
     });
 
