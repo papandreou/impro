@@ -1300,7 +1300,7 @@ describe('impro', () => {
 
         return new Promise((resolve) => {
           childProcess
-            .spawn('inkscape', ['--without-gui'])
+            .spawn('inkscape', ['--version'])
             .on('exit', () => resolve());
         });
       }
