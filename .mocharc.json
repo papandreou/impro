@@ -1,4 +1,5 @@
 {
+  "extension": ".spec.js",
   "reporter": "spec",
   "recursive": true,
   "timeout": 4000
