@@ -1,3 +1,12 @@
+### v0.9.0 (2021-01-20)
+
+- [Bump timeout in an attempt to fix CI.](https://github.com/papandreou/impro/commit/e8076bbca73ae3be34b21e35802160f92b319b41) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Amend test warmup code for on macOS so no UI opens with inkscape v1+.](https://github.com/papandreou/impro/commit/7648b6c1cc82a18d7943b5af1e7993993f49f321) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Differentiate between test files and utility code after 7321c59.](https://github.com/papandreou/impro/commit/babe47de22133d0546f8860d471209c3ef12fca3) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Switch to GitHub Actions](https://github.com/papandreou/impro/commit/6aeac2580e4f0ebb51fb8d46ac96056581d94189) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Support avif](https://github.com/papandreou/impro/commit/90e47f64df8a0cc95e6acc2686a835aa3ed0071f) ([Andreas Lind](mailto:andreaslindpetersen@gmail.com))
+- [+14 more](https://github.com/papandreou/impro/compare/v0.8.0...v0.9.0)
+
 ### v0.8.0 (2020-09-04)
 
 - [Use the version hook to generate a changelog.](https://github.com/papandreou/impro/commit/73dabb8a00344f8ca0ced4016a3fd5dbd1bb945f) ([Alex J Burke](mailto:alex@alexjeffburke.com))
