@@ -1417,9 +1417,12 @@ describe('impro', () => {
               height: 424,
             },
           })
-          .and('to satisfy', (buffer) => {
-            expect(buffer.length, 'to be within', 1, 105836);
-          })
+          .and(
+            'to satisfy',
+            expect.it((buffer) => {
+              expect(buffer.length, 'to be within', 1, 105836);
+            })
+          )
       ));
 
     it('should support arithmetic', () => {
