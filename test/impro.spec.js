@@ -68,6 +68,10 @@ expect.addAssertion(
 );
 
 describe('impro', () => {
+  afterEach(() => {
+    sinon.restore();
+  });
+
   it('should be an instance of impro.Impro', () => {
     expect(impro, 'to be an', impro.Impro);
   });
@@ -441,185 +445,151 @@ describe('impro', () => {
         }
       ));
 
-    it(
-      'should allow passing a cache option',
-      sinon.test(function () {
-        const cacheSpy = this.spy(require('sharp'), 'cache');
-        const improInstance = new impro.Impro().use(impro.engines.metadata);
-        return expect(
-          'turtle.jpg',
-          'when piped through',
-          improInstance.metadata({ cache: 123 }),
-          'to yield JSON output satisfying',
-          {
-            contentType: 'image/jpeg',
-          }
-        )
-          .then(() => {
-            expect(cacheSpy, 'to have calls satisfying', () => {
-              cacheSpy(123);
-            });
-          })
-          .finally(() => cacheSpy.restore());
-      })
-    );
+    it('should allow passing a cache option', function () {
+      const cacheSpy = sinon.spy(require('sharp'), 'cache');
+      const improInstance = new impro.Impro().use(impro.engines.metadata);
+      return expect(
+        'turtle.jpg',
+        'when piped through',
+        improInstance.metadata({ cache: 123 }),
+        'to yield JSON output satisfying',
+        {
+          contentType: 'image/jpeg',
+        }
+      ).then(() => {
+        expect(cacheSpy, 'to have calls satisfying', () => {
+          cacheSpy(123);
+        });
+      });
+    });
 
-    it(
-      'should allow passing a sharpCache option to the pipeline',
-      sinon.test(function () {
-        const cacheSpy = this.spy(require('sharp'), 'cache');
-        const improInstance = new impro.Impro().use(impro.engines.metadata);
-        return expect(
-          'turtle.jpg',
-          'when piped through',
-          improInstance.createPipeline({ sharpCache: 456 }).metadata(),
-          'to yield JSON output satisfying',
-          {
-            contentType: 'image/jpeg',
-          }
-        )
-          .then(() => {
-            expect(cacheSpy, 'to have calls satisfying', () => {
-              cacheSpy(456);
-            });
-          })
-          .finally(() => cacheSpy.restore());
-      })
-    );
+    it('should allow passing a sharpCache option to the pipeline', function () {
+      const cacheSpy = sinon.spy(require('sharp'), 'cache');
+      const improInstance = new impro.Impro().use(impro.engines.metadata);
+      return expect(
+        'turtle.jpg',
+        'when piped through',
+        improInstance.createPipeline({ sharpCache: 456 }).metadata(),
+        'to yield JSON output satisfying',
+        {
+          contentType: 'image/jpeg',
+        }
+      ).then(() => {
+        expect(cacheSpy, 'to have calls satisfying', () => {
+          cacheSpy(456);
+        });
+      });
+    });
   });
 
   describe('with the sharp engine', () => {
-    it(
-      'should allow passing a cache option',
-      sinon.test(function () {
-        const cacheSpy = this.spy(require('sharp'), 'cache');
-        const improInstance = new impro.Impro().use(impro.engines.sharp);
-        return expect(
-          'turtle.jpg',
-          'when piped through',
-          improInstance.sharp({ cache: 123 }).resize(10, 10),
-          'to yield output satisfying to have metadata satisfying',
-          {
-            format: 'JPEG',
-          }
-        )
-          .then(() => {
-            expect(cacheSpy, 'to have calls satisfying', () => {
-              cacheSpy(123);
-            });
-          })
-          .finally(() => cacheSpy.restore());
-      })
-    );
+    it('should allow passing a cache option', function () {
+      const cacheSpy = sinon.spy(require('sharp'), 'cache');
+      const improInstance = new impro.Impro().use(impro.engines.sharp);
+      return expect(
+        'turtle.jpg',
+        'when piped through',
+        improInstance.sharp({ cache: 123 }).resize(10, 10),
+        'to yield output satisfying to have metadata satisfying',
+        {
+          format: 'JPEG',
+        }
+      ).then(() => {
+        expect(cacheSpy, 'to have calls satisfying', () => {
+          cacheSpy(123);
+        });
+      });
+    });
 
-    it(
-      'should allow passing a sharpCache option to the pipeline',
-      sinon.test(function () {
-        const cacheSpy = this.spy(require('sharp'), 'cache');
-        const improInstance = new impro.Impro().use(impro.engines.sharp);
-        return expect(
-          'turtle.jpg',
-          'when piped through',
-          improInstance.createPipeline({ sharpCache: 456 }).resize(10, 10),
-          'to yield output satisfying to have metadata satisfying',
-          {
-            format: 'JPEG',
-          }
-        )
-          .then(() => {
-            expect(cacheSpy, 'to have calls satisfying', () => {
-              cacheSpy(456);
-            });
-          })
-          .finally(() => cacheSpy.restore());
-      })
-    );
+    it('should allow passing a sharpCache option to the pipeline', function () {
+      const cacheSpy = sinon.spy(require('sharp'), 'cache');
+      const improInstance = new impro.Impro().use(impro.engines.sharp);
+      return expect(
+        'turtle.jpg',
+        'when piped through',
+        improInstance.createPipeline({ sharpCache: 456 }).resize(10, 10),
+        'to yield output satisfying to have metadata satisfying',
+        {
+          format: 'JPEG',
+        }
+      ).then(() => {
+        expect(cacheSpy, 'to have calls satisfying', () => {
+          cacheSpy(456);
+        });
+      });
+    });
 
-    it(
-      'should allow passing a sequentialRead option',
-      sinon.test(function () {
-        const improInstance = new impro.Impro().use(impro.engines.sharp);
-        const sharpSpy = this.spy(improInstance.getEngine('sharp'), 'library');
-        const pipeline = improInstance
-          .sharp({ sequentialRead: true })
-          .type('jpeg')
-          .resize(10, 10);
+    it('should allow passing a sequentialRead option', function () {
+      const improInstance = new impro.Impro().use(impro.engines.sharp);
+      const sharpSpy = sinon.spy(improInstance.getEngine('sharp'), 'library');
+      const pipeline = improInstance
+        .sharp({ sequentialRead: true })
+        .type('jpeg')
+        .resize(10, 10);
 
-        return expect(
-          'turtle.jpg',
-          'when piped through',
-          pipeline,
-          'to yield output satisfying to have metadata satisfying',
-          {
-            format: 'JPEG',
-          }
-        )
-          .then(() => {
-            expect(sharpSpy, 'to have calls satisfying', [
-              [{ sequentialRead: true }],
-            ]);
-          })
-          .finally(() => sharpSpy.restore());
-      })
-    );
+      return expect(
+        'turtle.jpg',
+        'when piped through',
+        pipeline,
+        'to yield output satisfying to have metadata satisfying',
+        {
+          format: 'JPEG',
+        }
+      ).then(() => {
+        expect(sharpSpy, 'to have calls satisfying', [
+          [{ sequentialRead: true }],
+        ]);
+      });
+    });
 
-    it(
-      'should allow setting a input pixel limit',
-      sinon.test(function () {
-        const improInstance = new impro.Impro().use(impro.engines.sharp);
-        const sharpSpy = this.spy(improInstance.getEngine('sharp'), 'library');
-        const pipeline = improInstance
-          .createPipeline({ maxInputPixels: 1000 })
-          .type('jpeg')
-          .resize(10, 10);
+    it('should allow setting a input pixel limit', function () {
+      const improInstance = new impro.Impro().use(impro.engines.sharp);
+      const sharpSpy = sinon.spy(improInstance.getEngine('sharp'), 'library');
+      const pipeline = improInstance
+        .createPipeline({ maxInputPixels: 1000 })
+        .type('jpeg')
+        .resize(10, 10);
 
-        return expect(
-          'turtle.jpg',
-          'when piped through',
-          pipeline,
-          'to error with',
-          'Input image exceeds pixel limit'
-        )
-          .then(() => {
-            expect(sharpSpy, 'to have calls satisfying', [
-              [{ limitInputPixels: 1000 }],
-            ]);
-          })
-          .finally(() => sharpSpy.restore());
-      })
-    );
+      return expect(
+        'turtle.jpg',
+        'when piped through',
+        pipeline,
+        'to error with',
+        'Input image exceeds pixel limit'
+      ).then(() => {
+        expect(sharpSpy, 'to have calls satisfying', [
+          [{ limitInputPixels: 1000 }],
+        ]);
+      });
+    });
 
-    it(
-      'should only call sharp.cache once, even after processing multiple images',
-      sinon.test(function () {
-        const cacheSpy = this.spy(require('sharp'), 'cache');
-        const improInstance = new impro.Impro().use(impro.engines.sharp);
-        return expect(
-          'turtle.jpg',
-          'when piped through',
-          improInstance.sharp({ cache: 123 }).type('jpeg').resize(10, 10),
-          'to yield output satisfying to have metadata satisfying',
-          {
-            format: 'JPEG',
-          }
-        )
-          .then(() =>
-            expect(
-              'turtle.jpg',
-              'when piped through',
-              impro.sharp({ cache: 123 }).type('jpeg').resize(10, 10),
-              'to yield output satisfying to have metadata satisfying',
-              {
-                format: 'JPEG',
-              }
-            )
+    it('should only call sharp.cache once, even after processing multiple images', function () {
+      const cacheSpy = sinon.spy(require('sharp'), 'cache');
+      const improInstance = new impro.Impro().use(impro.engines.sharp);
+      return expect(
+        'turtle.jpg',
+        'when piped through',
+        improInstance.sharp({ cache: 123 }).type('jpeg').resize(10, 10),
+        'to yield output satisfying to have metadata satisfying',
+        {
+          format: 'JPEG',
+        }
+      )
+        .then(() =>
+          expect(
+            'turtle.jpg',
+            'when piped through',
+            impro.sharp({ cache: 123 }).type('jpeg').resize(10, 10),
+            'to yield output satisfying to have metadata satisfying',
+            {
+              format: 'JPEG',
+            }
           )
-          .then(() =>
-            expect(cacheSpy, 'to have calls satisfying', () => cacheSpy(123))
-          )
-          .finally(() => cacheSpy.restore());
-      })
-    );
+        )
+        .then(() =>
+          expect(cacheSpy, 'to have calls satisfying', () => cacheSpy(123))
+        );
+    });
 
     it('should support blur with no argument', () => {
       const executeSpy = sinon.spy(impro.engineByName.sharp, 'execute');
@@ -631,9 +601,7 @@ describe('impro', () => {
           name: 'blur',
           args: [],
         },
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should support blur with an argument', () => {
@@ -646,9 +614,7 @@ describe('impro', () => {
           name: 'blur',
           args: [0.5],
         },
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should support quality', () => {
@@ -661,25 +627,21 @@ describe('impro', () => {
           name: 'jpeg',
           args: [{ quality: 88 }],
         },
-      ])
-        .then(() =>
-          // check that the external representation is unchanged
-          expect(usedEngines, 'to satisfy', [
-            {
-              name: 'sharp',
-              operations: expect.it('to equal', [
-                {
-                  name: 'quality',
-                  args: [88],
-                  engineName: 'sharp',
-                },
-              ]),
-            },
-          ])
-        )
-        .finally(() => {
-          executeSpy.restore();
-        });
+      ]).then(() =>
+        // check that the external representation is unchanged
+        expect(usedEngines, 'to satisfy', [
+          {
+            name: 'sharp',
+            operations: expect.it('to equal', [
+              {
+                name: 'quality',
+                args: [88],
+                engineName: 'sharp',
+              },
+            ]),
+          },
+        ])
+      );
     });
 
     it('should throw on quality without a target type', () =>
@@ -712,9 +674,7 @@ describe('impro', () => {
           name: 'rotate',
           args: [90],
         },
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should support resize (only width)', () => {
@@ -724,9 +684,7 @@ describe('impro', () => {
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         { name: 'resize', args: [10, null, { fit: 'inside' }] },
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should support resize (only height)', () => {
@@ -736,9 +694,7 @@ describe('impro', () => {
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         { name: 'resize', args: [null, 10, { fit: 'inside' }] },
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should support crop without resize', () => {
@@ -751,9 +707,7 @@ describe('impro', () => {
           name: 'resize',
           args: [null, null, { fit: 'cover', position: 'center' }],
         },
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should combine crop with a resize', () => {
@@ -770,30 +724,26 @@ describe('impro', () => {
           name: 'resize',
           args: [10, 10, { fit: 'cover', position: 'northwest' }],
         },
-      ])
-        .then(() =>
-          // check that the external representation is unchanged
-          expect(usedEngines, 'to satisfy', [
-            {
-              name: 'sharp',
-              operations: expect.it('to equal', [
-                {
-                  name: 'resize',
-                  args: [10, 10],
-                  engineName: 'sharp',
-                },
-                {
-                  name: 'crop',
-                  args: ['northwest'],
-                  engineName: 'sharp',
-                },
-              ]),
-            },
-          ])
-        )
-        .finally(() => {
-          executeSpy.restore();
-        });
+      ]).then(() =>
+        // check that the external representation is unchanged
+        expect(usedEngines, 'to satisfy', [
+          {
+            name: 'sharp',
+            operations: expect.it('to equal', [
+              {
+                name: 'resize',
+                args: [10, 10],
+                engineName: 'sharp',
+              },
+              {
+                name: 'crop',
+                args: ['northwest'],
+                engineName: 'sharp',
+              },
+            ]),
+          },
+        ])
+      );
     });
 
     it('should support crop with "attention"', () => {
@@ -806,9 +756,7 @@ describe('impro', () => {
           name: 'resize',
           args: [null, null, { fit: 'cover', position: 'attention' }],
         },
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should support crop with "entropy"', () => {
@@ -821,9 +769,7 @@ describe('impro', () => {
           name: 'resize',
           args: [null, null, { fit: 'cover', position: 'entropy' }],
         },
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should support embed without resize', () => {
@@ -836,9 +782,7 @@ describe('impro', () => {
           name: 'resize',
           args: [null, null, { fit: 'contain', position: 'north' }],
         },
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should combine embed with a resize', () => {
@@ -855,30 +799,26 @@ describe('impro', () => {
           name: 'resize',
           args: [10, 10, { fit: 'contain', position: 'northwest' }],
         },
-      ])
-        .then(() =>
-          // check that the external representation is unchanged
-          expect(usedEngines, 'to satisfy', [
-            {
-              name: 'sharp',
-              operations: expect.it('to equal', [
-                {
-                  name: 'resize',
-                  args: [10, 10],
-                  engineName: 'sharp',
-                },
-                {
-                  name: 'embed',
-                  args: ['northwest'],
-                  engineName: 'sharp',
-                },
-              ]),
-            },
-          ])
-        )
-        .finally(() => {
-          executeSpy.restore();
-        });
+      ]).then(() =>
+        // check that the external representation is unchanged
+        expect(usedEngines, 'to satisfy', [
+          {
+            name: 'sharp',
+            operations: expect.it('to equal', [
+              {
+                name: 'resize',
+                args: [10, 10],
+                engineName: 'sharp',
+              },
+              {
+                name: 'embed',
+                args: ['northwest'],
+                engineName: 'sharp',
+              },
+            ]),
+          },
+        ])
+      );
     });
 
     it('should throw on withoutEnlargement without resize', () =>
@@ -900,9 +840,7 @@ describe('impro', () => {
           name: 'resize',
           args: [10, 10, { fit: 'inside', withoutEnlargement: true }],
         },
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should throw on ignoreAspectRatio without resize', () =>
@@ -924,9 +862,7 @@ describe('impro', () => {
           name: 'resize',
           args: [10, 10, { fit: 'fill' }],
         },
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     describe('with a maxOutputPixels setting in place', () => {
@@ -941,9 +877,7 @@ describe('impro', () => {
 
         return expect(executeSpy.returnValues[0], 'to equal', [
           { name: 'resize', args: [2000, 12, { fit: 'inside' }] },
-        ]).finally(() => {
-          executeSpy.restore();
-        });
+        ]);
       });
 
       it('should support resize (only height)', () => {
@@ -957,9 +891,7 @@ describe('impro', () => {
 
         return expect(executeSpy.returnValues[0], 'to equal', [
           { name: 'resize', args: [12, 2000, { fit: 'inside' }] },
-        ]).finally(() => {
-          executeSpy.restore();
-        });
+        ]);
       });
     });
 
@@ -1007,9 +939,7 @@ describe('impro', () => {
       return expect(executeSpy.returnValues[0], 'to equal', [
         '--resize-width',
         10,
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should support resize (only height)', () => {
@@ -1020,9 +950,7 @@ describe('impro', () => {
       return expect(executeSpy.returnValues[0], 'to equal', [
         '--resize-height',
         10,
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should support resize followed by extract', () => {
@@ -1036,9 +964,7 @@ describe('impro', () => {
         ';',
         '--crop',
         '150,150+100x100',
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should output resize followed by extract', () =>
@@ -1075,9 +1001,7 @@ describe('impro', () => {
         return expect(executeSpy.returnValues[0], 'to equal', [
           '--resize-fit',
           '2000x12',
-        ]).finally(() => {
-          executeSpy.restore();
-        });
+        ]);
       });
 
       it('should support resize (only height)', () => {
@@ -1092,9 +1016,7 @@ describe('impro', () => {
         return expect(executeSpy.returnValues[0], 'to equal', [
           '--resize-fit',
           '12x2000',
-        ]).finally(() => {
-          executeSpy.restore();
-        });
+        ]);
       });
     });
   });
@@ -1148,9 +1070,7 @@ describe('impro', () => {
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         { name: 'gravity', args: ['Center'] },
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should support progressive', () => {
@@ -1160,9 +1080,7 @@ describe('impro', () => {
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         { name: 'interlace', args: ['line'] },
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should support resize', () => {
@@ -1172,9 +1090,7 @@ describe('impro', () => {
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         { name: 'resize', args: [10, 10] },
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should support resize (only width)', () => {
@@ -1184,9 +1100,7 @@ describe('impro', () => {
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         { name: 'resize', args: [10, ''] },
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should support resize (only height)', () => {
@@ -1196,9 +1110,7 @@ describe('impro', () => {
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         { name: 'resize', args: ['', 10] },
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should support withoutEnlargement', () => {
@@ -1208,9 +1120,7 @@ describe('impro', () => {
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         { name: 'resize', args: [10, 10, '>'] },
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should support ignoreAspectRatio', () => {
@@ -1220,9 +1130,7 @@ describe('impro', () => {
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         { name: 'resize', args: [10, 10, '!'] },
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should emit an error on a bad conversion', () => {
@@ -1262,9 +1170,7 @@ describe('impro', () => {
 
         return expect(executeSpy.returnValues[0], 'to equal', [
           { name: 'resize', args: [2000, 12] },
-        ]).finally(() => {
-          executeSpy.restore();
-        });
+        ]);
       });
 
       it('should support resize (only height)', () => {
@@ -1278,9 +1184,7 @@ describe('impro', () => {
 
         return expect(executeSpy.returnValues[0], 'to equal', [
           { name: 'resize', args: [12, 2000] },
-        ]).finally(() => {
-          executeSpy.restore();
-        });
+        ]);
       });
     });
   });
@@ -1430,11 +1334,7 @@ describe('impro', () => {
 
       impro.jpegtran().arithmetic().flush();
 
-      return expect(executeSpy.returnValues[0], 'to equal', [
-        '-arithmetic',
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      return expect(executeSpy.returnValues[0], 'to equal', ['-arithmetic']);
     });
 
     it('should support crop', () => {
@@ -1445,26 +1345,22 @@ describe('impro', () => {
       return expect(executeSpy.returnValues[0], 'to equal', [
         '-crop',
         '10x10+10+10',
-      ])
-        .then(() => {
-          // check that the external representation is unchanged
-          expect(pipeline.usedEngines, 'to equal', [
-            {
-              name: 'jpegtran',
-              operations: [
-                {
-                  name: 'crop',
-                  args: [10, 10, 10, 10],
-                  engineName: 'jpegtran',
-                },
-              ],
-              commandArgs: ['-crop', '10x10+10+10'],
-            },
-          ]);
-        })
-        .finally(() => {
-          executeSpy.restore();
-        });
+      ]).then(() => {
+        // check that the external representation is unchanged
+        expect(pipeline.usedEngines, 'to equal', [
+          {
+            name: 'jpegtran',
+            operations: [
+              {
+                name: 'crop',
+                args: [10, 10, 10, 10],
+                engineName: 'jpegtran',
+              },
+            ],
+            commandArgs: ['-crop', '10x10+10+10'],
+          },
+        ]);
+      });
     });
 
     it('should support grayscale', () => {
@@ -1472,11 +1368,7 @@ describe('impro', () => {
 
       impro.jpegtran().grayscale().flush();
 
-      return expect(executeSpy.returnValues[0], 'to equal', [
-        '-grayscale',
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      return expect(executeSpy.returnValues[0], 'to equal', ['-grayscale']);
     });
 
     it('should reject grayscale with invalid argument', () =>
@@ -1493,11 +1385,7 @@ describe('impro', () => {
 
       impro.jpegtran().perfect().flush();
 
-      return expect(executeSpy.returnValues[0], 'to equal', [
-        '-perfect',
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      return expect(executeSpy.returnValues[0], 'to equal', ['-perfect']);
     });
 
     it('should support progressive', () => {
@@ -1505,11 +1393,7 @@ describe('impro', () => {
 
       impro.jpegtran().progressive().flush();
 
-      return expect(executeSpy.returnValues[0], 'to equal', [
-        '-progressive',
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      return expect(executeSpy.returnValues[0], 'to equal', ['-progressive']);
     });
 
     it('should support transpose', () => {
@@ -1517,11 +1401,7 @@ describe('impro', () => {
 
       impro.jpegtran().transpose().flush();
 
-      return expect(executeSpy.returnValues[0], 'to equal', [
-        '-transpose',
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      return expect(executeSpy.returnValues[0], 'to equal', ['-transpose']);
     });
 
     it('should support transverse', () => {
@@ -1529,11 +1409,7 @@ describe('impro', () => {
 
       impro.jpegtran().transverse().flush();
 
-      return expect(executeSpy.returnValues[0], 'to equal', [
-        '-transverse',
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      return expect(executeSpy.returnValues[0], 'to equal', ['-transverse']);
     });
   });
 
@@ -1657,9 +1533,7 @@ describe('impro', () => {
         '--floyd',
         0.3,
         '-',
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should support ncolors', () => {
@@ -1683,9 +1557,7 @@ describe('impro', () => {
         '--posterize',
         0,
         '-',
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should support quality', () => {
@@ -1697,9 +1569,7 @@ describe('impro', () => {
         '--quality',
         '10-90',
         '-',
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should support speed', () => {
@@ -1711,9 +1581,7 @@ describe('impro', () => {
         '--speed',
         1,
         '-',
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should support multiple operations', () => {
@@ -1726,9 +1594,7 @@ describe('impro', () => {
         1,
         256,
         '-',
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      ]);
     });
 
     it('should support no operations', () => {
@@ -1782,11 +1648,7 @@ describe('impro', () => {
 
       impro.pngcrush().reduce().flush();
 
-      return expect(executeSpy.returnValues[0], 'to equal', [
-        '-reduce',
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      return expect(executeSpy.returnValues[0], 'to equal', ['-reduce']);
     });
 
     it('should support noreduce', () => {
@@ -1794,11 +1656,7 @@ describe('impro', () => {
 
       impro.pngcrush().noreduce().flush();
 
-      return expect(executeSpy.returnValues[0], 'to equal', [
-        '-noreduce',
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      return expect(executeSpy.returnValues[0], 'to equal', ['-noreduce']);
     });
 
     it('should support rem', () => {
@@ -1806,12 +1664,7 @@ describe('impro', () => {
 
       impro.pngcrush().rem('allb').flush();
 
-      return expect(executeSpy.returnValues[0], 'to equal', [
-        '-rem',
-        'allb',
-      ]).finally(() => {
-        executeSpy.restore();
-      });
+      return expect(executeSpy.returnValues[0], 'to equal', ['-rem', 'allb']);
     });
   });
 
