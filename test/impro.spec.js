@@ -41,7 +41,7 @@ expect.addAssertion(
   '<string> when piped through <Stream> <assertion?>',
   (expect, subject, ...rest) => {
     expect.errorMode = 'nested';
-    return expect(load(subject), 'when piped through', ...rest);
+    return expect(loadAsStream(subject), 'when piped through', ...rest);
   }
 );
 
@@ -1760,7 +1760,7 @@ describe('impro', () => {
 
       const pipeline = impro.createPipeline().addStream(erroringStream);
 
-      expect(
+      return expect(
         'bulb.gif',
         'when piped through',
         pipeline,
@@ -1783,7 +1783,7 @@ describe('impro', () => {
         .addStream(new stream.PassThrough())
         .addStream(erroringStream);
 
-      expect(
+      return expect(
         'bulb.gif',
         'when piped through',
         pipeline,
