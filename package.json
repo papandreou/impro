@@ -51,12 +51,12 @@
     "sharp": "~0.27.0",
     "sinon": "1.17.7",
     "svgfilter": "3.0.0",
-    "unexpected": "10.40.2",
-    "unexpected-dom": "4.13.1",
-    "unexpected-image": "3.1.0",
-    "unexpected-resemble": "4.2.0",
-    "unexpected-sinon": "10.6.0",
-    "unexpected-stream": "4.0.0"
+    "unexpected": "^12.0.1",
+    "unexpected-dom": "^5.0.0",
+    "unexpected-image": "^4.0.0",
+    "unexpected-resemble": "^5.0.0",
+    "unexpected-sinon": "^11.0.1",
+    "unexpected-stream": "^5.0.0"
   },
   "dependencies": {
     "combine-stream": "0.0.4",
