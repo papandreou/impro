@@ -13,13 +13,13 @@ const fs = require('fs');
 
 const testDataPath = pathModule.resolve(__dirname, '..', 'testdata');
 
-const load = memoizeSync((fileName, platformsToOverride) => {
+const fileNameForPlatform = (fileName, platformsToOverride) => {
   if (
     Array.isArray(platformsToOverride) &&
     platformsToOverride.includes(process.platform)
   ) {
     const ext = pathModule.extname(fileName);
-    fileName = [
+    return [
       pathModule.basename(fileName, ext),
       '-',
       process.platform,
@@ -27,10 +27,12 @@ const load = memoizeSync((fileName, platformsToOverride) => {
     ].join('');
   }
 
-  return fs.readFileSync(
-    pathModule.resolve(__dirname, '..', 'testdata', fileName)
-  );
-});
+  return fileName;
+};
+
+const load = memoizeSync((fileName) =>
+  fs.readFileSync(pathModule.resolve(__dirname, '..', 'testdata', fileName))
+);
 
 const loadAsStream = (fileName) =>
   fs.createReadStream(
@@ -90,7 +92,7 @@ describe('impro', () => {
       'when piped through',
       impro.gm().resize(40, 15).crop('center'),
       'to yield output satisfying to resemble',
-      load('turtleCroppedCenterGm.jpg', ['darwin'])
+      load(fileNameForPlatform('turtleCroppedCenterGm.jpg', ['darwin']))
     ));
 
   it('should maintain an array of engines that have been applied', () =>
