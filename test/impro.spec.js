@@ -895,8 +895,8 @@ describe('impro', () => {
       });
     });
 
-    it('should support avif as a source format', async () => {
-      await expect(
+    it('should support avif as a source format', () => {
+      return expect(
         'cosmos_frame12924_yuv420_10bpc_bt2020_pq_q50.avif',
         'when piped through',
         impro.sharp().resize(10, 10).jpeg().flush(),
@@ -908,8 +908,8 @@ describe('impro', () => {
       );
     });
 
-    it('should support avif as a target format', async () => {
-      await expect(
+    it('should support avif as a target format', () => {
+      return expect(
         'turtle.jpg',
         'when piped through',
         impro.sharp().resize(10, 10).avif().flush(),
