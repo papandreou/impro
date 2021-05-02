@@ -6,12 +6,24 @@ const sinon = require('sinon');
 const stream = require('stream');
 
 const impro = require('../');
+const Pipeline = require('../src/Pipeline');
 
 const memoizeSync = require('memoizesync');
 const pathModule = require('path');
 const fs = require('fs');
 
 const testDataPath = pathModule.resolve(__dirname, '..', 'testdata');
+
+const consumeStream = (stream) => {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+
+    stream
+      .on('error', (e) => reject(e))
+      .on('data', (chunk) => chunks.push(chunk))
+      .on('end', () => resolve(Buffer.concat(chunks)));
+  });
+};
 
 const fileNameForPlatform = (fileName, platformsToOverride) => {
   if (
@@ -39,11 +51,31 @@ const loadAsStream = (fileName) =>
     pathModule.resolve(__dirname, '..', 'testdata', fileName)
   );
 
+expect.addType({
+  name: 'Pipeline',
+  base: 'object',
+  getKeys() {
+    return ['options', 'isDisabledByEngineName', 'usedEngines'];
+  },
+  identify(obj) {
+    return obj instanceof Pipeline;
+  },
+  prefix(output) {
+    return output.jsKeyword('Pipeline').text('({');
+  },
+  suffix(output) {
+    return output.text('})');
+  },
+});
+
 expect.addAssertion(
-  '<string> when piped through <Stream> <assertion?>',
-  (expect, subject, ...rest) => {
+  '<string> when piped through <Pipeline> <assertion?>',
+  async (expect, subject, pipeline, ...rest) => {
     expect.errorMode = 'nested';
-    return expect(loadAsStream(subject), 'when piped through', ...rest);
+
+    loadAsStream(subject).pipe(pipeline);
+
+    return expect(pipeline, ...rest);
   }
 );
 
@@ -56,17 +88,53 @@ expect.addAssertion(
 );
 
 expect.addAssertion(
-  '<Stream> to yield JSON output satisfying <any>',
-  (expect, subject, value) =>
+  '<Pipeline> to yield output satisfying <any>',
+  async (expect, subject, value) =>
     expect(
-      subject,
-      'to yield output satisfying when decoded as',
+      await consumeStream(subject),
+      'when decoded as',
       'utf-8',
       'when passed as parameter to',
       JSON.parse,
       'to satisfy',
       value
     )
+);
+
+expect.addAssertion(
+  '<Pipeline> to yield output satisfying <assertion>',
+  async (expect, subject, ...rest) =>
+    expect(await consumeStream(subject), ...rest)
+);
+
+expect.addAssertion(
+  '<Pipeline> to error with <string>',
+  async (expect, subject, value) => {
+    expect.errorMode = 'bubble';
+
+    try {
+      await consumeStream(subject);
+    } catch (e) {
+      return expect(e, 'to have message', value);
+    }
+
+    expect.fail('Pipeline did not error');
+  }
+);
+
+expect.addAssertion(
+  '<Pipeline> to error with <Error|expect.it>',
+  async (expect, subject, value) => {
+    expect.errorMode = 'bubble';
+
+    try {
+      await consumeStream(subject);
+    } catch (e) {
+      return expect(e, 'to satisfy', value);
+    }
+
+    expect.fail('Pipeline did not error');
+  }
 );
 
 describe('impro', () => {
@@ -314,7 +382,7 @@ describe('impro', () => {
         'turtle.jpg',
         'when piped through',
         impro.metadata(),
-        'to yield JSON output satisfying',
+        'to yield output satisfying',
         {
           contentType: 'image/jpeg',
           width: 481,
@@ -331,7 +399,7 @@ describe('impro', () => {
         'exif.jpg',
         'when piped through',
         impro.metadata(),
-        'to yield JSON output satisfying',
+        'to yield output satisfying',
         {
           image: expect.it('to exhaustively satisfy', {
             Make: 'Apple',
@@ -358,7 +426,7 @@ describe('impro', () => {
         'turtle.jpg',
         'when piped through',
         impro.source({ filesize: 105836, etag: 'W/"foobar"' }).metadata(),
-        'to yield JSON output satisfying',
+        'to yield output satisfying',
         {
           contentType: 'image/jpeg',
           filesize: 105836,
@@ -375,7 +443,7 @@ describe('impro', () => {
             sourceMetadata: { filesize: 105836, etag: 'W/"foobar"' },
           })
           .metadata(),
-        'to yield JSON output satisfying',
+        'to yield output satisfying',
         {
           contentType: 'image/jpeg',
           filesize: 105836,
@@ -392,7 +460,7 @@ describe('impro', () => {
           .resize(10, 10)
           .embed('center')
           .metadata(),
-        'to yield JSON output satisfying',
+        'to yield output satisfying',
         {
           contentType: 'image/jpeg',
           filesize: undefined,
@@ -407,7 +475,7 @@ describe('impro', () => {
         'exif.jpg',
         'when piped through',
         impro.type('image/jpeg').metadata(),
-        'to yield JSON output satisfying',
+        'to yield output satisfying',
         {
           contentType: 'image/jpeg',
         }
@@ -418,7 +486,7 @@ describe('impro', () => {
         'something.txt',
         'when piped through',
         impro.type('text/plain; charset=UTF-8').metadata(),
-        'to yield JSON output satisfying',
+        'to yield output satisfying',
         {
           error: 'Input buffer contains unsupported image format',
           contentType: 'text/plain; charset=UTF-8',
@@ -430,7 +498,7 @@ describe('impro', () => {
         'animated.gif',
         'when piped through',
         impro.metadata(),
-        'to yield JSON output satisfying',
+        'to yield output satisfying',
         {
           animated: true,
         }
@@ -441,7 +509,7 @@ describe('impro', () => {
         'bulb.gif',
         'when piped through',
         impro.metadata(),
-        'to yield JSON output satisfying',
+        'to yield output satisfying',
         {
           animated: false,
         }
@@ -454,7 +522,7 @@ describe('impro', () => {
         'turtle.jpg',
         'when piped through',
         improInstance.metadata({ cache: 123 }),
-        'to yield JSON output satisfying',
+        'to yield output satisfying',
         {
           contentType: 'image/jpeg',
         }
@@ -472,7 +540,7 @@ describe('impro', () => {
         'turtle.jpg',
         'when piped through',
         improInstance.createPipeline({ sharpCache: 456 }).metadata(),
-        'to yield JSON output satisfying',
+        'to yield output satisfying',
         {
           contentType: 'image/jpeg',
         }

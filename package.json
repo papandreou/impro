@@ -55,8 +55,7 @@
     "unexpected-dom": "^5.0.0",
     "unexpected-image": "^4.0.0",
     "unexpected-resemble": "^5.0.0",
-    "unexpected-sinon": "^11.0.1",
-    "unexpected-stream": "^5.0.0"
+    "unexpected-sinon": "^11.0.1"
   },
   "dependencies": {
     "combine-stream": "0.0.4",
