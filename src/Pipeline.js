@@ -110,7 +110,7 @@ module.exports = class Pipeline extends Stream.Duplex {
         startIndex = upToIndex;
       } catch (e) {
         if (isStream) {
-          this._fail(e, this.usedEngines.length + 1);
+          this._fail(e, true);
         } else {
           throw e;
         }
@@ -217,7 +217,7 @@ module.exports = class Pipeline extends Stream.Duplex {
           const engineName = this.usedEngines[i].name;
           err.commandLine = `${engineName} ${commandArgs.join(' ')}`;
         }
-        this._fail(err, i);
+        this._fail(err, true);
       });
     }, this);
     this.on('finish', () => this._finish());
@@ -265,7 +265,7 @@ module.exports = class Pipeline extends Stream.Duplex {
     this._streams[this._streams.length - 1].read(size);
   }
 
-  _fail(err, streamIndex = -1) {
+  _fail(err, isErrorFromStream = false) {
     if (this.ended) {
       return;
     }
@@ -298,7 +298,7 @@ module.exports = class Pipeline extends Stream.Duplex {
       filter.on('error', () => {});
     });
 
-    if (streamIndex > -1) {
+    if (isErrorFromStream) {
       // unhook pipeline error handler to avoid re-entry
       this.removeListener('error', this._onError);
       // now signal the error on the pipeline
