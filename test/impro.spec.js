@@ -965,9 +965,22 @@ describe('impro', () => {
       });
     });
 
-    it('should support avif as a source format', () => {
+    it('should support avif 8bit as a source format', () => {
       return expect(
-        'cosmos_frame12924_yuv420_10bpc_bt2020_pq_q50.avif',
+        'Chimera-AV1-8bit-480x270-552kbps-100.avif',
+        'when piped through',
+        impro.sharp().resize(10, 10).jpeg().flush(),
+        'to yield output satisfying to have metadata satisfying',
+        {
+          format: 'JPEG',
+          size: { width: 10 },
+        }
+      );
+    });
+
+    it('should support avif 10bit as a source format', () => {
+      return expect(
+        'Chimera-AV1-10bit-480x270-531kbps-100.avif',
         'when piped through',
         impro.sharp().resize(10, 10).jpeg().flush(),
         'to yield output satisfying to have metadata satisfying',
