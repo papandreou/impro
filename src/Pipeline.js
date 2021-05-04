@@ -6,6 +6,7 @@ module.exports = class Pipeline extends Stream.Duplex {
   constructor(impro, options) {
     super();
 
+    this._flushed = false;
     this._onError = (err) => this._fail(err);
     this._queuedOperations = [];
     this._streams = [];
@@ -14,6 +15,7 @@ module.exports = class Pipeline extends Stream.Duplex {
     this.impro = impro;
     this.isDisabledByEngineName = {};
     this.options = {};
+    this.usedEngines = [];
 
     options = options || {};
     const { type, engines, supportedOptions, sourceMetadata } = options;
@@ -57,7 +59,7 @@ module.exports = class Pipeline extends Stream.Duplex {
     }
 
     this._flushed = true;
-    this.usedEngines = this.usedEngines || [];
+
     let startIndex = 0;
     let lastSelectedEngineName;
     let candidateEngineNames;
@@ -340,7 +342,6 @@ module.exports = class Pipeline extends Stream.Duplex {
   addStream(stream) {
     this._preflush = true;
     this._attach(stream);
-    this.usedEngines = this.usedEngines || [];
     this.usedEngines.push({ name: '_stream' });
     return this;
   }
