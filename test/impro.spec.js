@@ -978,7 +978,8 @@ describe('impro', () => {
       );
     });
 
-    it('should support avif 10bit as a source format', () => {
+    // TODO: reenable once 10bit support is back in sharp pre-built binaries
+    it.skip('should support avif 10bit as a source format', () => {
       return expect(
         'Chimera-AV1-10bit-480x270-531kbps-100.avif',
         'when piped through',
