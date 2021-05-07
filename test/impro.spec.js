@@ -1833,7 +1833,7 @@ describe('impro', () => {
       );
     });
 
-    it('should not break when one arbitrary stream errors', () => {
+    it('should not break on error from an arbitrary stream with one stream', () => {
       const error = new Error('arranged error');
       const erroringStream = new stream.Transform();
       erroringStream._transform = () => {
@@ -1853,7 +1853,7 @@ describe('impro', () => {
       );
     });
 
-    it('should not break when two arbitrary stream errors', () => {
+    it('should not break on error from an arbitrary stream with two streams', () => {
       const error = new Error('arranged error');
       const erroringStream = new stream.Transform();
       erroringStream._transform = () => {
@@ -1875,6 +1875,35 @@ describe('impro', () => {
         expect.it('to equal', error).and('not to have property', 'commandLine')
       );
     });
+  });
+
+  it('should not break on error occurring on the internal passthrough', () => {
+    const error = new Error('arranged error');
+    class UnchangedStream extends stream.Transform {
+      _transform(chunk, encoding, cb) {
+        cb(null, chunk);
+      }
+    }
+
+    const pipeline = impro
+      .createPipeline()
+      .addStream(new UnchangedStream())
+      .addStream(new UnchangedStream())
+      .flush(); // force construstion of the child streams
+
+    const internalPassThroughStream =
+      pipeline._streams[pipeline._streams.length - 1];
+    setImmediate(() => {
+      internalPassThroughStream.emit('error', error);
+    });
+
+    return expect(
+      'bulb.gif',
+      'when piped through',
+      pipeline,
+      'to error with',
+      expect.it('to equal', error).and('not to have property', 'commandLine')
+    );
   });
 
   describe('with a maxOutputPixels setting', () => {

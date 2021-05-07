@@ -200,20 +200,31 @@ module.exports = class Pipeline extends Stream.Duplex {
     _flush(this._queuedOperations.length);
 
     this._queuedOperations = undefined;
-    this._streams.push(new Stream.PassThrough());
+
+    // Account for stream implementation differences by making
+    // sure the stream which interfaces with the Pipeline (i.e.
+    // the Duplex steam ultimate handed out to callers) is also
+    // a 'standard' internal stream.
+    const lastStream = new Stream.PassThrough();
+    lastStream
+      .on('readable', () => this.push(lastStream.read()))
+      .on('end', () => this.push(null))
+      .on('error', (err) => this._fail(err, true));
+    this._streams.push(lastStream);
+
+    // Wire the streams to each other
     this._streams.forEach(function (stream, i) {
-      if (i < this._streams.length - 1) {
-        stream.pipe(this._streams[i + 1]);
-      } else {
-        stream
-          .on('readable', () => this.push(stream.read()))
-          .on('end', () => this.push(null));
+      if (stream === lastStream) {
+        // ignore given it is wired to the pipeline separately
+        return;
       }
+
+      stream.pipe(this._streams[i + 1]);
+
       // protect against filters emitting errors more than once
       stream.once('error', (err) => {
         let commandArgs;
         if (
-          i < this._streams.length - 1 &&
           (commandArgs = err.commandArgs || this.usedEngines[i].commandArgs)
         ) {
           const engineName = this.usedEngines[i].name;
