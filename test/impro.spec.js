@@ -377,6 +377,11 @@ describe('impro', () => {
   });
 
   describe('#metadata', () => {
+    it('should default the output content type to JSON', () =>
+      expect(impro.metadata().flush(), 'to satisfy', {
+        targetContentType: 'application/json; charset=utf-8',
+      }));
+
     it('should produce the metadata of an image as JSON', () =>
       expect(
         'turtle.jpg',

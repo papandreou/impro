@@ -2,10 +2,11 @@ const requireOr = require('require-or');
 const sharp = requireOr('sharp');
 const Stream = require('stream');
 const createAnimatedGifDetector = requireOr('animated-gif-detector');
-const mime = require('mime');
 const exifReader = require('exif-reader');
 const icc = require('icc');
 const _ = require('lodash');
+
+const mime = require('../mime');
 
 module.exports = {
   name: 'metadata',
@@ -69,7 +70,7 @@ module.exports = {
     const alreadyKnownMetadata = {
       format: pipeline.targetType,
       contentType:
-        pipeline.targetContentType || mime.types[pipeline.targetType],
+        pipeline.targetContentType || mime.getType(pipeline.targetType),
     };
     if (pipeline._streams.length === 0) {
       _.extend(alreadyKnownMetadata, pipeline.sourceMetadata);

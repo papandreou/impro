@@ -1,10 +1,5 @@
 const _ = require('lodash');
-const mime = require('mime');
 const Pipeline = require('./Pipeline');
-
-mime.define({
-  'image/vnd.microsoft.icon': ['ico'],
-});
 
 module.exports = class Impro {
   constructor(options) {

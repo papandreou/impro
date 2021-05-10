@@ -1,6 +1,7 @@
 const Stream = require('stream');
-const mime = require('mime');
 const Path = require('path');
+
+const mime = require('./mime');
 
 module.exports = class Pipeline extends Stream.Duplex {
   constructor(impro, options) {
@@ -164,7 +165,7 @@ module.exports = class Pipeline extends Stream.Duplex {
         ) {
           if (this.impro.isTypeByName[operation.name]) {
             this.targetType = operation.name;
-            this.targetContentType = mime.types[operation.name];
+            this.targetContentType = mime.getType(operation.name);
           }
 
           candidateEngineNames = filteredCandidateEngineNames;
@@ -179,7 +180,7 @@ module.exports = class Pipeline extends Stream.Duplex {
           // only then set the new type after the flush.
           if (this.impro.isTypeByName[operation.name]) {
             this.targetType = operation.name;
-            this.targetContentType = mime.types[operation.name];
+            this.targetContentType = mime.getType(operation.name);
           }
 
           lastSelectedEngineName = undefined;
@@ -363,9 +364,9 @@ module.exports = class Pipeline extends Stream.Duplex {
     } else {
       if (this.impro.isTypeByName[type]) {
         this.sourceType = this.targetType = type;
-        this.targetContentType = mime.types[type];
+        this.targetContentType = mime.getType(type);
       } else {
-        const extension = mime.extensions[type.replace(/\s*;.*$/, '')];
+        const extension = mime.getExtension(type);
         if (extension) {
           if (this.impro.isTypeByName[extension]) {
             this.sourceType = this.targetType = extension;
