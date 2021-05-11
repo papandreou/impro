@@ -58,7 +58,6 @@
     "unexpected-sinon": "^11.0.1"
   },
   "dependencies": {
-    "combine-stream": "0.0.4",
     "createerror": "1.1.0",
     "exif-reader": "^1.0.3",
     "icc": "^1.0.0",
