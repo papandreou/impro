@@ -1,6 +1,7 @@
-const requireOr = require('require-or');
-const Gifsicle = requireOr('gifsicle-stream');
 const errors = require('../errors');
+const requireOr = require('../requireOr');
+
+const Gifsicle = requireOr('gifsicle-stream');
 
 function isNumberWithin(num, min, max) {
   return typeof num === 'number' && num >= min && num <= max;

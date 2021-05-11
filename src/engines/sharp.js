@@ -1,6 +1,7 @@
-const requireOr = require('require-or');
-const sharp = requireOr('sharp');
 const errors = require('../errors');
+const requireOr = require('../requireOr');
+
+const sharp = requireOr('sharp');
 
 function isNumberWithin(num, min, max) {
   return typeof num === 'number' && num >= min && num <= max;

@@ -1,12 +1,13 @@
-const requireOr = require('require-or');
-const sharp = requireOr('sharp');
 const Stream = require('stream');
-const createAnimatedGifDetector = requireOr('animated-gif-detector');
 const exifReader = require('exif-reader');
 const icc = require('icc');
 const _ = require('lodash');
 
 const mime = require('../mime');
+const requireOr = require('../requireOr');
+
+const createAnimatedGifDetector = requireOr('animated-gif-detector');
+const sharp = requireOr('sharp');
 
 module.exports = {
   name: 'metadata',

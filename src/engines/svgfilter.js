@@ -1,4 +1,5 @@
-const requireOr = require('require-or');
+const requireOr = require('../requireOr');
+
 const SvgFilter = requireOr('svgfilter');
 
 module.exports = {

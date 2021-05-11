@@ -1,7 +1,9 @@
-const requireOr = require('require-or');
 const Stream = require('stream');
-const gm = requireOr('gm-papandreou');
+
 const errors = require('../errors');
+const requireOr = require('../requireOr');
+
+const gm = requireOr('gm-papandreou');
 
 function createGmOperations(pipeline, operations) {
   const gmOperations = [];

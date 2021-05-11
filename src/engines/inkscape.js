@@ -1,4 +1,5 @@
-const requireOr = require('require-or');
+const requireOr = require('../requireOr');
+
 const Inkscape = requireOr('inkscape');
 
 module.exports = {
