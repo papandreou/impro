@@ -426,7 +426,7 @@ describe('impro', () => {
         }
       ));
 
-    it('should include source metadata provided via the meta method', () =>
+    it('should include source metadata provided via meta method', () =>
       expect(
         'turtle.jpg',
         'when piped through',
@@ -439,7 +439,7 @@ describe('impro', () => {
         }
       ));
 
-    it('should include source metadata provided via the meta method when supplied as a pipeline option', () =>
+    it('should include source metadata provided via pipeline options', () =>
       expect(
         'turtle.jpg',
         'when piped through',
@@ -456,7 +456,7 @@ describe('impro', () => {
         }
       ));
 
-    it('should not include source metadata provided via the meta method when an operation has been performed', () =>
+    it('should not include source metadata when an operation has been performed', () =>
       expect(
         'turtle.jpg',
         'when piped through',

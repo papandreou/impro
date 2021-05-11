@@ -79,7 +79,7 @@ module.exports = {
     duplexStream._read = (size) => {
       sharpInstance.metadata((err, metadata) => {
         if (err) {
-          metadata = _.defaults({ error: err.message }, alreadyKnownMetadata);
+          metadata = { error: err.message };
         }
         if (metadata.format === 'magick') {
           // https://github.com/lovell/sharp/issues/377
