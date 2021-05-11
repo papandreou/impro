@@ -1,5 +1,13 @@
-const _ = require('lodash');
 const Pipeline = require('./Pipeline');
+
+function pickProperties(obj, properties) {
+  if (!obj) return {};
+  const ret = {};
+  for (const property of properties) {
+    ret[property] = obj[property];
+  }
+  return ret;
+}
 
 module.exports = class Impro {
   constructor(options) {
@@ -44,7 +52,7 @@ module.exports = class Impro {
 
     const pipeline = new this._Pipeline(this, {
       ...options,
-      engines: _.pick(options, Object.keys(this.engineByName)), // Allow disabling via createPipeline({<engineName>: false})
+      engines: pickProperties(options, Object.keys(this.engineByName)), // Allow disabling via createPipeline({<engineName>: false})
       supportedOptions: this.supportedOptions,
     });
 

@@ -1,13 +1,21 @@
 const Stream = require('stream');
 const exifReader = require('exif-reader');
 const icc = require('icc');
-const _ = require('lodash');
 
 const mime = require('../mime');
 const requireOr = require('../requireOr');
 
 const createAnimatedGifDetector = requireOr('animated-gif-detector');
 const sharp = requireOr('sharp');
+
+function defaultProperties(obj, source) {
+  for (const key in source) {
+    if (typeof obj[key] === 'undefined') {
+      obj[key] = source[key];
+    }
+  }
+  return obj;
+}
 
 module.exports = {
   name: 'metadata',
@@ -74,7 +82,7 @@ module.exports = {
         pipeline.targetContentType || mime.getType(pipeline.targetType),
     };
     if (pipeline._streams.length === 0) {
-      _.extend(alreadyKnownMetadata, pipeline.sourceMetadata);
+      Object.assign(alreadyKnownMetadata, pipeline.sourceMetadata);
     }
     duplexStream._read = (size) => {
       sharpInstance.metadata((err, metadata) => {
@@ -88,7 +96,7 @@ module.exports = {
           // metadata.format is one of 'jpeg', 'png', 'webp' so this should be safe:
           metadata.contentType = 'image/' + metadata.format;
         }
-        _.defaults(metadata, alreadyKnownMetadata);
+        defaultProperties(metadata, alreadyKnownMetadata);
         if (metadata.exif) {
           let exifData;
           try {
@@ -113,7 +121,7 @@ module.exports = {
               metadata.orientedWidth = metadata.width;
               metadata.orientedHeight = metadata.height;
             }
-            _.defaults(metadata, exifData);
+            defaultProperties(metadata, exifData);
           }
         }
         if (metadata.icc) {
