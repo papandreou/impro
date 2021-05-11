@@ -494,6 +494,7 @@ describe('impro', () => {
         'to yield output satisfying',
         {
           error: 'Input buffer contains unsupported image format',
+          format: expect.it('to be undefined'),
           contentType: 'text/plain; charset=UTF-8',
         }
       ));
