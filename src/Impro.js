@@ -17,7 +17,6 @@ module.exports = class Impro {
     this.isTypeByName = {};
 
     this.supportedOptions = [
-      'defaultEngineName',
       'allowOperation',
       'maxInputPixels',
       'maxOutputPixels',
@@ -26,12 +25,6 @@ module.exports = class Impro {
     ];
 
     this.restrictedOptions = ['svgAssetPath'];
-
-    _.extend(
-      this,
-      { defaultEngineName: Impro.defaultEngineName },
-      _.pick(options, this.supportedOptions)
-    );
 
     this._Pipeline = class extends Pipeline {};
 
@@ -105,7 +98,6 @@ module.exports = class Impro {
       // Will allow all options.operations that don't take any arguments:
       options.validateOperation = () => {};
     }
-    this.defaultEngineName = this.defaultEngineName || engineName;
 
     this.engineByName[options.name] = options;
     this.registerMethod(engineName);
