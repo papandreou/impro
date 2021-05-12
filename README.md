@@ -11,6 +11,29 @@ select the correct conversion library to perform the job itself.
 
 Support for the following libraries is included:
 
+<!-- evaldown hide:true,console:true -->
+
+```js
+const pkg = require('./package.json');
+
+const engineLibs = Object.keys(require('./src/engines')).filter(
+  (name) => name !== 'metadata'
+);
+
+const engineNameToDepName = {
+  gm: 'gm-papandreou',
+};
+
+for (const engineLib of engineLibs) {
+  const depName = engineNameToDepName[engineLib] || engineLib;
+  let depVersion = pkg.devDependencies[depName];
+  if (!/^[~^]/.test(depVersion)) depVersion = `^${depVersion}`;
+  console.log(`- ${engineLib} (npm install ${depName}@${depVersion})`);
+}
+```
+
+<!-- evaldown output:true -->
+
 ```
 - gifsicle (npm install gifsicle-stream@^1.0.0)
 - gm (npm install gm-papandreou@^1.23.0-patch1)
@@ -101,6 +124,8 @@ method. Above, the `.jpeg()` is a conversion operation to the JPEG type.
 Let's look at another example:
 
 ```js
+const impro = require('impro');
+
 impro
   .createPipeline({ type: 'png' })
   .grayscale()
@@ -124,6 +149,8 @@ of the arguments (zero or more) that are provided to it. These operations
 are placed in an array and can be passed directly when creating a pipeline:
 
 ```js
+const impro = require('impro');
+
 const pipeline = impro.createPipeline({ type: 'png' }, [
   { name: 'grayscale', args: [] },
   { name: 'resize', args: [100, 100] },

@@ -18,10 +18,11 @@
   ],
   "scripts": {
     "coverage": "nyc --reporter=lcov --reporter=text -- npm test && echo Coverage Report written to coverage/lcov-report/index.html",
+    "docs": "evaldown --inplace README.md",
     "test": "mocha",
     "lint": "eslint . && prettier --check '**/*.{js,json,md}'",
     "clean": "rm -rf lib coverage .nyc_output",
-    "version": "offline-github-changelog --next=${npm_new_version} > CHANGELOG.md && git add CHANGELOG.md"
+    "version": "npm run docs && git add README.md && offline-github-changelog --next=${npm_new_version} > CHANGELOG.md && git add CHANGELOG.md"
   },
   "devDependencies": {
     "animated-gif-detector": "1.2.0",
@@ -34,9 +35,11 @@
     "eslint-plugin-prettier": "^3.3.0",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^5.0.0",
+    "evaldown": "^2.0.0",
     "file-type": "^12.3.0",
     "gifsicle": "^5.3.0",
     "gm-papandreou": "1.23.0-patch1",
+    "impro": "file:./",
     "inkscape": "3.0.0",
     "jpegtran": "2.0.0",
     "memoizesync": "^1.1.1",
