@@ -1,3 +1,12 @@
+### v0.10.0 (2021-05-12)
+
+- [Update the supported list of libraries with versions.](https://github.com/papandreou/impro/commit/a685fe5162a94496adcc53956b95c5cda262175a) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Bump svgfilter to 4.1.0.](https://github.com/papandreou/impro/commit/a664793ddd38d2141a73ba7d6e42fffd7141d181) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Statically define exports in the engines index file.](https://github.com/papandreou/impro/commit/2fb6b001f142342818a3d4ef69babbd5879fdcaa) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Bump memoizesync to 1.1.1 and set caret version.](https://github.com/papandreou/impro/commit/7c09e7cde3b9aed7d0b0a0f8bc5d3b37bd93ff13) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Bump jpegtran to 2.0.0.](https://github.com/papandreou/impro/commit/e625663633de21d41b5eed14d141c425bfaeac4e) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [+21 more](https://github.com/papandreou/impro/compare/v0.9.0...v0.10.0)
+
 ### v0.9.0 (2021-01-20)
 
 - [Bump timeout in an attempt to fix CI.](https://github.com/papandreou/impro/commit/e8076bbca73ae3be34b21e35802160f92b319b41) ([Alex J Burke](mailto:alex@alexjeffburke.com))
