@@ -1,3 +1,7 @@
+### v0.11.0 (2021-09-21)
+
+- [#5](https://github.com/papandreou/impro/pull/5) Added support for configuring 'failOnError' for Sharp engine ([Priyank Parashar](mailto:paras20xx@gmail.com))
+
 ### v0.10.0 (2021-05-12)
 
 - [Update the supported list of libraries with versions.](https://github.com/papandreou/impro/commit/a685fe5162a94496adcc53956b95c5cda262175a) ([Alex J Burke](mailto:alex@alexjeffburke.com))
