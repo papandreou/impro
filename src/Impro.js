@@ -30,6 +30,7 @@ module.exports = class Impro {
       'maxOutputPixels',
       'sharpCache',
       'svgAssetPath',
+      'sharpFailOnError',
     ];
 
     this.restrictedOptions = ['svgAssetPath'];

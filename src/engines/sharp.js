@@ -158,6 +158,16 @@ module.exports = {
     options = options ? { ...options } : {};
     const impro = pipeline.impro;
     const cache = pipeline.options.sharpCache || options.cache;
+    const failOnError = (() => {
+      // TODO: Switch to using "Nullish coalescing operator (??)" once only Node.js 14 onwards are supported
+      if (typeof pipeline.options.sharpFailOnError !== 'undefined') {
+        return pipeline.options.sharpFailOnError;
+      } else if (typeof options.failOnError !== 'undefined') {
+        return options.failOnError;
+      } else {
+        return true;
+      }
+    })();
     // Would make sense to move the _sharpCacheSet property to the type, but that breaks some test scenarios:
     if (cache !== 'undefined' && !impro._sharpCacheSet) {
       sharp.cache(cache);
@@ -280,7 +290,7 @@ module.exports = {
     });
 
     // ensure at least one option is present
-    options = { failOnError: true, ...options };
+    options = { failOnError, ...options };
 
     if (pipeline.options.maxInputPixels) {
       options.limitInputPixels = pipeline.options.maxInputPixels;
