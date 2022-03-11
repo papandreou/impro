@@ -1024,7 +1024,7 @@ describe('impro', () => {
         'to yield ascii output satisfying',
         'to match',
         // eslint-disable-next-line no-control-regex
-        /^\x00{3}\x18ftypavif/
+        /^\x00{3}\x1cftypavif/
       );
     });
   });
