@@ -156,11 +156,15 @@ describe('impro', () => {
 
   it('should allow an image engine to be explicitly selected', () =>
     expect(
-      'turtle.jpg',
-      'when piped through',
-      impro.gm().resize(40, 15).crop('center'),
-      'to yield output satisfying to resemble',
-      load(fileNameForPlatform('turtleCroppedCenterGm.jpg', ['darwin']))
+      impro.inkscape().eps().flush().usedEngines,
+      'to exhaustively satisfy',
+      [
+        {
+          name: 'inkscape',
+          operations: [{ name: 'eps', args: [], engineName: 'inkscape' }],
+          commandArgs: null,
+        },
+      ]
     ));
 
   it('should maintain an array of engines that have been applied', () =>
@@ -1112,6 +1116,20 @@ describe('impro', () => {
   });
 
   describe('with the gm engine', () => {
+    it('should output as a jpeg', () =>
+      expect(
+        'turtle.jpg',
+        'when piped through',
+        impro.gm().resize(40, 15).crop('center'),
+        'to yield output satisfying',
+        expect
+          .it('to have mime type', 'image/jpeg')
+          .and(
+            'to resemble',
+            load(fileNameForPlatform('turtleCroppedCenterGm.jpg', ['darwin']))
+          )
+      ));
+
     it('should output as a tiff', () =>
       expect(
         'bulb.gif',
@@ -1124,7 +1142,7 @@ describe('impro', () => {
 
     it('should output as a tga', () =>
       expect(
-        'turtle.jpg',
+        'dialog-information.png',
         'when piped through',
         impro.gm().tga(),
         'to yield output satisfying',
@@ -1881,35 +1899,35 @@ describe('impro', () => {
         expect.it('to equal', error).and('not to have property', 'commandLine')
       );
     });
-  });
 
-  it('should not break on error occurring on the internal passthrough', () => {
-    const error = new Error('arranged error');
-    class UnchangedStream extends stream.Transform {
-      _transform(chunk, encoding, cb) {
-        cb(null, chunk);
+    it('should not break on error occurring on the internal passthrough', () => {
+      const error = new Error('arranged error');
+      class UnchangedStream extends stream.Transform {
+        _transform(chunk, encoding, cb) {
+          cb(null, chunk);
+        }
       }
-    }
 
-    const pipeline = impro
-      .createPipeline()
-      .addStream(new UnchangedStream())
-      .addStream(new UnchangedStream())
-      .flush(); // force construstion of the child streams
+      const pipeline = impro
+        .createPipeline()
+        .addStream(new UnchangedStream())
+        .addStream(new UnchangedStream())
+        .flush(); // force construstion of the child streams
 
-    const internalPassThroughStream =
-      pipeline._streams[pipeline._streams.length - 1];
-    setImmediate(() => {
-      internalPassThroughStream.emit('error', error);
+      const internalPassThroughStream =
+        pipeline._streams[pipeline._streams.length - 1];
+      setImmediate(() => {
+        internalPassThroughStream.emit('error', error);
+      });
+
+      return expect(
+        'bulb.gif',
+        'when piped through',
+        pipeline,
+        'to error with',
+        expect.it('to equal', error).and('not to have property', 'commandLine')
+      );
     });
-
-    return expect(
-      'bulb.gif',
-      'when piped through',
-      pipeline,
-      'to error with',
-      expect.it('to equal', error).and('not to have property', 'commandLine')
-    );
   });
 
   describe('with a maxOutputPixels setting', () => {
