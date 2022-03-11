@@ -14,14 +14,24 @@ const fs = require('fs');
 
 const testDataPath = pathModule.resolve(__dirname, '..', 'testdata');
 
-const consumeStream = (stream) => {
+const consumeStream = (stream, encoding) => {
   return new Promise((resolve, reject) => {
     const chunks = [];
 
     stream
       .on('error', (e) => reject(e))
       .on('data', (chunk) => chunks.push(chunk))
-      .on('end', () => resolve(Buffer.concat(chunks)));
+      .on('end', () => {
+        const buffer = Buffer.concat(chunks);
+        if (!encoding) resolve(buffer);
+        let convertedBuffer;
+        try {
+          convertedBuffer = buffer.toString(encoding);
+        } catch (e) {
+          reject(new Error(`unable to decode buffer as ${encoding}`));
+        }
+        resolve(convertedBuffer);
+      });
   });
 };
 
@@ -88,23 +98,26 @@ expect.addAssertion(
 );
 
 expect.addAssertion(
-  '<Pipeline> to yield output satisfying <any>',
-  async (expect, subject, value) =>
-    expect(
-      await consumeStream(subject),
-      'when decoded as',
-      'utf-8',
-      'when passed as parameter to',
-      JSON.parse,
-      'to satisfy',
-      value
-    )
+  '<Pipeline> to yield (|ascii|utf8) output satisfying <assertion>',
+  async (expect, subject, ...rest) => {
+    const encoding = expect.alternations ? expect.alternations[0] : undefined;
+    expect.errorMode = 'bubble';
+    return expect(await consumeStream(subject, encoding), ...rest);
+  }
 );
 
 expect.addAssertion(
-  '<Pipeline> to yield output satisfying <assertion>',
-  async (expect, subject, ...rest) =>
-    expect(await consumeStream(subject), ...rest)
+  '<Pipeline> to yield json output satisfying <object>',
+  async (expect, subject, value) => {
+    let jsonObject;
+    try {
+      jsonObject = JSON.parse(await consumeStream(subject, 'utf8'));
+    } catch (e) {
+      throw new Error('unable to parse buffer as JSON');
+    }
+    expect.errorMode = 'bubble';
+    expect(jsonObject, 'to satisfy', value);
+  }
 );
 
 expect.addAssertion(
@@ -391,7 +404,7 @@ describe('impro', () => {
         'turtle.jpg',
         'when piped through',
         impro.metadata(),
-        'to yield output satisfying',
+        'to yield json output satisfying',
         {
           contentType: 'image/jpeg',
           width: 481,
@@ -408,7 +421,7 @@ describe('impro', () => {
         'exif.jpg',
         'when piped through',
         impro.metadata(),
-        'to yield output satisfying',
+        'to yield json output satisfying',
         {
           image: expect.it('to exhaustively satisfy', {
             Make: 'Apple',
@@ -435,7 +448,7 @@ describe('impro', () => {
         'turtle.jpg',
         'when piped through',
         impro.source({ filesize: 105836, etag: 'W/"foobar"' }).metadata(),
-        'to yield output satisfying',
+        'to yield json output satisfying',
         {
           contentType: 'image/jpeg',
           filesize: 105836,
@@ -452,7 +465,7 @@ describe('impro', () => {
             sourceMetadata: { filesize: 105836, etag: 'W/"foobar"' },
           })
           .metadata(),
-        'to yield output satisfying',
+        'to yield json output satisfying',
         {
           contentType: 'image/jpeg',
           filesize: 105836,
@@ -469,7 +482,7 @@ describe('impro', () => {
           .resize(10, 10)
           .embed('center')
           .metadata(),
-        'to yield output satisfying',
+        'to yield json output satisfying',
         {
           contentType: 'image/jpeg',
           filesize: undefined,
@@ -484,7 +497,7 @@ describe('impro', () => {
         'exif.jpg',
         'when piped through',
         impro.type('image/jpeg').metadata(),
-        'to yield output satisfying',
+        'to yield json output satisfying',
         {
           contentType: 'image/jpeg',
         }
@@ -495,7 +508,7 @@ describe('impro', () => {
         'something.txt',
         'when piped through',
         impro.type('text/plain; charset=UTF-8').metadata(),
-        'to yield output satisfying',
+        'to yield json output satisfying',
         {
           error: 'Input buffer contains unsupported image format',
           format: expect.it('to be undefined'),
@@ -508,7 +521,7 @@ describe('impro', () => {
         'animated.gif',
         'when piped through',
         impro.metadata(),
-        'to yield output satisfying',
+        'to yield json output satisfying',
         {
           animated: true,
         }
@@ -519,7 +532,7 @@ describe('impro', () => {
         'bulb.gif',
         'when piped through',
         impro.metadata(),
-        'to yield output satisfying',
+        'to yield json output satisfying',
         {
           animated: false,
         }
@@ -532,7 +545,7 @@ describe('impro', () => {
         'turtle.jpg',
         'when piped through',
         improInstance.metadata({ cache: 123 }),
-        'to yield output satisfying',
+        'to yield json output satisfying',
         {
           contentType: 'image/jpeg',
         }
@@ -546,11 +559,12 @@ describe('impro', () => {
     it('should allow passing a sharpCache option to the pipeline', function () {
       const cacheSpy = sinon.spy(require('sharp'), 'cache');
       const improInstance = new impro.Impro().use(impro.engines.metadata);
+
       return expect(
         'turtle.jpg',
         'when piped through',
         improInstance.createPipeline({ sharpCache: 456 }).metadata(),
-        'to yield output satisfying',
+        'to yield json output satisfying',
         {
           contentType: 'image/jpeg',
         }
@@ -1007,9 +1021,7 @@ describe('impro', () => {
         'turtle.jpg',
         'when piped through',
         impro.sharp().resize(10, 10).avif().flush(),
-        'to yield output satisfying',
-        'when decoded as',
-        'ascii',
+        'to yield ascii output satisfying',
         'to match',
         // eslint-disable-next-line no-control-regex
         /^\x00{3}\x18ftypavif/
@@ -1374,8 +1386,7 @@ describe('impro', () => {
           runScript: 'addBogusElement.js',
           bogusElementId: 'theBogusElementId',
         }),
-        'to yield output satisfying when decoded as',
-        'utf-8',
+        'to yield utf8 output satisfying',
         'when parsed as XML queried for first',
         'bogus',
         'to satisfy',
@@ -1402,8 +1413,7 @@ describe('impro', () => {
             },
           ]
         ),
-        'to yield output satisfying when decoded as',
-        'utf-8',
+        'to yield utf8 output satisfying',
         'when parsed as XML queried for first',
         'bogus',
         'to satisfy',
@@ -1726,7 +1736,9 @@ describe('impro', () => {
         impro.pngcrush().rem('gAMA'),
         'to yield output satisfying',
         expect
-          .it('when decoded as', 'ascii', 'not to match', /gAMA/)
+          .it((buffer) =>
+            expect(buffer.toString('ascii'), 'not to match', /gAMA/)
+          )
           .and('to satisfy', {
             length: expect.it('to be greater than', 0),
           })
