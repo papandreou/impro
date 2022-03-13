@@ -9,6 +9,7 @@ module.exports = class Pipeline extends Stream.Duplex {
 
     this._flushed = false;
     this._onError = (err) => this._fail(err);
+    this._preflush = false;
     this._queuedOperations = [];
     this._streams = [];
 
