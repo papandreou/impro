@@ -250,9 +250,16 @@ describe('impro', () => {
   });
 
   describe('#createPipeline', () => {
-    it('should allow directly setting an output type option', () => {
+    it('should return a pipeline object', () => {
       const customImpro = new impro.Impro().use(impro.engines.gifsicle);
       const pipeline = customImpro.createPipeline({ type: 'gif' }).flush();
+
+      expect(pipeline, 'to be a', Pipeline);
+    });
+
+    it('should allow directly setting an output type option', () => {
+      const customImpro = new impro.Impro().use(impro.engines.gifsicle);
+      const pipeline = customImpro.createPipeline({ type: 'gif' });
 
       expect(pipeline, 'to satisfy', {
         sourceType: 'gif',
@@ -261,17 +268,15 @@ describe('impro', () => {
       });
     });
 
-    it('should process and execute instructions when passed an array of operation objects', () =>
-      expect(
-        'turtle.jpg',
-        'when piped through',
-        impro.createPipeline([
-          { name: 'resize', args: [40, 15] },
-          { name: 'crop', args: ['center'] },
-        ]),
-        'to yield output satisfying to resemble',
-        load('turtleCroppedCenter.jpg')
-      ));
+    it('should allow directly setting an array of operation objects', () => {
+      const operations = [
+        { name: 'resize', args: [40, 15] },
+        { name: 'crop', args: ['center'] },
+      ];
+      const pipeline = impro.createPipeline(operations);
+
+      expect(pipeline._queuedOperations, 'to equal', operations);
+    });
 
     it('should throw if the operations definition is not supported', () =>
       expect(
@@ -280,6 +285,18 @@ describe('impro', () => {
         },
         'to throw',
         'Pipeline creation can only be supplied an operations array'
+      ));
+
+    it('should default to the sharp engine when flushing operations', () =>
+      expect(
+        impro
+          .createPipeline(null, [
+            { name: 'resize', args: [40, 15] },
+            { name: 'crop', args: ['center'] },
+          ])
+          .flush().usedEngines,
+        'to satisfy',
+        [{ name: 'sharp' }]
       ));
 
     it('should throw when flushing unsupported operations', () =>
@@ -291,15 +308,6 @@ describe('impro', () => {
         },
         'to throw',
         'No supported engine can carry out this sequence of operations'
-      ));
-
-    it('should throw early from the chaining interface on an unsupported operation', () =>
-      expect(
-        () => {
-          impro.createPipeline({}).crop();
-        },
-        'to throw',
-        'invalid operation or arguments: crop=[]'
       ));
   });
 
@@ -366,13 +374,13 @@ describe('impro', () => {
   });
 
   describe('when adding the processing instructions via individual method calls', () => {
-    it('should return a duplex stream that executes the processing instructions', () =>
+    it('should throw early from the chaining interface on an unsupported arguments', () =>
       expect(
-        'turtle.jpg',
-        'when piped through',
-        impro.resize(40, 15).crop('center'),
-        'to yield output satisfying to resemble',
-        load('turtleCroppedCenter.jpg')
+        () => {
+          impro.createPipeline({}).crop();
+        },
+        'to throw',
+        'invalid operation or arguments: crop=[]'
       ));
   });
 
@@ -577,6 +585,15 @@ describe('impro', () => {
   });
 
   describe('with the sharp engine', () => {
+    it('should return a duplex stream that executes the processing instructions', () =>
+      expect(
+        'turtle.jpg',
+        'when piped through',
+        impro.sharp().resize(40, 15).crop('center'),
+        'to yield output satisfying to resemble',
+        load('turtleCroppedCenter.jpg')
+      ));
+
     it('should allow passing a cache option', function () {
       const cacheSpy = sinon.spy(require('sharp'), 'cache');
       const improInstance = new impro.Impro().use(impro.engines.sharp);
@@ -584,10 +601,9 @@ describe('impro', () => {
         'turtle.jpg',
         'when piped through',
         improInstance.sharp({ cache: 123 }).resize(10, 10),
-        'to yield output satisfying to have metadata satisfying',
-        {
-          format: 'JPEG',
-        }
+        'to yield output satisfying',
+        'to have mime type',
+        'image/jpeg'
       ).then(() => {
         expect(cacheSpy, 'to have calls satisfying', () => {
           cacheSpy(123);
@@ -602,10 +618,9 @@ describe('impro', () => {
         'turtle.jpg',
         'when piped through',
         improInstance.createPipeline({ sharpCache: 456 }).resize(10, 10),
-        'to yield output satisfying to have metadata satisfying',
-        {
-          format: 'JPEG',
-        }
+        'to yield output satisfying',
+        'to have mime type',
+        'image/jpeg'
       ).then(() => {
         expect(cacheSpy, 'to have calls satisfying', () => {
           cacheSpy(456);
@@ -625,10 +640,9 @@ describe('impro', () => {
         'turtle.jpg',
         'when piped through',
         pipeline,
-        'to yield output satisfying to have metadata satisfying',
-        {
-          format: 'JPEG',
-        }
+        'to yield output satisfying',
+        'to have mime type',
+        'image/jpeg'
       ).then(() => {
         expect(sharpSpy, 'to have calls satisfying', [
           [{ sequentialRead: true }],
@@ -664,20 +678,18 @@ describe('impro', () => {
         'turtle.jpg',
         'when piped through',
         improInstance.sharp({ cache: 123 }).type('jpeg').resize(10, 10),
-        'to yield output satisfying to have metadata satisfying',
-        {
-          format: 'JPEG',
-        }
+        'to yield output satisfying',
+        'to have mime type',
+        'image/jpeg'
       )
         .then(() =>
           expect(
             'turtle.jpg',
             'when piped through',
             impro.sharp({ cache: 123 }).type('jpeg').resize(10, 10),
-            'to yield output satisfying to have metadata satisfying',
-            {
-              format: 'JPEG',
-            }
+            'to yield output satisfying',
+            'to have mime type',
+            'image/jpeg'
           )
         )
         .then(() =>
@@ -1128,21 +1140,26 @@ describe('impro', () => {
   });
 
   describe('with the gm engine', () => {
-    it('should output as a jpeg', () =>
+    it('should return a duplex stream that executes the processing instructions', () =>
       expect(
         'turtle.jpg',
         'when piped through',
         impro.gm().resize(40, 15).crop('center'),
-        'to yield output satisfying',
-        expect
-          .it('to have mime type', 'image/jpeg')
-          .and(
-            'to resemble',
-            load(fileNameForPlatform('turtleCroppedCenterGm.jpg', ['darwin']))
-          )
+        'to yield output satisfying to resemble',
+        load(fileNameForPlatform('turtleCroppedCenterGm.jpg', ['darwin']))
       ));
 
-    it('should output as a tiff', () =>
+    it('should output an image/gif as a jpeg', () =>
+      expect(
+        'bulb.gif',
+        'when piped through',
+        impro.gm().jpeg(),
+        'to yield output satisfying',
+        'to have mime type',
+        'image/jpeg'
+      ));
+
+    it('should output an image/gif as a tiff', () =>
       expect(
         'bulb.gif',
         'when piped through',
@@ -1152,7 +1169,7 @@ describe('impro', () => {
         'image/tiff'
       ));
 
-    it('should output as a tga', () =>
+    it('should output an image/png as a tga', () =>
       expect(
         'dialog-information.png',
         'when piped through',
@@ -1167,9 +1184,8 @@ describe('impro', () => {
         'when piped through',
         impro.type('image/x-icon').gm().png(),
         'to yield output satisfying',
-        expect.it('to have metadata satisfying', {
-          format: 'PNG',
-        })
+        'to have mime type',
+        'image/png'
       ));
 
     it('should output an image/vnd.microsoft.icon as a png', () =>
@@ -1178,9 +1194,8 @@ describe('impro', () => {
         'when piped through',
         impro.type('image/vnd.microsoft.icon').gm().png(),
         'to yield output satisfying',
-        expect.it('to have metadata satisfying', {
-          format: 'PNG',
-        })
+        'to have mime type',
+        'image/png'
       ));
 
     it('should support crop', () => {
