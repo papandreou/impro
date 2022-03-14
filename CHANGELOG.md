@@ -1,3 +1,12 @@
+### v0.12.0 (2022-03-14)
+
+- [Continued test cleanup work.](https://github.com/papandreou/impro/commit/09ce6bc5793c136bbfa71eec6b8cdae619e87f8d) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Declare extra instance variable for type stability missed in 418cccb.](https://github.com/papandreou/impro/commit/718eb91cc00388187d737f8a03adc8c0045ef7ae) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Update sharp to ~0.29.0](https://github.com/papandreou/impro/commit/4507dbee679a06acec54fe8340f40fbb911ee81d) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Drop node 10 support](https://github.com/papandreou/impro/commit/ceb5c8716e7670183ad63affcee9028f3529ad27) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Collapse multiple levels of expect indirection when decoding buffers.](https://github.com/papandreou/impro/commit/2839d0b12c5cb9fa98dae20a27c371354f8f4450) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [+2 more](https://github.com/papandreou/impro/compare/v0.11.0...v0.12.0)
+
 ### v0.11.0 (2021-09-21)
 
 - [#5](https://github.com/papandreou/impro/pull/5) Added support for configuring 'failOnError' for Sharp engine ([Priyank Parashar](mailto:paras20xx@gmail.com))
