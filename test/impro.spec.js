@@ -949,6 +949,29 @@ describe('impro', () => {
       ]);
     });
 
+    it('should throw on withoutReduction without resize', () =>
+      expect(
+        () => {
+          impro.withoutReduction().flush();
+        },
+        'to throw',
+        'sharp: withoutReduction() operation must follow resize'
+      ));
+
+    it('should support withoutReduction', () => {
+      return expect(
+        'turtle.jpg',
+        'when piped through',
+        impro.resize(10, 10).withoutReduction(),
+        'to yield output satisfying',
+        'to have metadata satisfying',
+        {
+          format: 'JPEG',
+          size: { width: 481, height: 424 }, // unchanged
+        }
+      );
+    });
+
     it('should throw on ignoreAspectRatio without resize', () =>
       expect(
         () => {
@@ -1258,6 +1281,16 @@ describe('impro', () => {
       ]);
     });
 
+    it('should support withoutReduction', () => {
+      const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
+
+      impro.gm().resize(10, 10).withoutReduction().flush();
+
+      return expect(executeSpy.returnValues[0], 'to equal', [
+        { name: 'resize', args: [10, 10, '<'] },
+      ]);
+    });
+
     it('should support ignoreAspectRatio', () => {
       const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
 
@@ -1290,6 +1323,22 @@ describe('impro', () => {
       ).finally(() => {
         gmEngine.execute = origExecute;
         gmEngine.outputTypes.splice(gmEngine.outputTypes.length - 1, 1);
+      });
+    });
+
+    describe('with executed conversions', () => {
+      it('should support withoutReduction', () => {
+        return expect(
+          'turtle.jpg',
+          'when piped through',
+          impro.gm().resize(10, 10).withoutReduction(),
+          'to yield output satisfying',
+          'to have metadata satisfying',
+          {
+            format: 'JPEG',
+            size: { width: 481, height: 424 }, // unchanged
+          }
+        );
       });
     });
 

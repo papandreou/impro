@@ -28,6 +28,7 @@ const optionsToOutputType = {
 };
 const optionsToResize = {
   withoutEnlargement: () => ({ withoutEnlargement: true }),
+  withoutReduction: () => ({ withoutReduction: true }),
   ignoreAspectRatio: () => ({ fit: 'fill' }),
 };
 const variationsToResize = {
@@ -53,6 +54,7 @@ module.exports = {
     'flip',
     'flop',
     'withoutEnlargement',
+    'withoutReduction',
     'ignoreAspectRatio',
     'blur',
     'sharpen',

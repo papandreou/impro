@@ -10,6 +10,7 @@ function createGmOperations(pipeline, operations) {
   let resize;
   let crop;
   let withoutEnlargement;
+  let withoutReduction;
   let ignoreAspectRatio;
 
   for (const requestedOperation of operations) {
@@ -21,6 +22,9 @@ function createGmOperations(pipeline, operations) {
       crop = operation;
     } else if (operation.name === 'withoutEnlargement') {
       withoutEnlargement = operation;
+      continue;
+    } else if (operation.name === 'withoutReduction') {
+      withoutReduction = operation;
       continue;
     } else if (operation.name === 'ignoreAspectRatio') {
       ignoreAspectRatio = operation;
@@ -92,6 +96,9 @@ function createGmOperations(pipeline, operations) {
   if (withoutEnlargement && resize) {
     resize.args[2] = '>';
   }
+  if (withoutReduction && resize) {
+    resize.args[2] = '<';
+  }
   if (ignoreAspectRatio && resize) {
     resize.args[2] = '!';
   }
@@ -121,6 +128,7 @@ module.exports = {
         'extract',
         'progressive',
         'withoutEnlargement',
+        'withoutReduction',
         'ignoreAspectRatio',
       ].concat(
         Object.keys(gm.prototype).filter(
@@ -136,6 +144,7 @@ module.exports = {
     switch (name) {
       // Operations that emulate sharp's API:
       case 'withoutEnlargement':
+      case 'withoutReduction':
       case 'ignoreAspectRatio':
       case 'progressive':
         return args.length === 0;
