@@ -219,30 +219,10 @@ describe('impro', () => {
       targetContentType: undefined,
     }));
 
-  describe('when passed an object', () => {
-    it('should interpret unsupported properties as source metadata', () => {
-      expect(impro.source({ foo: 'bar' }).sourceMetadata, 'to equal', {
-        foo: 'bar',
-      });
-    });
-
-    it('should support a type property', () => {
-      expect(impro.type('gif').targetContentType, 'to equal', 'image/gif');
-    });
-
-    it('should support a type property that is a full Content-Type', () => {
-      expect(
-        impro.type('image/gif').targetContentType,
-        'to equal',
-        'image/gif'
-      );
-    });
-  });
-
   describe('#createPipeline', () => {
     it('should return a pipeline object', () => {
       const customImpro = new impro.Impro().use(impro.engines.gifsicle);
-      const pipeline = customImpro.createPipeline({ type: 'gif' }).flush();
+      const pipeline = customImpro.createPipeline().flush();
 
       expect(pipeline, 'to be a', Pipeline);
     });
@@ -261,9 +241,20 @@ describe('impro', () => {
       });
     });
 
-    it('should allow directly setting an output type option', () => {
+    it('should allow directly setting a type option', () => {
       const customImpro = new impro.Impro().use(impro.engines.gifsicle);
       const pipeline = customImpro.createPipeline({ type: 'gif' });
+
+      expect(pipeline, 'to satisfy', {
+        sourceType: 'gif',
+        targetType: 'gif',
+        targetContentType: 'image/gif',
+      });
+    });
+
+    it('should allow directly setting a type option that is a full Content-Type', () => {
+      const customImpro = new impro.Impro().use(impro.engines.gifsicle);
+      const pipeline = customImpro.createPipeline({ type: 'image/gif' });
 
       expect(pipeline, 'to satisfy', {
         sourceType: 'gif',
@@ -386,6 +377,28 @@ describe('impro', () => {
         'to throw',
         'invalid operation or arguments: crop=[]'
       ));
+
+    it('should interpret unsupported properties as source metadata', () => {
+      expect(impro.source({ foo: 'bar' }).sourceMetadata, 'to equal', {
+        foo: 'bar',
+      });
+    });
+
+    it('should support a type property', () => {
+      expect(impro.type('gif'), 'to satisfy', {
+        sourceType: 'gif',
+        targetType: 'gif',
+        targetContentType: 'image/gif',
+      });
+    });
+
+    it('should support a type property that is a full Content-Type', () => {
+      expect(impro.type('image/gif'), 'to satisfy', {
+        sourceType: 'gif',
+        targetType: 'gif',
+        targetContentType: 'image/gif',
+      });
+    });
   });
 
   describe('when given a source content type', () => {
@@ -400,6 +413,7 @@ describe('impro', () => {
 
     it('should honor an explicit type conversion', () =>
       expect(impro.type('image/jpeg').gif().flush(), 'to satisfy', {
+        sourceType: 'jpeg',
         targetType: 'gif',
         targetContentType: 'image/gif',
       }));
