@@ -399,17 +399,25 @@ module.exports = class Pipeline extends Stream.Duplex {
     if (typeof type !== 'string') {
       throw new Error('Type must be given as a string');
     } else {
+      let targetType = null;
+      let targetContentType = null;
       if (this.impro.isTypeByName[type]) {
-        this.sourceType = this.targetType = type;
-        this.targetContentType = mime.getType(type);
+        targetType = type;
+        targetContentType = mime.getType(type);
       } else {
         const extension = mime.getExtension(type);
         if (extension) {
           if (this.impro.isTypeByName[extension]) {
-            this.sourceType = this.targetType = extension;
+            targetType = extension;
           }
-          this.targetContentType = type;
+          targetContentType = type;
         }
+      }
+      if (targetType !== null) {
+        this.sourceType = this.targetType = targetType;
+      }
+      if (targetContentType !== null) {
+        this.targetContentType = targetContentType;
       }
     }
     return this;
