@@ -1,3 +1,10 @@
+### v0.13.0 (2022-03-15)
+
+- [Fix sharp library version listed in README.](https://github.com/papandreou/impro/commit/f3efe3b08b6da97431480449b8504b6973a8a772) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Add support for withoutReduction operation.](https://github.com/papandreou/impro/commit/a48b366bf4c2c3c2c177f219143a828b546bb85b) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Update sharp to ~0.30.0](https://github.com/papandreou/impro/commit/728a44c363c246fec41e1b438649bf013e46797e) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Remove broken badge from README and fix a spelling mistake.](https://github.com/papandreou/impro/commit/fb3cc65e5bbe46c8d66686bd4d995afb63e872a6) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+
 ### v0.12.0 (2022-03-14)
 
 - [Continued test cleanup work.](https://github.com/papandreou/impro/commit/09ce6bc5793c136bbfa71eec6b8cdae619e87f8d) ([Alex J Burke](mailto:alex@alexjeffburke.com))
