@@ -5,7 +5,6 @@ An image processing engine integrating multiple conversion libraries.
 [![NPM version](https://badge.fury.io/js/impro.svg)](http://badge.fury.io/js/impro)
 [![Build Status](https://github.com/papandreou/impro/workflows/tests/badge.svg)](https://github.com/papandreou/impro/actions)
 [![Coverage Status](https://coveralls.io/repos/papandreou/impro/badge.svg)](https://coveralls.io/r/papandreou/impro)
-[![Dependency Status](https://david-dm.org/papandreou/impro.svg)](https://david-dm.org/papandreou/impro)
 
 Impro allows specifying the operations to apply to images and will
 select the correct conversion library to perform the job itself.
@@ -37,8 +36,8 @@ into the desired output and processing is done while fully streaming data.
 
 Image processing has typically involved command line tools which are often
 supplied a set of command line arguments that act as a series of instructions
-for the properties of the image being output and anuy transformations to apply.
-Each of these options is modelled as an "operation".
+for the properties of the image being output and any series of transformations
+to apply. Each of these options is modelled as an "operation".
 
 ### Operations
 
