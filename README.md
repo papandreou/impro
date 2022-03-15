@@ -19,7 +19,7 @@ Support for the following libraries is included:
 - OptiPNG (npm install optipng@^2.1.0)
 - Pngcrush (npm install pngcrush@^2.0.1)
 - Pngquant (npm install pngquant@^3.0.0)
-- Sharp (npm install sharp@~0.28.0)
+- Sharp (npm install sharp@~0.30.0)
 - SvgFilter (npm install svgfilter@^4.1.0)
 ```
 
