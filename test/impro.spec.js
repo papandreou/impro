@@ -195,7 +195,40 @@ describe('impro', () => {
       },
     ]));
 
-  it('should allow multiple type conversions', () =>
+  it('should allow multiple type conversions without source type', () =>
+    expect(
+      impro.resize(10, 10).png().quality(88).flush().usedEngines,
+      'to satisfy',
+      [
+        {
+          name: 'sharp',
+          operations: [
+            { name: 'resize', args: [10, 10] },
+            { name: 'png', args: [] },
+            { name: 'quality', args: [88], engineName: 'sharp' },
+          ],
+        },
+      ]
+    ));
+
+  it('should allow multiple type conversions without source type and type operation', () =>
+    expect(
+      impro.gif().resize(10, 10).png().quality(88).flush().usedEngines,
+      'to satisfy',
+      [
+        {
+          name: 'gm',
+          operations: [
+            { name: 'gif' },
+            { name: 'resize', args: [10, 10] },
+            { name: 'png' },
+            { name: 'quality', args: [88] },
+          ],
+        },
+      ]
+    ));
+
+  it('should allow multiple type conversions with source type', () =>
     expect(
       impro.type('gif').resize(10, 10).png().quality(88).flush().usedEngines,
       'to satisfy',
@@ -411,12 +444,22 @@ describe('impro', () => {
         }
       ));
 
-    it('should honor an explicit type conversion', () =>
+    it('should honor an explicit type conversion (output types)', () =>
       expect(impro.type('image/jpeg').gif().flush(), 'to satisfy', {
         sourceType: 'jpeg',
         targetType: 'gif',
         targetContentType: 'image/gif',
       }));
+
+    it('should honor an explicit type conversion (engine selection)', () => {
+      const pipeline = impro.type('image/jpeg').gif().flush();
+      expect(pipeline.flush().usedEngines, 'to satisfy', [
+        {
+          name: 'gm',
+          operations: [{ name: 'gif' }],
+        },
+      ]);
+    });
   });
 
   describe('#metadata', () => {
