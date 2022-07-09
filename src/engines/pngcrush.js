@@ -11,8 +11,6 @@ module.exports = {
   validateOperation: function (name, args) {
     switch (name) {
       case 'brute':
-      case 'noreduce':
-      case 'reduce':
         return args.length === 0;
       case 'rem':
         return args.length >= 1 && args.every((arg) => /^[a-z]{4}$/i.test(arg));
