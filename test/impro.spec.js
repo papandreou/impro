@@ -1827,6 +1827,14 @@ describe('impro', () => {
       );
     });
 
+    it('should support reduce', () => {
+      const executeSpy = sinon.spy(impro.engineByName.pngcrush, 'execute');
+
+      impro.pngcrush().reduce().flush();
+
+      return expect(executeSpy.returnValues[0], 'to equal', ['-reduce']);
+    });
+
     it('should support noreduce', () => {
       const executeSpy = sinon.spy(impro.engineByName.pngcrush, 'execute');
 
