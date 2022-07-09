@@ -21,7 +21,7 @@
     "test": "mocha",
     "lint": "eslint . && prettier --check '**/*.{js,json,md}'",
     "clean": "rm -rf lib coverage .nyc_output",
-    "version": "offline-github-changelog --next=${npm_package_version} > CHANGELOG.md && git add CHANGELOG.md"
+    "version": "offline-github-changelog --next=${npm_new_version} > CHANGELOG.md && git add CHANGELOG.md"
   },
   "devDependencies": {
     "animated-gif-detector": "1.2.0",
