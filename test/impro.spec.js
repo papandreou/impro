@@ -766,7 +766,7 @@ describe('impro', () => {
         impro.type('jpeg').progressive(),
         'to yield output satisfying to have metadata satisfying',
         {
-          Interlace: 'Line',
+          isProgressive: true,
         }
       ));
 
@@ -1116,8 +1116,8 @@ describe('impro', () => {
         'to yield output satisfying',
         expect
           .it('to have metadata satisfying', {
+            delay: [100, 100, 100, 100], // Animated
             size: { width: 100, height: 100 },
-            Scene: ['0 of 4', '1 of 4', '2 of 4', '3 of 4'], // Animated
           })
           .and('to resemble', load('cat-resized-then-cropped.gif'))
       ));
@@ -1495,9 +1495,8 @@ describe('impro', () => {
         expect
           .it('to have metadata satisfying', {
             format: 'JPEG',
-            'Channel Depths': {
-              Gray: '8 bits',
-            },
+            channels: 1, // Grayscale
+            depth: 'uchar', // 8-bit
             size: {
               width: 481,
               height: 424,
