@@ -1,3 +1,12 @@
+### v0.13.1 (2023-10-27)
+
+- [Harden stream error handling for cases of a non-Error instance emit.](https://github.com/papandreou/impro/commit/fdb87a063798d06bb9a467d7ac7feb7985db8ef8) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Allow an imageMagick: true as a gm engine property to request its use.](https://github.com/papandreou/impro/commit/d7245be026f8f8c5e2787beb605ae7ca463a720f) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Inline unexpected-image assertion and switch metadata fetch to sharp.](https://github.com/papandreou/impro/commit/5a8b62c5e1b20a76291f4e165f1e9efc6192ec93) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Use a supported Ubuntu version on CI thus restoring it to working.](https://github.com/papandreou/impro/commit/c4bcffaaf61697e174f1dea936203a62344a1304) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [pngcrush: Remove support for \(no\)reduce, as reduce collides with a new node.js stream method](https://github.com/papandreou/impro/commit/f525dac23a9bb46c195a67004cb163a3c78654eb) ([Andreas Lind](mailto:andreaslindpetersen@gmail.com))
+- [+4 more](https://github.com/papandreou/impro/compare/v0.13.0...v0.13.1)
+
 ### v0.13.0 (2022-03-15)
 
 - [Fix sharp library version listed in README.](https://github.com/papandreou/impro/commit/f3efe3b08b6da97431480449b8504b6973a8a772) ([Alex J Burke](mailto:alex@alexjeffburke.com))
