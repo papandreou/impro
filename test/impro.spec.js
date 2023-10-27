@@ -12,6 +12,7 @@ const memoizeSync = require('memoizesync');
 const pathModule = require('path');
 const fs = require('fs');
 
+const isDarwin = process.platform === 'darwin';
 const testDataPath = pathModule.resolve(__dirname, '..', 'testdata');
 
 const consumeStream = (stream, encoding) => {
@@ -35,21 +36,9 @@ const consumeStream = (stream, encoding) => {
   });
 };
 
-const fileNameForPlatform = (fileName, platformsToOverride) => {
-  if (
-    Array.isArray(platformsToOverride) &&
-    platformsToOverride.includes(process.platform)
-  ) {
-    const ext = pathModule.extname(fileName);
-    return [
-      pathModule.basename(fileName, ext),
-      '-',
-      process.platform,
-      ext,
-    ].join('');
-  }
-
-  return fileName;
+const gmPipeline = (improInstance = impro) => {
+  const engineOptions = isDarwin ? { imageMagick: true } : undefined;
+  return improInstance.gm(engineOptions);
 };
 
 const load = memoizeSync((fileName) =>
@@ -1163,20 +1152,25 @@ describe('impro', () => {
   });
 
   describe('with the gm engine', () => {
-    it('should return a duplex stream that executes the processing instructions', () =>
-      expect(
+    it('should return a duplex stream that executes the processing instructions', () => {
+      const expectedFileName = isDarwin
+        ? 'turtleCroppedCenterIm-darwin.jpg'
+        : 'turtleCroppedCenterGm.jpg';
+
+      return expect(
         'turtle.jpg',
         'when piped through',
-        impro.gm().resize(40, 15).crop('center'),
+        gmPipeline().resize(40, 15).crop('center'),
         'to yield output satisfying to resemble',
-        load(fileNameForPlatform('turtleCroppedCenterGm.jpg', ['darwin']))
-      ));
+        load(expectedFileName)
+      );
+    });
 
     it('should output an image/gif as a jpeg', () =>
       expect(
         'bulb.gif',
         'when piped through',
-        impro.gm().jpeg(),
+        gmPipeline().jpeg(),
         'to yield output satisfying',
         'to have mime type',
         'image/jpeg'
@@ -1186,7 +1180,7 @@ describe('impro', () => {
       expect(
         'bulb.gif',
         'when piped through',
-        impro.gm().tiff(),
+        gmPipeline().tiff(),
         'to yield output satisfying',
         'to have mime type',
         'image/tiff'
@@ -1196,35 +1190,41 @@ describe('impro', () => {
       expect(
         'dialog-information.png',
         'when piped through',
-        impro.gm().tga(),
+        gmPipeline().tga(),
         'to yield output satisfying',
         expect.it('not to be empty')
       ));
 
-    it('should output an image/x-icon as a png', () =>
-      expect(
-        'favicon.ico',
-        'when piped through',
-        impro.type('image/x-icon').gm().png(),
-        'to yield output satisfying',
-        'to have mime type',
-        'image/png'
-      ));
+    it('should output an image/x-icon as a png', () => {
+      const improWithType = impro.type('image/x-icon');
 
-    it('should output an image/vnd.microsoft.icon as a png', () =>
-      expect(
+      return expect(
         'favicon.ico',
         'when piped through',
-        impro.type('image/vnd.microsoft.icon').gm().png(),
+        gmPipeline(improWithType).png(),
         'to yield output satisfying',
         'to have mime type',
         'image/png'
-      ));
+      );
+    });
+
+    it('should output an image/vnd.microsoft.icon as a png', () => {
+      const improWithType = impro.type('image/vnd.microsoft.icon');
+
+      return expect(
+        'favicon.ico',
+        'when piped through',
+        gmPipeline(improWithType).png(),
+        'to yield output satisfying',
+        'to have mime type',
+        'image/png'
+      );
+    });
 
     it('should support crop', () => {
       const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
 
-      impro.gm().crop('center').flush();
+      gmPipeline().crop('center').flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         { name: 'gravity', args: ['Center'] },
@@ -1234,7 +1234,7 @@ describe('impro', () => {
     it('should support progressive', () => {
       const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
 
-      impro.gm().progressive().flush();
+      gmPipeline().progressive().flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         { name: 'interlace', args: ['line'] },
@@ -1244,7 +1244,7 @@ describe('impro', () => {
     it('should support resize', () => {
       const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
 
-      impro.gm().resize(10, 10).flush();
+      gmPipeline().resize(10, 10).flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         { name: 'resize', args: [10, 10] },
@@ -1254,7 +1254,7 @@ describe('impro', () => {
     it('should support resize (only width)', () => {
       const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
 
-      impro.gm().resize(10, null).flush();
+      gmPipeline().resize(10, null).flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         { name: 'resize', args: [10, ''] },
@@ -1264,7 +1264,7 @@ describe('impro', () => {
     it('should support resize (only height)', () => {
       const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
 
-      impro.gm().resize(null, 10).flush();
+      gmPipeline().resize(null, 10).flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         { name: 'resize', args: ['', 10] },
@@ -1274,7 +1274,7 @@ describe('impro', () => {
     it('should support withoutEnlargement', () => {
       const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
 
-      impro.gm().resize(10, 10).withoutEnlargement().flush();
+      gmPipeline().resize(10, 10).withoutEnlargement().flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         { name: 'resize', args: [10, 10, '>'] },
@@ -1284,7 +1284,7 @@ describe('impro', () => {
     it('should support withoutReduction', () => {
       const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
 
-      impro.gm().resize(10, 10).withoutReduction().flush();
+      gmPipeline().resize(10, 10).withoutReduction().flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         { name: 'resize', args: [10, 10, '<'] },
@@ -1294,7 +1294,7 @@ describe('impro', () => {
     it('should support ignoreAspectRatio', () => {
       const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
 
-      impro.gm().resize(10, 10).ignoreAspectRatio().flush();
+      gmPipeline().resize(10, 10).ignoreAspectRatio().flush();
 
       return expect(executeSpy.returnValues[0], 'to equal', [
         { name: 'resize', args: [10, 10, '!'] },
@@ -1317,7 +1317,7 @@ describe('impro', () => {
       return expect(
         'bulb.gif',
         'when piped through',
-        impro.gm().png(),
+        gmPipeline().png(),
         'to error with',
         'gm: stream ended without emitting any data'
       ).finally(() => {
@@ -1331,7 +1331,7 @@ describe('impro', () => {
         return expect(
           'turtle.jpg',
           'when piped through',
-          impro.gm().resize(10, 10).withoutReduction(),
+          gmPipeline().resize(10, 10).withoutReduction(),
           'to yield output satisfying',
           'to have metadata satisfying',
           {
@@ -1346,9 +1346,7 @@ describe('impro', () => {
       it('should support resize (only width)', () => {
         const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
 
-        impro
-          .createPipeline({ maxOutputPixels: 25000 })
-          .gm()
+        gmPipeline(impro.createPipeline({ maxOutputPixels: 25000 }))
           .resize(2000, null)
           .flush();
 
@@ -1360,9 +1358,7 @@ describe('impro', () => {
       it('should support resize (only height)', () => {
         const executeSpy = sinon.spy(impro.engineByName.gm, 'execute');
 
-        impro
-          .createPipeline({ maxOutputPixels: 25000 })
-          .gm()
+        gmPipeline(impro.createPipeline({ maxOutputPixels: 25000 }))
           .resize(null, 2000)
           .flush();
 

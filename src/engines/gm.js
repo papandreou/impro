@@ -182,7 +182,8 @@ module.exports = {
         return args.length === 1 && isNumberWithin(args[0], 1, 100);
     }
   },
-  execute: function (pipeline, operations) {
+  execute: function (pipeline, operations, options) {
+    options = options || {};
     const gmOperations = createGmOperations(pipeline, operations);
 
     // For some reason the gm module doesn't expose itself as a readable/writable stream,
@@ -198,7 +199,10 @@ module.exports = {
         spawned = true;
         let seenData = false;
         let hasEnded = false;
-        const gmInstance = gm(
+        const Gm = options.imageMagick
+          ? gm.subClass({ imageMagick: '7+' })
+          : gm;
+        const gmInstance = Gm(
           readStream,
           pipeline.sourceType && `.${pipeline.sourceType}`
         );
