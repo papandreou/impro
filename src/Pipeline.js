@@ -225,11 +225,18 @@ module.exports = class Pipeline extends Stream.Duplex {
 
       // protect against filters emitting errors more than once
       stream.once('error', (err) => {
+        const engineName = this.usedEngines[i].name;
         let commandArgs;
-        if (
-          (commandArgs = err.commandArgs || this.usedEngines[i].commandArgs)
-        ) {
-          const engineName = this.usedEngines[i].name;
+        if (!(err instanceof Error)) {
+          const messageForNonError = `${engineName} emitted non-Error (stream index ${i})`;
+          err = new Error(messageForNonError);
+          commandArgs = null;
+        } else if (err.commandArgs) {
+          commandArgs = err.commandArgs;
+        } else {
+          commandArgs = this.usedEngines[i].commandArgs;
+        }
+        if (commandArgs) {
           err.commandLine = `${engineName} ${commandArgs.join(' ')}`;
         }
         this._fail(err, true);
@@ -355,7 +362,7 @@ module.exports = class Pipeline extends Stream.Duplex {
   addStream(stream) {
     this._preflush = true;
     this._attach(stream);
-    this.usedEngines.push({ name: '_stream' });
+    this.usedEngines.push({ name: '_stream', commandArgs: null });
     return this;
   }
 

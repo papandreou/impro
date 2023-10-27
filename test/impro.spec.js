@@ -1955,6 +1955,27 @@ describe('impro', () => {
       );
     });
 
+    it('should not break on error from an arbitrary stream that is not an Error', () => {
+      const erroringStream = new stream.Transform();
+      erroringStream._transform = () => {
+        setImmediate(() => {
+          erroringStream.emit('error', undefined);
+        });
+      };
+
+      const pipeline = impro.createPipeline().addStream(erroringStream);
+
+      return expect(
+        'bulb.gif',
+        'when piped through',
+        pipeline,
+        'to error with',
+        expect
+          .it('to have message', '_stream emitted non-Error (stream index 0)')
+          .and('not to have property', 'commandLine')
+      );
+    });
+
     it('should not break on error occurring on the internal passthrough', () => {
       const error = new Error('arranged error');
       class UnchangedStream extends stream.Transform {
