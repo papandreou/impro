@@ -1,17 +1,25 @@
 const errors = require('../errors');
-const requireOr = require('../requireOr');
+const StdinoutStream = require('../StdinoutStream');
+const { requireOr } = require('../requireOr');
+const { whichSyncSafe } = require('../which');
 
-const Gifsicle = requireOr('gifsicle-stream');
+function findBinary() {
+  let binary;
+  if ((binary = whichSyncSafe('gifsicle'))) return binary;
+  if ((binary = requireOr('gifsicle', null))) return binary;
+  return null;
+}
 
 function isNumberWithin(num, min, max) {
   return typeof num === 'number' && num >= min && num <= max;
 }
 
+const defaultBinPath = findBinary();
 const maxDimension = 16384;
 
 module.exports = {
   name: 'gifsicle',
-  unavailable: !Gifsicle,
+  unavailable: defaultBinPath === null,
   operations: [
     'crop',
     'rotate',
@@ -62,16 +70,17 @@ module.exports = {
   },
   execute: function (pipeline, operations) {
     const allGifsicleArgs = [];
-    let gifsicleArgs = [];
+    const binPath = module.exports._binPath;
+    let args = [];
     let seenOperationThatMustComeBeforeExtract = false;
 
     function flush() {
-      if (gifsicleArgs.length > 0) {
-        pipeline._attach(new Gifsicle(gifsicleArgs));
+      if (args.length > 0) {
+        pipeline._attach(new StdinoutStream('gifsicle', binPath, args));
         seenOperationThatMustComeBeforeExtract = false;
         if (allGifsicleArgs.length > 0) allGifsicleArgs.push(';');
-        allGifsicleArgs.push(...gifsicleArgs);
-        gifsicleArgs = [];
+        allGifsicleArgs.push(...args);
+        args = [];
       }
     }
 
@@ -107,20 +116,20 @@ module.exports = {
         }
 
         if (operation.args[0] !== null && operation.args[1] !== null) {
-          gifsicleArgs.push(
+          args.push(
             '--resize' + (ignoreAspectRatio ? '' : '-fit'),
             operation.args[0] + 'x' + operation.args[1]
           );
         } else if (operation.args[1] === null) {
-          gifsicleArgs.push('--resize-width', operation.args[0]);
+          args.push('--resize-width', operation.args[0]);
         } else if (operation.args[0] === null) {
-          gifsicleArgs.push('--resize-height', operation.args[1]);
+          args.push('--resize-height', operation.args[1]);
         }
       } else if (operation.name === 'extract') {
         if (seenOperationThatMustComeBeforeExtract) {
           flush();
         }
-        gifsicleArgs.push(
+        args.push(
           '--crop',
           operation.args[0] +
             ',' +
@@ -134,10 +143,10 @@ module.exports = {
         operation.name === 'rotate' &&
         /^(?:90|180|270)$/.test(operation.args[0])
       ) {
-        gifsicleArgs.push('--rotate-' + operation.args[0]);
+        args.push('--rotate-' + operation.args[0]);
         seenOperationThatMustComeBeforeExtract = true;
       } else if (operation.name === 'progressive') {
-        gifsicleArgs.push('--interlace');
+        args.push('--interlace');
       }
     }, this);
     flush();
@@ -147,4 +156,6 @@ module.exports = {
 
     return allGifsicleArgs;
   },
+  _binPath: defaultBinPath,
+  _findBinary: findBinary,
 };

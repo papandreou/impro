@@ -1061,6 +1061,16 @@ describe('impro', () => {
         [{ name: 'gifsicle' }]
       ));
 
+    it('should process the image according to the given options', () =>
+      expect(
+        'bulb.gif',
+        'when piped through',
+        impro.gifsicle().progressive(),
+        'to yield output satisfying',
+        'to equal',
+        load('bulbInterlaced.gif')
+      ));
+
     it('should support resize (only width)', () => {
       const executeSpy = sinon.spy(impro.engineByName.gifsicle, 'execute');
 
@@ -1865,6 +1875,32 @@ describe('impro', () => {
 
       return expect(pipeline, 'to error with', error).then(() =>
         expect(endSpy, 'was called')
+      );
+    });
+
+    it('should error on an empty image (gifsicle)', () => {
+      return expect(
+        'empty.gif',
+        'when piped through',
+        impro.gifsicle().progressive(),
+        'to error with',
+        'gifsicle: stream ended without emitting any data'
+      );
+    });
+
+    it('should error on an invalid image (gifsicle)', () => {
+      return expect(
+        'testImage.png',
+        'when piped through',
+        impro.gifsicle().progressive(),
+        'to error with',
+        expect.it((error) =>
+          expect(
+            error.message,
+            'to start with',
+            'gifsicle: [PROCESS] exited with code -1'
+          )
+        )
       );
     });
 
