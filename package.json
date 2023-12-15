@@ -45,7 +45,7 @@
     "offline-github-changelog": "^1.7.0",
     "optipng": "^4.0.0",
     "pngcrush": "^3.0.0",
-    "pngquant": "3.0.0",
+    "pngquant": "^4.0.0",
     "prettier": "~2.2.1",
     "sharp": "~0.32.0",
     "sinon": "^9.2.4",
