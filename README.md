@@ -12,15 +12,15 @@ select the correct conversion library to perform the job itself.
 Support for the following libraries is included:
 
 ```
-- Gifsicle (npm install gifsicle-stream@^1.0.0)
-- GraphicsMagick (npm install gm-papandreou@^1.23.0-patch1)
-- Inkscape (npm install inkscape@^3.0.0)
-- JpegTran (npm install jpegtran@^2.0.0)
-- OptiPNG (npm install optipng@^2.1.0)
-- Pngcrush (npm install pngcrush@^2.0.1)
-- Pngquant (npm install pngquant@^3.0.0)
-- Sharp (npm install sharp@~0.30.0)
-- SvgFilter (npm install svgfilter@^4.1.0)
+- gifsicle (npm install gifsicle-stream@^1.0.0)
+- gm (npm install gm-papandreou@^1.23.0-patch1)
+- inkscape (npm install inkscape@^3.0.0)
+- jpegtran (npm install jpegtran@^2.0.0)
+- optipng (npm install optipng@^2.1.0)
+- pngcrush (npm install pngcrush@^2.0.1)
+- pngquant (npm install pngquant@^3.0.0)
+- sharp (npm install sharp@~0.30.0)
+- svgfilter (npm install svgfilter@^4.1.0)
 ```
 
 > callers must install the libraries and if present they will be enabled
