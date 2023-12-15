@@ -594,8 +594,8 @@ describe('impro', () => {
         'turtle.jpg',
         'when piped through',
         impro.sharp().resize(40, 15).crop('center'),
-        'to yield output satisfying to resemble',
-        load('turtleCroppedCenter.jpg')
+        'to yield output satisfying',
+        expect.it('to equal', load('turtleCroppedCenterSharp.jpg'))
       ));
 
     it('should allow passing a cache option', function () {
@@ -1145,7 +1145,7 @@ describe('impro', () => {
             delay: [100, 100, 100, 100], // Animated
             size: { width: 100, height: 100 },
           })
-          .and('to resemble', load('cat-resized-then-cropped.gif'))
+          .and('to equal', load('cat-resized-then-cropped.gif'))
       ));
 
     it('should use gm for gifs when gifsicle is disabled', () =>
@@ -1210,8 +1210,8 @@ describe('impro', () => {
         'turtle.jpg',
         'when piped through',
         gmPipeline().resize(40, 15).crop('center'),
-        'to yield output satisfying to resemble',
-        load(expectedFileName)
+        'to yield output satisfying',
+        expect.it('to equal', load(expectedFileName))
       );
     });
 
@@ -1237,7 +1237,7 @@ describe('impro', () => {
 
     it('should output an image/png as a tga', () =>
       expect(
-        'dialog-information.png',
+        'testImage.png',
         'when piped through',
         gmPipeline().tga(),
         'to yield output satisfying',
@@ -1453,23 +1453,33 @@ describe('impro', () => {
       }
     });
 
-    it('should convert to png by default', () =>
-      expect(
+    it('should convert to png by default', () => {
+      const expectedFileName = isDarwin
+        ? 'dialog-information-darwin.png'
+        : 'dialog-information.png';
+
+      return expect(
         'dialog-information.svg',
         'when piped through',
         impro.type('svg').inkscape(),
-        'to yield output satisfying to resemble',
-        load('dialog-information.png')
-      ));
+        'to yield output satisfying',
+        expect.it('to equal', load(expectedFileName))
+      );
+    });
 
-    it('should convert to png explicitly', () =>
-      expect(
+    it('should convert to png explicitly', () => {
+      const expectedFileName = isDarwin
+        ? 'dialog-information-darwin.png'
+        : 'dialog-information.png';
+
+      return expect(
         'dialog-information.svg',
         'when piped through',
         impro.type('svg').inkscape().png(),
-        'to yield output satisfying to resemble',
-        load('dialog-information.png')
-      ));
+        'to yield output satisfying',
+        expect.it('to equal', load(expectedFileName))
+      );
+    });
 
     it('should convert to pdf', () =>
       expect(

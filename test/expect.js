@@ -1,8 +1,7 @@
 const expectWithPlugins = require('unexpected')
   .clone()
   .use(require('unexpected-dom'))
-  .use(require('unexpected-sinon'))
-  .use(require('unexpected-resemble'));
+  .use(require('unexpected-sinon'));
 const sharp = require('sharp');
 
 expectWithPlugins.addAssertion(
