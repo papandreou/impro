@@ -57,7 +57,7 @@
   },
   "dependencies": {
     "exif-reader": "^1.0.3",
-    "icc": "^1.0.0",
+    "icc": "^3.0.0",
     "mime": "^3.0.0"
   }
 }
