@@ -1,5 +1,9 @@
-const createError = require('createerror');
+class OutputDimensionsExceeded extends Error {
+  constructor(...args) {
+    super(...args);
+    this.name = 'OutputDimensionsExceeded';
+    this[this.name] = true; // createerror compatiblity
+  }
+}
 
-module.exports = {
-  OutputDimensionsExceeded: createError({ name: 'OutputDimensionsExceeded' }),
-};
+exports.OutputDimensionsExceeded = OutputDimensionsExceeded;

@@ -56,7 +56,6 @@
     "unexpected-sinon": "^11.0.1"
   },
   "dependencies": {
-    "createerror": "1.1.0",
     "exif-reader": "^1.0.3",
     "icc": "^1.0.0",
     "mime": "^3.0.0"
