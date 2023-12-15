@@ -43,7 +43,7 @@
     "mocha": "^8.2.1",
     "nyc": "^14.1.1",
     "offline-github-changelog": "^1.7.0",
-    "optipng": "2.1.0",
+    "optipng": "^4.0.0",
     "pngcrush": "^3.0.0",
     "pngquant": "3.0.0",
     "prettier": "~2.2.1",
