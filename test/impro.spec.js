@@ -6,6 +6,7 @@ const sinon = require('sinon');
 const stream = require('stream');
 
 const impro = require('../');
+const errors = require('../src/errors');
 const Pipeline = require('../src/Pipeline');
 
 const memoizeSync = require('memoizesync');
@@ -1011,6 +1012,18 @@ describe('impro', () => {
           { name: 'resize', args: [12, 2000, { fit: 'inside' }] },
         ]);
       });
+
+      it('should refuse to resize an image to exceed the max number of pixels', () => {
+        expect(
+          () => {
+            impro.maxOutputPixels(2).sharp().resize(100, 100).flush();
+          },
+          'to throw',
+          new errors.OutputDimensionsExceeded(
+            'resize: Target dimensions of 100x100 exceed maxOutputPixels (2)'
+          )
+        );
+      });
     });
 
     it('should support avif 8bit as a source format', () => {
@@ -1157,6 +1170,18 @@ describe('impro', () => {
           '--resize-fit',
           '12x2000',
         ]);
+      });
+
+      it('should refuse to resize an image to exceed the max number of pixels', () => {
+        expect(
+          () => {
+            impro.maxOutputPixels(2).gifsicle().resize(100, 100).flush();
+          },
+          'to throw',
+          new errors.OutputDimensionsExceeded(
+            'resize: Target dimensions of 100x100 exceed maxOutputPixels (2)'
+          )
+        );
       });
     });
   });
@@ -1375,6 +1400,18 @@ describe('impro', () => {
         return expect(executeSpy.returnValues[0], 'to equal', [
           { name: 'resize', args: [12, 2000] },
         ]);
+      });
+
+      it('should refuse to resize an image to exceed the max number of pixels', () => {
+        expect(
+          () => {
+            impro.maxOutputPixels(2).gm().resize(100, 100).flush();
+          },
+          'to throw',
+          new errors.OutputDimensionsExceeded(
+            'resize: Target dimensions of 100x100 exceed maxOutputPixels (2)'
+          )
+        );
       });
     });
   });
@@ -2043,36 +2080,6 @@ describe('impro', () => {
   });
 
   describe('with a maxOutputPixels setting', () => {
-    it('should refuse to resize an image to exceed the max number of pixels (sharp)', () => {
-      expect(
-        () => {
-          impro.maxOutputPixels(2).type('jpeg').resize(100, 100).flush();
-        },
-        'to throw',
-        'resize: Target dimensions of 100x100 exceed maxOutputPixels (2)'
-      );
-    });
-
-    it('should refuse to resize an image to exceed the max number of pixels (gm)', () => {
-      expect(
-        () => {
-          impro.maxOutputPixels(2).gm().resize(100, 100).flush();
-        },
-        'to throw',
-        'resize: Target dimensions of 100x100 exceed maxOutputPixels (2)'
-      );
-    });
-
-    it('should refuse to resize an image to exceed the max number of pixels (gifsicle)', () => {
-      expect(
-        () => {
-          impro.maxOutputPixels(2).gifsicle().resize(100, 100).flush();
-        },
-        'to throw',
-        'resize: Target dimensions of 100x100 exceed maxOutputPixels (2)'
-      );
-    });
-
     it('should correctly refuse due to max number of pixels after streaming starts', () => {
       const turtleJpg = loadAsStream('turtle.jpg');
       const pipeline = impro.maxOutputPixels(2).resize(100, 100);
