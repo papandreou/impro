@@ -36,14 +36,14 @@ for (const engineLib of engineLibs) {
 <!-- evaldown output:true -->
 
 ```
-- gifsicle (npm install gifsicle-stream@^1.0.0)
+- gifsicle (npm install gifsicle@^5.3.0)
 - gm (npm install gm-papandreou@^1.23.0-patch1)
 - inkscape (npm install inkscape@^3.0.0)
 - jpegtran (npm install jpegtran@^2.0.0)
-- optipng (npm install optipng@^2.1.0)
-- pngcrush (npm install pngcrush@^2.0.1)
-- pngquant (npm install pngquant@^3.0.0)
-- sharp (npm install sharp@~0.30.0)
+- optipng (npm install optipng@^4.0.0)
+- pngcrush (npm install pngcrush@^3.0.0)
+- pngquant (npm install pngquant@^4.0.0)
+- sharp (npm install sharp@~0.32.0)
 - svgfilter (npm install svgfilter@^4.1.0)
 ```
 

@@ -1,3 +1,12 @@
+### v0.14.0 (2023-12-15)
+
+- [Add a note about requiring node 14+ to the README.](https://github.com/papandreou/impro/commit/ef5a2b3cee7ffb04d522da4e80197b6174270e8e) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Keep node 14 syntax for npm version passed to changelog generation.](https://github.com/papandreou/impro/commit/1dc4eb63bb184683b8174cb944264fcb7a971b88) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Further reduce test complexity by removing use of unexpected-resemble.](https://github.com/papandreou/impro/commit/be3729f0635b5ec33439685e2409b9e1586cf55a) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Prioritise npm package gifsicle above the system version.](https://github.com/papandreou/impro/commit/9ef7a9cfbd7740638f6f4211ed92567dd5571b88) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Bring in evaldown and automatically generate supported libs.](https://github.com/papandreou/impro/commit/13ba3f00999098d3dca6feb9b78921cdf274832f) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [+12 more](https://github.com/papandreou/impro/compare/v0.13.1...v0.14.0)
+
 ### v0.13.1 (2023-10-27)
 
 - [Harden stream error handling for cases of a non-Error instance emit.](https://github.com/papandreou/impro/commit/fdb87a063798d06bb9a467d7ac7feb7985db8ef8) ([Alex J Burke](mailto:alex@alexjeffburke.com))
