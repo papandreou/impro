@@ -490,6 +490,20 @@ describe('impro', () => {
         }
       ));
 
+    it('should allow retrieving the metadata for an image and include icc', () =>
+      expect(
+        '16-bit-grey-alpha.png',
+        'when piped through',
+        impro.metadata(),
+        'to yield json output satisfying',
+        {
+          icc: {
+            colorSpace: 'GRAY',
+            copyright: 'No copyright, use freely',
+          },
+        }
+      ));
+
     it('should allow retrieving the metadata for an image with a specified type', () =>
       expect(
         'exif.jpg',
