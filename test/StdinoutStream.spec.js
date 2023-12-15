@@ -1,11 +1,11 @@
 const expect = require('./expect');
 const fs = require('fs');
-const gifsicleBinPath = require('gifsicle');
 const pathModule = require('path');
 const sinon = require('sinon');
 
 const StdinoutStream = require('../src/StdinoutStream');
 
+const GIFSICLE_BIN_PATH = require('../src/requireOr')('gifsicle', '/absent');
 const TESTDATA = pathModule.join(__dirname, '..', 'testdata');
 
 const consumeStreamAs = (stream, as) => {
@@ -41,7 +41,7 @@ const loadAsStream = (fileName) =>
   fs.createReadStream(pathModule.join(TESTDATA, fileName));
 
 describe('StdinoutStream', () => {
-  const binPath = gifsicleBinPath;
+  const binPath = GIFSICLE_BIN_PATH;
 
   afterEach(() => {
     sinon.restore();

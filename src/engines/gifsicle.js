@@ -5,8 +5,8 @@ const { whichSyncSafe } = require('../which');
 
 function findBinary() {
   let binary;
-  if ((binary = whichSyncSafe('gifsicle'))) return binary;
   if ((binary = requireOr('gifsicle', null))) return binary;
+  if ((binary = whichSyncSafe('gifsicle'))) return binary;
   return null;
 }
 
