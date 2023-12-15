@@ -9,7 +9,8 @@ An image processing engine integrating multiple conversion libraries.
 Impro allows specifying the operations to apply to images and will
 select the correct conversion library to perform the job itself.
 
-Support for the following libraries is included:
+This library supports and is tested against node version **14** and above and
+includes support for the following image conversion tools:
 
 <!-- evaldown hide:true,console:true -->
 
