@@ -3,6 +3,14 @@ const Path = require('path');
 
 const mime = require('./mime');
 
+function mapValues(obj, valueFn) {
+  const target = { ...obj };
+  for (const [key, value] of Object.entries(obj)) {
+    target[key] = valueFn(value);
+  }
+  return target;
+}
+
 module.exports = class Pipeline extends Stream.Duplex {
   constructor(impro, options) {
     super();
@@ -15,9 +23,15 @@ module.exports = class Pipeline extends Stream.Duplex {
 
     this.ended = false;
     this.impro = impro;
-    this.isDisabledByEngineName = {};
     this.options = {};
+    this.optionsByEngineName = {};
     this.usedEngines = [];
+
+    Object.defineProperty(this, 'isDisabledByEngineName', {
+      get: () => {
+        return mapValues(this.optionsByEngineName, ({ disabled }) => disabled);
+      },
+    });
 
     options = options || {};
     const { type, engines, supportedOptions, sourceMetadata } = options;
@@ -30,13 +44,27 @@ module.exports = class Pipeline extends Stream.Duplex {
 
     const engineOptions = engines || {};
     Object.keys(this.impro.engineByName).forEach((engineName) => {
-      let isDisabled;
-      if (typeof engineOptions[engineName] !== 'boolean') {
-        isDisabled = false;
+      const isAvailable = !impro.engineByName[engineName].unavailable;
+
+      let isEnabled;
+      let perEngineOptions;
+      if (typeof engineOptions[engineName] === 'boolean') {
+        isEnabled = engineOptions[engineName];
+        perEngineOptions = null;
+      } else if (!engineOptions[engineName]) {
+        isEnabled = true;
+        perEngineOptions = null;
       } else {
-        isDisabled = !engineOptions[engineName];
+        isEnabled = true;
+        perEngineOptions = engineOptions[engineName];
       }
-      this.isDisabledByEngineName[engineName] = isDisabled;
+
+      const disabled = !(isEnabled && isAvailable);
+
+      this.optionsByEngineName[engineName] = Object.assign(
+        { disabled },
+        perEngineOptions
+      );
     });
 
     if (this.options.svgAssetPath) {
@@ -87,12 +115,14 @@ module.exports = class Pipeline extends Stream.Duplex {
           );
         }
         const engineName = candidateEngineNames[0];
-        let options;
+        const options = this.optionsByEngineName[engineName];
+
         if (this._queuedOperations[startIndex].name === engineName) {
           if (this._queuedOperations[startIndex].args.length > 1) {
             throw new Error('Engines take a max of one argument');
           }
-          options = this._queuedOperations[startIndex].args[0];
+          const engineArgument = this._queuedOperations[startIndex].args[0];
+          Object.assign(options, engineArgument);
           startIndex += 1;
         }
 
@@ -128,7 +158,7 @@ module.exports = class Pipeline extends Stream.Duplex {
           typeof operation.args[0] === 'boolean'
         ) {
           const isEnabled = operation.args[0];
-          this.isDisabledByEngineName[operation.name] = !isEnabled;
+          this.optionsByEngineName[operation.name].disabled = !isEnabled;
           if (i === 0) {
             startIndex += 1;
           } else {
@@ -266,8 +296,7 @@ module.exports = class Pipeline extends Stream.Duplex {
         const isSupportedByType =
           impro.isSupportedByEngineNameAndInputType[engineName];
         return (
-          !this.isDisabledByEngineName[engineName] &&
-          !impro.engineByName[engineName].unavailable &&
+          !this.optionsByEngineName[engineName].disabled &&
           (engineName === operationName ||
             isSupportedByType['*'] ||
             (targetType && isSupportedByType[targetType]))

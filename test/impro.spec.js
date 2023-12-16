@@ -247,6 +247,20 @@ describe('impro', () => {
       expect(pipeline, 'to be a', Pipeline);
     });
 
+    it('should return a pipeline object with all available engines enabled', () => {
+      const customImpro = new impro.Impro()
+        .use(impro.engines.gifsicle)
+        .use(impro.engines.inkscape)
+        .use(impro.engines.svgfilter);
+      const pipeline = customImpro.createPipeline({ type: 'gif' }).flush();
+
+      expect(pipeline.isDisabledByEngineName, 'to equal', {
+        gifsicle: false,
+        inkscape: false,
+        svgfilter: false,
+      });
+    });
+
     it('should allow directly setting an output type option', () => {
       const customImpro = new impro.Impro().use(impro.engines.gifsicle);
       const pipeline = customImpro.createPipeline({ type: 'gif' });
@@ -1213,6 +1227,50 @@ describe('impro', () => {
         'to yield output satisfying',
         expect.it('to equal', load(expectedFileName))
       );
+    });
+
+    it('should pass down engine specific options from the instance level', async () => {
+      const gmEngine = impro.engineByName.gm;
+      sinon.stub(gmEngine, 'execute').throws(new Error('STOP'));
+
+      await expect(
+        'bulb.gif',
+        'when piped through',
+        impro
+          .createPipeline({
+            gm: { imageMagick: true },
+          })
+          .gm()
+          .png(),
+        'to error with',
+        expect.it('to have message', 'STOP')
+      );
+
+      const [, , engineOptions] = gmEngine.execute.getCall(0).args;
+      expect(engineOptions, 'to equal', {
+        disabled: false,
+        imageMagick: true,
+      });
+    });
+
+    it('should pass down engine specific options from the operation level', async () => {
+      const gmEngine = impro.engineByName.gm;
+      sinon.stub(gmEngine, 'execute').throws(new Error('STOP'));
+
+      const pipeline = impro.gm({ imageMagick: true }).png();
+      await expect(
+        'bulb.gif',
+        'when piped through',
+        pipeline,
+        'to error with',
+        expect.it('to have message', 'STOP')
+      );
+
+      const [, , engineOptions] = gmEngine.execute.getCall(0).args;
+      expect(engineOptions, 'to equal', {
+        disabled: false,
+        imageMagick: true,
+      });
     });
 
     it('should output an image/gif as a jpeg', () =>

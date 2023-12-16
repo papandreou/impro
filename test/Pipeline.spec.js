@@ -11,6 +11,20 @@ describe('Pipeline', () => {
     };
   });
 
+  it('should allow disabling engines based on availability', () => {
+    fakeImpro.engineByName.foo = {};
+    fakeImpro.engineByName.bar = {
+      unavailable: true,
+    };
+
+    const pipeline = new Pipeline(fakeImpro);
+
+    expect(pipeline.isDisabledByEngineName, 'to equal', {
+      foo: false,
+      bar: true,
+    });
+  });
+
   it('should allow disabling engines from the constructor', () => {
     fakeImpro.engineByName.foo = {};
     fakeImpro.engineByName.bar = {};
