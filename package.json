@@ -18,7 +18,7 @@
   ],
   "scripts": {
     "coverage": "nyc --reporter=lcov --reporter=text -- npm test && echo Coverage Report written to coverage/lcov-report/index.html",
-    "docs": "evaldown --inplace README.md",
+    "docs": "evaldown docs/README.md > README.md",
     "test": "mocha",
     "lint": "eslint . && prettier --check '**/*.{js,json,md}'",
     "clean": "rm -rf lib coverage .nyc_output",
