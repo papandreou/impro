@@ -12,27 +12,6 @@ select the correct conversion library to perform the job itself.
 This library supports and is tested against node version **14** and above and
 includes support for the following image conversion tools:
 
-<!-- evaldown hide:true,console:true -->
-
-```js
-const pkg = require('./package.json');
-
-const engineLibs = Object.keys(require('./src/engines')).filter(
-  (name) => name !== 'metadata'
-);
-
-const engineNameToDepName = {
-  gm: 'gm-papandreou',
-};
-
-for (const engineLib of engineLibs) {
-  const depName = engineNameToDepName[engineLib] || engineLib;
-  let depVersion = pkg.devDependencies[depName];
-  if (!/^[~^]/.test(depVersion)) depVersion = `^${depVersion}`;
-  console.log(`- ${engineLib} (npm install ${depName}@${depVersion})`);
-}
-```
-
 <!-- evaldown output:true -->
 
 ```
@@ -165,3 +144,4 @@ The pipeline above is equivalent to the chaining API example.
 ## License
 
 Impro is licensed under a standard 3-clause BSD license.
+

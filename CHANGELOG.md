@@ -1,3 +1,8 @@
+### v0.14.1 (2023-12-17)
+
+- [Fix application of the hide marker in the README by evaldown.](https://github.com/papandreou/impro/commit/851218765352c4652dd383ed1aa8f482a2b826bc) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Ensure engine options can be configured at the level of the Pipeline.](https://github.com/papandreou/impro/commit/c0aa66d0cddff0ec5f55b1db401c55148f4ed436) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+
 ### v0.14.0 (2023-12-15)
 
 - [Add a note about requiring node 14+ to the README.](https://github.com/papandreou/impro/commit/ef5a2b3cee7ffb04d522da4e80197b6174270e8e) ([Alex J Burke](mailto:alex@alexjeffburke.com))
