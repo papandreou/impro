@@ -3,13 +3,18 @@ const Stream = require('stream');
 
 const debug = require('./debug');
 
+function noopFilterStderr() {
+  return true;
+}
+
 module.exports = class StdinoutStream extends Stream.Transform {
-  constructor(name, binary, args) {
+  constructor(name, binary, args, options) {
     super();
 
     this.args = args;
     this.binary = binary;
     this.errorline = null;
+    this.filterStderr = null;
     this.logger = null;
     this.process = null;
     this.hasEnded = false;
@@ -17,6 +22,13 @@ module.exports = class StdinoutStream extends Stream.Transform {
     this.hasOutput = false;
 
     this.logger = debug(name);
+
+    options = options || {};
+    if (typeof options.filterStderr === 'function') {
+      this.filterStderr = options.filterStderr;
+    } else {
+      this.filterStderr = noopFilterStderr;
+    }
   }
 
   // implementation local methods
@@ -81,14 +93,28 @@ module.exports = class StdinoutStream extends Stream.Transform {
       const stdinError = boundError('STDIN');
       const stdoutError = boundError('STDOUT');
 
+      const decodeStderr = (line) => {
+        let errorMessage;
+        try {
+          errorMessage = line.toString();
+        } catch (e) {
+          return 'undecodeable output on stderr';
+        }
+        if (!errorMessage) {
+          // empty line output on stderr => ignore
+          return null;
+        } else if (!this.filterStderr(errorMessage)) {
+          // filter indicated a non-error => ignore
+          return null;
+        }
+        return errorMessage;
+      };
+
       this.process.stderr.on('data', (line) => {
-        if (this.errorline === null) {
+        if (this.errorline !== null) {
+          // ignore
+        } else if ((this.errorline = decodeStderr(line)) !== null) {
           this.hasErrored = true;
-          try {
-            this.errorline = line.toString();
-          } catch (e) {
-            this.errorline = 'undecodeable error';
-          }
         }
       });
 

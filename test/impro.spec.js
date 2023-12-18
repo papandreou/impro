@@ -1112,6 +1112,16 @@ describe('impro', () => {
         load('bulbInterlaced.gif')
       ));
 
+    it('should process any image that generates warnings to stderr', () =>
+      expect(
+        'lasercat.gif',
+        'when piped through',
+        impro.gifsicle().progressive(),
+        'to yield output satisfying',
+        'to have mime type',
+        'image/gif'
+      ));
+
     it('should support resize (only width)', () => {
       const executeSpy = sinon.spy(impro.engineByName.gifsicle, 'execute');
 

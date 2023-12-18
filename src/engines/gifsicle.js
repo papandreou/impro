@@ -76,7 +76,11 @@ module.exports = {
 
     function flush() {
       if (args.length > 0) {
-        pipeline._attach(new StdinoutStream('gifsicle', binPath, args));
+        pipeline._attach(
+          new StdinoutStream('gifsicle', binPath, args, {
+            filterStderr: (line) => !line.startsWith('gifsicle: warning:'),
+          })
+        );
         seenOperationThatMustComeBeforeExtract = false;
         if (allGifsicleArgs.length > 0) allGifsicleArgs.push(';');
         allGifsicleArgs.push(...args);
