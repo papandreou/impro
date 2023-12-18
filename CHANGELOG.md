@@ -1,3 +1,7 @@
+### v0.14.2 (2023-12-18)
+
+- [Account for gifsicle outputting warnings on stderr.](https://github.com/papandreou/impro/commit/e8339609941e03d543b0f1af2d207a058438d140) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+
 ### v0.14.1 (2023-12-17)
 
 - [Fix application of the hide marker in the README by evaldown.](https://github.com/papandreou/impro/commit/851218765352c4652dd383ed1aa8f482a2b826bc) ([Alex J Burke](mailto:alex@alexjeffburke.com))
