@@ -45,7 +45,7 @@
     "memoizesync": "^1.1.1",
     "mocha": "^10.2.0",
     "nyc": "^15.1.0",
-    "offline-github-changelog": "^1.7.0",
+    "offline-github-changelog": "^3.0.1",
     "optipng": "^4.0.0",
     "pngcrush": "^3.0.0",
     "pngquant": "^4.0.0",
