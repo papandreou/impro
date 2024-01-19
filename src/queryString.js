@@ -71,7 +71,7 @@ function parseImproQueryString(queryString, improInstance, allowOperation) {
   }
 
   return {
-    operations: operations,
+    operations,
     leftover: leftOverQueryStringFragments.join('&'),
     consumed: consumedQueryStringFragments.join('&'),
   };

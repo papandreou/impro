@@ -92,7 +92,15 @@ expect.addAssertion(
   async (expect, subject, ...rest) => {
     const encoding = expect.alternations ? expect.alternations[0] : undefined;
     expect.errorMode = 'bubble';
-    return expect(await consumeStream(subject, encoding), ...rest);
+    const contents = await consumeStream(subject, encoding);
+
+    // // DEV-HELPER: Uncomment this block to write the output to a file when debugging a test
+    // fs.writeFileSync(
+    //   pathModule.resolve(testDataPath, 'mismatching-file.extension'),
+    //   contents
+    // );
+
+    return expect(contents, ...rest);
   }
 );
 
