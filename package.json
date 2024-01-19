@@ -50,7 +50,7 @@
     "pngcrush": "^3.0.0",
     "pngquant": "^4.0.0",
     "prettier": "~3.2.4",
-    "sharp": "~0.32.0",
+    "sharp": "~0.33.2",
     "sinon": "^17.0.1",
     "svgfilter": "4.1.0",
     "unexpected": "^12.0.5",
