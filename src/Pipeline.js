@@ -255,7 +255,8 @@ module.exports = class Pipeline extends Stream.Duplex {
 
       // protect against filters emitting errors more than once
       stream.once('error', (err) => {
-        const engineName = this.usedEngines[i].name;
+        const usedEngine = this.usedEngines[i] || { name: 'unknown' };
+        const engineName = usedEngine.name || 'unindentified';
         let commandArgs;
         if (!(err instanceof Error)) {
           const messageForNonError = `${engineName} emitted non-Error (stream index ${i})`;
@@ -263,8 +264,10 @@ module.exports = class Pipeline extends Stream.Duplex {
           commandArgs = null;
         } else if (err.commandArgs) {
           commandArgs = err.commandArgs;
+        } else if (usedEngine.commandArgs) {
+          commandArgs = usedEngine.commandArgs;
         } else {
-          commandArgs = this.usedEngines[i].commandArgs;
+          commandArgs = null;
         }
         if (commandArgs) {
           err.commandLine = `${engineName} ${commandArgs.join(' ')}`;
