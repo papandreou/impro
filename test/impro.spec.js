@@ -1579,9 +1579,14 @@ describe('impro', () => {
     });
 
     it('should convert to png by default', () => {
-      const expectedFileName = isDarwin
-        ? 'dialog-information-darwin.png'
-        : 'dialog-information.png';
+      let expectedFileName;
+      if (isDarwin) {
+        expectedFileName = 'dialog-information-darwin.png';
+      } else if (process.env.CI === 'true') {
+        expectedFileName = 'dialog-information-ubuntu.png';
+      } else {
+        expectedFileName = 'dialog-information.png';
+      }
 
       return expect(
         'dialog-information.svg',
@@ -1593,9 +1598,14 @@ describe('impro', () => {
     });
 
     it('should convert to png explicitly', () => {
-      const expectedFileName = isDarwin
-        ? 'dialog-information-darwin.png'
-        : 'dialog-information.png';
+      let expectedFileName;
+      if (isDarwin) {
+        expectedFileName = 'dialog-information-darwin.png';
+      } else if (process.env.CI === 'true') {
+        expectedFileName = 'dialog-information-ubuntu.png';
+      } else {
+        expectedFileName = 'dialog-information.png';
+      }
 
       return expect(
         'dialog-information.svg',
