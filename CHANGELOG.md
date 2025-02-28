@@ -1,3 +1,12 @@
+### v0.14.3 (2025-02-28)
+
+- [Provide fallback when referencing used engines.](https://github.com/papandreou/impro/commit/457e8a28c5d880cc64e7c9f4f9ecdcafb096c2a8) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Account for output differences with inkscape on CI.](https://github.com/papandreou/impro/commit/63ba3fa699574264fda032a37bd746cd11148296) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Switch to Unbuntu 24.04 for CI.](https://github.com/papandreou/impro/commit/3dda516b326e852d6c783d8b6174e6ac4bb5adb6) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Add tests that more completely capture engine selection behaviour.](https://github.com/papandreou/impro/commit/acaff2f1643a3982c782c50a9b18fc1adf8dfdc3) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [Rearrange the Pipleline type\(\) method to consolidate the assignments.](https://github.com/papandreou/impro/commit/b10865aa4af739fbedf29fabce97e7e8515d6bfc) ([Alex J Burke](mailto:alex@alexjeffburke.com))
+- [+1 more](https://github.com/papandreou/impro/compare/v0.14.2...v0.14.3)
+
 ### v0.14.2 (2023-12-18)
 
 - [Account for gifsicle outputting warnings on stderr.](https://github.com/papandreou/impro/commit/e8339609941e03d543b0f1af2d207a058438d140) ([Alex J Burke](mailto:alex@alexjeffburke.com))
